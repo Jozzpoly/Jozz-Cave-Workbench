@@ -1,0 +1,37 @@
+name: GPT TEMP — v5 foreign-parent instrument bridge boundary
+on:
+  push:
+    branches:
+      - experiment/gpt-temporary-cloudflare-v41-2026-10-16
+    paths:
+      - 'research/gpt-v5-trust/**'
+      - '.github/workflows/gpt-temp-v5-trust.yml'
+permissions:
+  contents: read
+jobs:
+  trust:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - name: Retrieve exact published PR #2 source (do not alter it)
+        run: |
+          git fetch origin v5-przyrzady
+          git cat-file -e 8d7b1141105d1442eb7690bb345193a386485954:docs/przyrzad/jaskinia-przyrzad.js
+      - name: Test whether any foreign iframe parent can receive lab state or supply remarks
+        run: node research/gpt-v5-trust/foreign-parent.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gpt-v5-synthetic-parent-boundary-proof
+          retention-days: 5
+          if-no-files-found: warn
+          path: shots/gpt-v5-trust/real-bridge-observation.json
