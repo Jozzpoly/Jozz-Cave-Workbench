@@ -12,6 +12,7 @@ Jozz, a solo game developer and graphic designer, writes in Polish and casually.
 - **Risky operations make a backup first** (reset, import, load-all, delete forever) and offer "Cofnij" (undo) in a toast.
 - **Deleting for good keeps a way back.** A copy holds layouts, notes and views, not the trash, so `makeBackup(why, forgotten)` puts what leaves the trash for good inside the copy made just before, and restoring that copy puts it back in the trash. If the copy cannot be written, nothing is deleted.
 - **An older Jaskinia never erases what a newer one wrote.** Every Jaskinia downloaded to one computer shares the same `file://` storage, and the public build shares it with the private one. A window type or a pinned project that a build does not know waits in `w.lost` and comes back in a build that knows it.
+- **A running lab is never restarted by Jaskinia.** Window types with `live: true` (`przyrzad`, `gra`) are rebuilt only when what they run changes (`liveKey`), never for a theme, density, zoom, the language key, a layout change or a narrow window. Labs that speak the instrument contract ([docs/przyrzad/KONTRAKT.md](docs/przyrzad/KONTRAKT.md)) are heard only from frames Jaskinia opened, and only as text.
 - **Note text never enters the log.** A menu item whose label comes from something the owner wrote carries a `log` label (the notes menu logs "notatka"), and a package without notes scrubs every note's title and lines out of the log.
 - **Notes live outside layout undo.** Their text is in `store.notes`; a notes window only holds `st.note` (an id). Ctrl+Z of a layout never rewinds typing.
 - **The wall never rearranges itself.** Arranging happens only on request ("Ułóż…") and is one undo step. Camera position is per window in `store.views` and is not part of undo.
@@ -41,6 +42,7 @@ Jozz, a solo game developer and graphic designer, writes in Polish and casually.
 | `40-types.js` | the window-type registry `TYPES` (24 types: map, wall, Kataster, list, play, findings, changes, card, game, branches, rhythm, state, data, stats, chart, ranking, year, clock, pulse, history, notes, knowledge, settings, empty chooser) |
 | `45-settings.js` | themes (`data-jk`), life ramps (`data-life`), density, the Settings window, export/import |
 | `50-shell.js` | the shell: top bar, workspaces (tabs), windows, dividers, drag and drop, menus and sheets, phone mode (Back closes a sheet, two fingers zoom a window), undo/redo, trash, reset, toasts |
+| `52-przyrzady.js` | instruments: the owner's labs and games running in `przyrzad` and `gra` windows, the instrument contract (hello, state, signals, events, remarks back), the live "Sygnały" window, the picker of what to run, and the demo lab carried inside (`LAB_DEMO`) |
 | `55-feedback.js` | the feedback loop: the log (`jaskinia:dziennik`), "To mnie uwiera" notes pinned to the moment (`jaskinia:uwagi`), "Paczka dla Claude'a" (file or text), the Settings section "Uwagi i paczka" |
 | `version.txt` | the version number the top bar shows; `render.py` stamps it with the build time into `JASK_BUILD` |
 
@@ -52,19 +54,21 @@ Interface strings are written in Polish in the source and wrapped in `t('…')`.
 
 ## Before you propose a change
 
-- Run `node tools/jk_test.mjs`, `node tools/jk2_test.mjs`, `node tools/jk4_test.mjs` and `node tools/jk2_chaos.mjs 400 <seed>`. All must pass. They open the pages over http (`tools/serve.mjs`), because headless Chromium can drop the `localStorage` of `file://` pages across reloads, which would test the browser instead of Jaskinia.
+- Run `node tools/jk_test.mjs`, `node tools/jk2_test.mjs`, `node tools/jk4_test.mjs`, `node tools/jk5_test.mjs` and `node tools/jk2_chaos.mjs 400 <seed>`. All must pass. They open the pages over http (`tools/serve.mjs`), because headless Chromium can drop the `localStorage` of `file://` pages across reloads, which would test the browser instead of Jaskinia.
 - For anything visible, take screenshots on desktop and phone (`tools/jk4_look.mjs [dir] [scenario]` shows how) and look at them.
 - Work on a branch and open a pull request. `main` is the owner's.
 - Do not commit generated test pages (`dist/_*.html`) or screenshot folders.
 - Never put tokens anywhere in the repository.
 
-## Known debts (as of 16 Oct 2026, v4)
+## Known debts (as of 16 Oct 2026, v5)
 
 1. The data is a snapshot taken in an agent's sandbox, with no automatic refresh yet.
 2. State lives in one browser; no sync between devices. The owner often runs Jaskinia as a downloaded file, so a sync built only on the claude.ai artifact would not reach him.
 3. There is no layer for the owner's own judgment of projects (finished, donor, return to it).
 4. Library panels are glued in through a compatibility hook and are Polish only.
 5. The window system is concatenated scripts with shared state. Tests are mostly end-to-end.
-6. In the claude.ai artifact, games open in a new tab, not in a window (a downloaded file and the owner's own server can open them in a window since v4).
+6. In the claude.ai artifact, games open in a new tab, not in a window (a downloaded file and the owner's own server can open them in a window since v4). The demo lab is the exception: it is carried inside the page.
+7. The instrument contract reaches labs only in a window. A lab opened in a separate tab (the phone's default for games) does not talk to Jaskinia yet, and no real lab speaks the contract yet: the first adopters decide whether it is worth it.
+8. Changing the interface language rebuilds Jaskinia, so running labs start again.
 
 The order in which to tackle these is in the view from above.

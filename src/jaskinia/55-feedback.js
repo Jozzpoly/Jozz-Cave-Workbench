@@ -70,9 +70,17 @@ function nowContext() {
 }
 
 /* ---------- "to mnie uwiera": one line now, pinned to this second ---------- */
-function uwagaPop(anchor) {
+function uwagaPop(anchor, liveId) {
   const ctx = nowContext();
-  const where = [ctx.u && t('układ „{0}”', ctx.u), ctx.okno && t('okno „{0}”', ctx.okno), ctx.projekt && t('projekt {0}', ctx.projekt)].filter(Boolean).join(' · ');
+  // the lab Jozz is using rides along: what it is, and its state at this second (asked for now, never waited on)
+  const le = liveId ? LIVE.get(liveId) : activeLive(true);
+  if (le) {
+    ctx.przyrzad = liveCtxOf(le);
+    askState(le).then(s => { if (s && ctx.przyrzad) Object.assign(ctx.przyrzad, { stan: s.text, dane: s.data, stan_z: isoLocal(s.t) }); });
+  }
+  const tells = le && le.hello && le.hello.wants.includes('remark');
+  const where = [ctx.u && t('układ „{0}”', ctx.u), ctx.okno && t('okno „{0}”', ctx.okno), le && t('przyrząd „{0}”', liveName(le)), ctx.projekt && t('projekt {0}', ctx.projekt)].filter(Boolean).join(' · ')
+    + (tells ? ' · ' + t('przyrząd też ją dostanie') : '');
   let close = null;
   const inp = h('textarea', { class: 'jk-in', rows: 4, maxlength: 2000, 'aria-label': t('Co Cię uwiera?'), placeholder: t('Co Cię uwiera albo cieszy? Jedno zdanie wystarczy.') });
   const ok = () => {
@@ -81,6 +89,7 @@ function uwagaPop(anchor) {
     if (!text) return;
     uwagi.push({ ...ctx, text });
     const saved = saveUwagi();
+    if (le) remarkToLive(le, text, ctx.t);
     logEv(t('uwaga: {0}', noteTitle(text)));
     jtoast(saved ? t('Uwaga zapisana ({0}). Paczka dla Claude\'a: Ustawienia → Uwagi i paczka.', uwagi.length) : t('Uwagi nie da się zapisać w tej przeglądarce. Skopiuj ją: Ustawienia → Uwagi i paczka.'),
       { label: t('Pokaż'), act: () => openSettings('uwagi') });
@@ -117,6 +126,14 @@ function packageData(withNotes) {
     uwagi: uwagi.map(u => ({ ...u, czas: isoLocal(u.t) })),
     dziennik: jlog.map(e => ({ ...e, a: scrubNotes(e.a, needles), czas: isoLocal(e.t) })),
     notatki: withNotes ? store.notes : { liczba: notesInfo.length, znakow: notesInfo.reduce((a, n) => a + (n.text || '').length, 0), tresc: 'pominięta (Ustawienia → Uwagi i paczka → dołącz treść notatek)' },
+    // what the labs running in windows said about themselves (their own claims), with their numbers in short
+    przyrzady: [...LIVE.values()].filter(e => L.wins[e.id] || store.spaces.some(sp => sp.L.wins[e.id])).map(e => ({
+      okno: e.id, typ: (store.spaces.map(sp => sp.L.wins[e.id]).find(Boolean) || {}).type || null, adres: e.url, nazwa: e.hello ? e.hello.name : null, wersja: e.hello ? e.hello.version : null, rozmawia: !!e.hello,
+      dziala_od: isoLocal(e.since), stan: e.state ? { czas: isoLocal(e.state.t), tekst: e.state.text, dane: e.state.data } : null,
+      sygnaly: Object.fromEntries([...e.sigs].map(([k, sg]) => [k, { ostatni: sg.v[sg.v.length - 1], min: Math.min(...sg.v), max: Math.max(...sg.v), probek: sg.v.length }])),
+      zdarzenia: e.evs.slice(-60).map(x => ({ czas: isoLocal(x.t), tekst: x.text, poziom: x.level })), pominiete_zdarzenia: e.quiet,
+      uwagi_jozza: e.marks.map(isoLocal),
+    })),
     licznik: { zapisy: store.saved.length, kosz: store.trash.length, kopie: readBackups().length },
   };
 }
@@ -134,7 +151,15 @@ function packageText(maxLog = 160) {
   lines.push('');
   lines.push(`## Uwagi (${p.uwagi.length})`);
   if (!p.uwagi.length) lines.push('brak');
-  for (const u of p.uwagi) lines.push(`- ${u.czas.slice(0, 19)} · ${[u.u, u.okno, u.projekt].filter(Boolean).join(' / ')} · ${u.ekran}${u.telefon ? ' telefon' : ''}: ${u.text.replace(/\s*\n\s*/g, ' ⏎ ')}`);
+  for (const u of p.uwagi) lines.push(`- ${u.czas.slice(0, 19)} · ${[u.u, u.okno, u.przyrzad && (u.przyrzad.nazwa || u.przyrzad.adres), u.projekt].filter(Boolean).join(' / ')} · ${u.ekran}${u.telefon ? ' telefon' : ''}: ${u.text.replace(/\s*\n\s*/g, ' ⏎ ')}${u.przyrzad && u.przyrzad.stan ? ` [stan przyrządu: ${u.przyrzad.stan}]` : ''}`);
+  if (p.przyrzady.length) {
+    lines.push('');
+    lines.push(`## Przyrządy (${p.przyrzady.length})`);
+    for (const x of p.przyrzady) {
+      const sg = Object.entries(x.sygnaly).map(([k, v]) => `${k} ${fmtNum(v.ostatni)} (${fmtNum(v.min)}…${fmtNum(v.max)})`).join(', ');
+      lines.push(`- ${x.nazwa ? `${x.nazwa}${x.wersja ? ' ' + x.wersja : ''}` : x.adres}${x.rozmawia ? '' : ' (nie rozmawia z Jaskinią)'}, ${x.adres}${x.stan ? ` · stan ${x.stan.czas.slice(11, 19)}: ${x.stan.tekst}` : ''}${sg ? ` · ${sg}` : ''}${x.zdarzenia.length ? ` · zdarzeń ${x.zdarzenia.length}` : ''}`);
+    }
+  }
   lines.push('');
   const tail = p.dziennik.slice(-maxLog);
   lines.push(`## Dziennik (ostatnie ${tail.length} z ${p.dziennik.length})`);
@@ -164,7 +189,7 @@ SET_SECTIONS.uwagi = (c, draw) => {
       h('p', { class: 'set-note', text: t('Szybka uwaga przypięta do chwili: zapisuje godzinę co do sekundy, układ, okno, projekt i rozmiar ekranu. Przycisk z chorągiewką u góry albo Ctrl+. (na telefonie: menu pod logo).') }),
       h('div', { class: 'set-acts' }, h('button', { class: 'btn', type: 'button', onclick: e => uwagaPop(e.currentTarget) }, icon('flag', 14), t('Nowa uwaga'))),
       list.length ? h('ul', { class: 'set-list' }, list.map(u => h('li', null,
-        h('div', { class: 'sl-main' }, h('b', { text: u.text }), h('small', { text: [isoLocal(u.t).slice(0, 19), u.u, u.okno, u.projekt, u.ekran + (u.telefon ? ' · ' + t('telefon') : ''), u.v].filter(Boolean).join(' · ') })),
+        h('div', { class: 'sl-main' }, h('b', { text: u.text }), h('small', { text: [isoLocal(u.t).slice(0, 19), u.u, u.okno, u.przyrzad && (u.przyrzad.nazwa || u.przyrzad.adres), u.projekt, u.ekran + (u.telefon ? ' · ' + t('telefon') : ''), u.v].filter(Boolean).join(' · ') })),
         h('div', { class: 'sl-acts' },
           ibtn('copy', t('Kopiuj'), () => B.copyText(u.text, t('Skopiowane'))),
           ibtn('trash', t('Usuń uwagę'), () => {

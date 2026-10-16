@@ -151,6 +151,7 @@ function apply() {
   if (was !== phone) { for (const id of ids) updateHead(id); hideSheet(); logEv(phone ? t('tryb telefonu: jedno okno naraz ({0})', `${W}×${Hh}`) : t('tryb biurka ({0})', `${W}×${Hh}`)); }
   renderDock();
   tabArrows();
+  liveVisibility();
 }
 function phoneCurrent() { const ids = allIds(); return ids.includes(L.focus) ? L.focus : ids[0]; }
 function floatPx(f, W, Hh) {
@@ -259,6 +260,8 @@ function dropWin(id) { const rt = RT.get(id); if (!rt) return; dispose(rt); rt.r
 function wantKey(id) {
   const w = L.wins[id], T = typeOf(w), rt = RT.get(id);
   const repo = T.follows ? (w.pin || store.sel) : null;
+  // a running page is rebuilt only when what it runs changes, never for the language, the zoom or the window's size
+  if (T.live) return JSON.stringify([w.type, repo, T.liveKey ? T.liveKey(w.st) : w.st]);
   let sz = '';
   if (T.sized) { const s0 = innerSize(rt, w); sz = Math.round(s0.w) + 'x' + Math.round(s0.h); }
   return JSON.stringify([w.type, repo, w.st, sz, T.stats ? L.stats : null, prefs.lang, T.zoomKey ? zEff(w) : 0, w.type === 'gra' ? gamesInWindow() : 0]);
@@ -1369,7 +1372,10 @@ function bindKeys() {
 
 /* a game opens inside a window only where frames are possible (a downloaded file, Jozz's own server) and he wants it there;
    by default the desk opens a window and the phone a new tab, where the game gets the whole screen */
-function gamesInWindow() { return !!B.HOSTED && (prefs.games === 'okno' || (prefs.games !== 'karta' && !phone)); }
+/* "Samo": a window everywhere except on a phone-sized touch screen. Decided by the device, not by the window's width,
+   so making the browser narrow never turns a running game into a link (that restarted it). */
+const phoneDevice = () => coarse.matches && Math.min(screen.width, screen.height) < 700;
+function gamesInWindow() { return !!B.HOSTED && (prefs.games === 'okno' || (prefs.games !== 'karta' && !phoneDevice())); }
 
 /* ---------- start ---------- */
 function firstHint() {
@@ -1399,7 +1405,7 @@ function boot() {
     if (href.startsWith('#repo~')) select(href.slice(6), 'win');
   });
   B.HOOK.go = hash => { const m = /^#repo~(.+)$/.exec(decodeURIComponent(hash)); if (m && R[m[1]]) select(m[1], 'win'); };
-  B.HOOK.refresh = () => { for (const id of allIds()) { const rt = RT.get(id); if (rt) rt.key = null; refreshWin(id); } };
+  B.HOOK.refresh = () => { for (const id of allIds()) { const rt = RT.get(id); if (rt && !typeOf(L.wins[id]).live) rt.key = null; refreshWin(id); } }; // a theme change never restarts a running lab
   B.HOOK.play = r => {
     select(r.name);
     logEv(t('zagraj: {0} ({1})', r.short, gamesInWindow() ? t('w oknie') : t('w nowej karcie')));
@@ -1417,5 +1423,6 @@ function boot() {
   maybeAutoBackup();
   showNotices();
   firstHint();
-  window.__JASK = { get L() { return L; }, get store() { return store; }, get phone() { return phone; }, RT, WALLS, apply, select, commit, undo, redo, setSpace, layoutRects, leafIds, rects: () => rects, prefs, openSettings, readBackups, persistNow, get log() { return jlog; }, get uwagi() { return uwagi; }, packageData, packageText, deleteSpace, restoreTrash, forgetTrash, restoreBackup };
+  window.__JASK = { get L() { return L; }, get store() { return store; }, get phone() { return phone; }, RT, WALLS, apply, select, commit, undo, redo, setSpace, layoutRects, leafIds, rects: () => rects, prefs, openSettings, readBackups, persistNow, get log() { return jlog; }, get uwagi() { return uwagi; }, packageData, packageText, deleteSpace, restoreTrash, forgetTrash, restoreBackup, setPref, signalsBeside, uwagaPop,
+    live: () => [...LIVE.values()].map(e => ({ id: e.id, url: e.url, hello: e.hello, state: e.state, sigs: [...e.sigs.keys()], n: Object.fromEntries([...e.sigs].map(([k, v]) => [k, v.v.length])), evs: e.evs.map(x => x.text), marks: e.marks.length, last: e.last, vis: e.vis })) };
 }
