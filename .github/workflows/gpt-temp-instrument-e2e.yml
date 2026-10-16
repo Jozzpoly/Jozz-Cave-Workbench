@@ -1,0 +1,33 @@
+name: GPT TEMP — genuine Jaskinia instrument E2E (isolated)
+on:
+  push:
+    branches:
+      - experiment/gpt-temporary-connected-instruments-2026-10-16
+    paths:
+      - '.github/workflows/gpt-temp-instrument-e2e.yml'
+      - 'experiments/gpt-temporary-connected-instruments-2026-10-16/**'
+      - 'src/jaskinia/42-gpt-temporary-instrument.js'
+      - 'src/jaskinia/50-shell.js'
+permissions:
+  contents: read
+concurrency:
+  group: gpt-temp-jaskinia-instrument
+  cancel-in-progress: true
+jobs:
+  actual-jaskinia:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install pinned dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Install Chromium on runner
+        run: npx playwright install --with-deps chromium
+      - name: Assemble real Jaskinia from exact sources
+        run: python3 -I tools/render.py --app jaskinia --host web
+      - name: Exercise real generated Jaskinia + sandboxed instruments
+        run: node experiments/gpt-temporary-connected-instruments-2026-10-16/real-jaskinia-e2e.mjs
