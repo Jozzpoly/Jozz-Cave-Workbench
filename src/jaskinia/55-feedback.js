@@ -75,6 +75,19 @@ function uwagaPop(anchor) {
 }
 
 /* ---------- the package ---------- */
+/* Historical logs may contain a note's title, because older menus logged raw labels.
+   For a package without notes, remove the human-authored part of such events.
+   This is a narrow mitigation, NOT a guarantee that layouts/feedback have no personal data. */
+function exportJournalEntry(e, withNotes) {
+  const out = { ...e, czas: isoLocal(e.t) };
+  if (!withNotes && typeof out.a === 'string') {
+    const unsafe = ['wybrane:', 'menu:', 'komunikat:', 'cofnięte:', 'ponowione:',
+      'błąd:', 'błąd okna ', 'na cały ekran:', 'powrót do układu z:'];
+    const k = unsafe.find(p => out.a.startsWith(p));
+    if (k) out.a = k + ' [szczegóły pominięte]';
+  }
+  return out;
+}
 function packageData(withNotes) {
   const C = D.estate.coverage;
   const notesInfo = Object.values(store.notes);
@@ -93,7 +106,7 @@ function packageData(withNotes) {
     uklady: store.spaces.map(sp => ({ nazwa: spaceName(sp), preset: sp.preset, cel: sp.purpose || '', okna: allIdsOf(sp.L).length, uklad: sp.L })),
     widoki: store.views,
     uwagi: uwagi.map(u => ({ ...u, czas: isoLocal(u.t) })),
-    dziennik: jlog.map(e => ({ ...e, czas: isoLocal(e.t) })),
+    dziennik: jlog.map(e => exportJournalEntry(e, withNotes)),
     notatki: withNotes ? store.notes : { liczba: notesInfo.length, znakow: notesInfo.reduce((a, n) => a + (n.text || '').length, 0), tresc: 'pominięta (Ustawienia → Uwagi i paczka → dołącz treść notatek)' },
     licznik: { zapisy: store.saved.length, kosz: store.trash.length, kopie: readBackups().length },
   };
@@ -152,7 +165,7 @@ SET_SECTIONS.uwagi = (c, draw) => {
           })))))
         : h('p', { class: 'set-note', text: t('Jeszcze żadnej uwagi.') })),
     setCard(t('Paczka dla Claude\'a'),
-      h('p', { class: 'set-note', text: t('Jeden plik z wersją Jaskini, urządzeniem, ustawieniami, układami, Twoimi uwagami i dziennikiem ostatnich ruchów (z godzinami). Z nim nagranie da się dopasować do tego, co działo się w Jaskini, co do sekundy. Plik nie zawiera treści Twoich notatek, chyba że to zaznaczysz.') }),
+      h('p', { class: 'set-note', text: t('Jeden plik z wersją Jaskini, urządzeniem, ustawieniami, układami, Twoimi uwagami i dziennikiem ostatnich ruchów (z godzinami). Z nim nagranie da się dopasować do tego, co działo się w Jaskini, co do sekundy. Domyślnie pomijam treść notatek, także starsze etykiety menu w dzienniku. Paczka nadal zawiera Twoje uwagi, nazwy i układy — przejrzyj ją przed wysłaniem.') }),
       h('label', { class: 'set-check', for: 'uw-notes' }, withNotes, h('span', { text: t('dołącz treść notatek z okien i ze ściany') })),
       h('div', { class: 'set-acts' },
         h('button', { class: 'btn', type: 'button', onclick: () => offerPackage(out, withNotes.checked) }, icon('download', 14), t('Zrób paczkę (plik)')),
