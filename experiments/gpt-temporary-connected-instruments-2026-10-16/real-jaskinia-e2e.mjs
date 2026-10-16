@@ -43,7 +43,7 @@ try {
   await test('two actual movable Jaskinia instrument windows',async()=>(await instrumentWindows.count())===2);
   await test('fixture points to repo path, not /dist/',async()=>{
     const url=await instrumentWindows.first().locator('input').inputValue();
-    return /\\/experiments\\/gpt-temporary-connected-instruments-2026-10-16\\/adapter\\.html$/.test(new URL(url).pathname);
+    return new URL(url).pathname.endsWith('/experiments/gpt-temporary-connected-instruments-2026-10-16/adapter.html');
   });
   for(let i=0;i<2;i++) await instrumentWindows.nth(i).getByRole('button',{name:'Załaduj instrument'}).click();
   await page.waitForFunction(()=>window.__JASK_GPT_TEMP?.list().filter(x=>x.ready).length===2,{timeout:10000});
