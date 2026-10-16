@@ -34,7 +34,7 @@
   function render(box, c) {
     const state = {
       id: c.id, linked: false, ready: false, pending: null, seq: 0,
-      currentProject: null, lastAck: null, url: '', history: []
+      currentProject: null, lastAck: null, observation: null, url: '', history: []
     };
     labWindows.set(c.id, state);
     const root = make('section', null, 'gpti');
@@ -80,6 +80,7 @@
       // A full private Jaskinia contains nonpublic projects: never leak their identity
       // to a remotely supplied iframe, even when its user has enabled linking.
       if (typeof R === 'undefined' || !R[name] || R[name].private !== false) {
+        state.observation = null;
         addHistory('Zatrzymano wybór prywatny lub nieznany');
         display('NIE WYSŁANO: projekt prywatny lub o nieznanej widoczności.');
         return;
@@ -93,6 +94,7 @@
       const seq = ++state.seq;
       state.pending = { seq, name, timer: null };
       state.currentProject = name;
+      state.observation = null;
       display(`WYSŁANE #${seq}: ${name} · oczekiwanie na potwierdzenie (nie sukces)`);
       send('set-project', { seq, project: name });
       const timer = setTimeout(() => {
@@ -121,6 +123,23 @@
         display(`ACK ramki #${p.seq}: ${p.name}. To nie jest niezależny dowód efektu w zewnętrznej aplikacji.`);
       } else if (m.kind === 'ack') {
         addHistory('Odrzucono przestarzały lub niezgodny ACK');
+      } else if (m.kind === 'observation') {
+        // This is a claim from the recipient, not independently validated GitHub evidence.
+        // Check envelope against the last applied selection before displaying a source pointer.
+        const safe = typeof m.sha === 'string' && /^[a-f0-9]{40}$/.test(m.sha) &&
+          m.source === 'github-rest' && Number.isSafeInteger(m.seq) &&
+          state.lastAck?.seq === m.seq && state.lastAck?.project === m.project &&
+          state.currentProject === m.project &&
+          typeof m.observedAt === 'string' && Number.isFinite(Date.parse(m.observedAt)) &&
+          typeof m.commitUrl === 'string' &&
+          m.commitUrl === 'https://github.com/Jozzpoly/' + encodeURIComponent(m.project) + '/commit/' + m.sha;
+        if (!safe) { addHistory('Odrzucono niespójny raport odbiorcy'); return; }
+        state.observation = { project: m.project, seq: m.seq, source: m.source,
+          sha: m.sha, observedAt: m.observedAt, url: m.commitUrl,
+          verification: 'receiver-claimed-only' };
+        addHistory('Raport źródła #' + m.seq + ' ' + m.sha.slice(0,10));
+        display('ODBIORCA ZGŁOSIŁ SHA ' + m.sha.slice(0,12) +
+          ' dla ' + m.project + '. To raport odbiorcy, NIE niezależna weryfikacja przez Jaskinię.');
       }
     }
     window.addEventListener('message', onMessage);
@@ -178,6 +197,6 @@
   // Read-only test observation. Not an authorized action API and not a stable public interface.
   window.__JASK_GPT_TEMP = { list: () => [...labWindows.values()].map(s => ({
     id: s.id, ready: s.ready, linked: s.linked, pending: s.pending?.seq ?? null,
-    currentProject: s.currentProject, lastAck: s.lastAck, history: [...s.history]
+    currentProject: s.currentProject, lastAck: s.lastAck, observation: s.observation, history: [...s.history]
   })) };
 })();
