@@ -125,6 +125,18 @@
     }
     window.addEventListener('message', onMessage);
     c.onSel(name => { if (state.linked) choose(name); });
+    // A hidden workspace is still alive in Jaskinia, but project selections made
+    // in OTHER workspaces do not reach its c.onSel callback. Catch up upon return.
+    // Observe only this window's hidden attribute; no global poll or shell patch.
+    const hostWindow = box.closest('.win');
+    const visibilityObserver = hostWindow ? new MutationObserver(() => {
+      if (closed || hostWindow.hidden || !state.linked) return;
+      const selected = c.selName();
+      if (state.lastAck?.project !== selected &&
+          (!state.pending || state.pending.name !== selected)) choose(selected);
+    }) : null;
+    visibilityObserver?.observe(hostWindow, { attributes: true, attributeFilter: ['hidden'] });
+    c.onDispose(() => visibilityObserver?.disconnect());
     frame.addEventListener('load', () => {
       state.ready = false;
       if (state.pending) { clearTimeout(state.pending.timer); timers.delete(state.pending.timer); state.pending = null; }
