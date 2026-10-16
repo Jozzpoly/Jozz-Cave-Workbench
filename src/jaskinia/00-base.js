@@ -14,6 +14,12 @@ const NARROW_STAGE = 700; // below this width the phone layout shows one window 
 const DSHORT = new Intl.DateTimeFormat('pl-PL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Warsaw' });
 const DSHORT_EN = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Warsaw' });
 const snapAgeDays = () => (Date.now() / 1000 - SNAP) / DAY;
+/* who this build is (the top bar shows it, so a screen recording names its own version) and where it runs:
+   'plik' a downloaded file, 'web' a server of Jozz's own, 'claude' inside claude.ai (other sites cannot open in a window there) */
+const BUILD = (typeof JASK_BUILD !== 'undefined' && JASK_BUILD) || { v: '?', built: '', host: 'artifact' };
+const VER = 'v' + BUILD.v;
+const PLACE = B.RUNS_LOCAL ? 'plik' : B.HOSTED ? 'web' : 'claude';
+const PLACE_NAME = { plik: 'plik na tym urządzeniu', web: 'własny serwer', claude: 'claude.ai' };
 
 /* ---------- preferences: how Jaskinia looks and behaves on this device ---------- */
 const PREFS_KEY = 'jaskinia:prefs';
@@ -25,8 +31,9 @@ const PREF_CHOICES = {
   lang: ['pl', 'en'],
   wheel: ['zoom', 'pan'],
   motion: ['full', 'less'],
+  games: ['auto', 'okno', 'karta'],
 };
-const PREFS_DEF = { theme: 'jaskinia', scheme: 'auto', life: 'zielen', density: 'srednia', cz: 1, lang: 'pl', wheel: 'zoom', tips: true, motion: 'full' };
+const PREFS_DEF = { theme: 'jaskinia', scheme: 'auto', life: 'zielen', density: 'srednia', cz: 1, lang: 'pl', wheel: 'zoom', tips: true, motion: 'full', games: 'auto' };
 function sanitizePrefs(p) {
   const out = { ...PREFS_DEF };
   if (!p || typeof p !== 'object') return out;
@@ -100,6 +107,7 @@ const ICONS = {
   spread: 'M5.5 8H1.5 M3.5 6l-2 2 2 2 M10.5 8h4 M12.5 6l2 2-2 2 M6.5 4.5h3v7h-3z',
   phone: 'M4.5 1.5h7v13h-7z M7 12.5h2',
   warn: 'M8 2.5 14 13H2z M8 6.5v3.2 M8 11.6v.01',
+  flag: 'M3.5 14V2.5 M3.5 3h8.5l-2.2 3.2 2.2 3.3H3.5',
   hand: 'M5.5 8V3.8a1 1 0 0 1 2 0V7.5 M7.5 7V2.8a1 1 0 0 1 2 0V7.5 M9.5 7.2V3.8a1 1 0 0 1 2 0v5.4c0 2.8-1.8 4.3-4 4.3-1.8 0-2.6-.8-3.6-2.3L2.5 8.6a1 1 0 0 1 1.6-1.2l1.4 1.4',
   /* window types */
   t_wybor: 'M2.5 2.5h11v11h-11z M8 5.5v5 M5.5 8h5',

@@ -40,7 +40,13 @@ if A.app == "jaskinia":
     shell = "\n".join(open(os.path.join(J, f), encoding="utf-8").read() for f in parts)
     tpl = open(os.path.join(J, "index.html"), encoding="utf-8").read()
     jcss = open(os.path.join(J, "jaskinia.css"), encoding="utf-8").read()
-    script = (f'const BIB_HOST = "{A.host}";\nconst BIB_MODE = "jaskinia";\n' + app + "\n(() => {\n'use strict';\n" + shell + "\n})();\n")
+    # the build says who it is, so a screen recording identifies its own version (docs/VERSIONS.md)
+    import datetime
+    ver = open(os.path.join(J, "version.txt"), encoding="utf-8").read().strip()
+    epoch = os.environ.get("SOURCE_DATE_EPOCH")
+    built = (datetime.datetime.fromtimestamp(int(epoch), datetime.timezone.utc) if epoch else datetime.datetime.now(datetime.timezone.utc)).strftime("%Y-%m-%dT%H:%MZ")
+    build = json.dumps({"v": ver, "built": built, "host": A.host})
+    script = (f'const BIB_HOST = "{A.host}";\nconst BIB_MODE = "jaskinia";\nconst JASK_BUILD = {build};\n' + app + "\n(() => {\n'use strict';\n" + shell + "\n})();\n")
     out = (tpl.replace("/*N*/", str(n)).replace("/*FONTS*/", fonts).replace("/*CSS*/", css).replace("/*JCSS*/", jcss)
            .replace("/*DATA*/", payload).replace("/*APP*/", script.replace("</script", "<\\/script")))
     name = "jaskinia.html" if A.host == "artifact" else "jaskinia-web.html"

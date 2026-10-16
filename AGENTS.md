@@ -17,6 +17,10 @@ Jozz, a solo game developer and graphic designer, writes in Polish and casually.
 - **Facts and meaning stay apart.** Families and the one-line "why" of each project are Claude's hypotheses (marked "HIPOTEZA CLAUDE" in the interface) until the owner ratifies them. Agents propose; their proposals never silently become the owner's decisions.
 - **"Od początku" starts where real work starts** (`workStart`): a thin prelude (under 10% of commits before a silence longer than 60 days) is left out and named at the chart's edge. The account's whole life is the "od konta" range.
 - **No pretend features.** If something only looks like it works, it is a bug.
+- **Every build names itself.** Raise `src/jaskinia/version.txt` for every version the owner gets, and add a row to [docs/VERSIONS.md](docs/VERSIONS.md). His recordings are matched to builds by the number in the top bar.
+- **Where it runs is detected, not assumed.** `PLACE` is `plik` (a downloaded file: `file:` or `content:`), `web` (the owner's own server) or `claude` (the artifact). Games may open in a window only outside claude.ai. Tests set `window.__JASK_PLACE` to pretend.
+- **The data's age is visible.** The top bar says how old the snapshot is; charts never draw the days after the snapshot as empty days.
+- **Feedback is cheap.** Anything new that changes the layout should go through `commit()` (it lands in undo and in the log). The log and the notes stay on the device; the package leaves only when the owner hands it over, without note texts unless he ticks it.
 - **The project is public, the instance is private.** Code, tools, tests, docs and the public repositories' data belong here. The owner's private repositories and his own words live in the private layer (`private/knowledge_private.json` plus the full snapshot) and never enter this repository. Make the public copy with `python3 -I tools/public_copy.py DEST`: it rebuilds from public data only and fails on any private trace. Never commit screen recordings or unreviewed frames either: they show the owner's whole screen.
 
 ## How the page is put together
@@ -33,7 +37,9 @@ Jozz, a solo game developer and graphic designer, writes in Polish and casually.
 | `30-wall.js` | the wall: world coordinates, camera, semantic zoom (level of detail by on-screen size), frames, sticky notes, links, minimap, gestures |
 | `40-types.js` | the window-type registry `TYPES` (24 types: map, wall, Kataster, list, play, findings, changes, card, game, branches, rhythm, state, data, stats, chart, ranking, year, clock, pulse, history, notes, knowledge, settings, empty chooser) |
 | `45-settings.js` | themes (`data-jk`), life ramps (`data-life`), density, the Settings window, export/import |
-| `50-shell.js` | the shell: top bar, workspaces (tabs), windows, dividers, drag and drop, menus and sheets, phone mode, undo/redo, trash, reset, toasts |
+| `50-shell.js` | the shell: top bar, workspaces (tabs), windows, dividers, drag and drop, menus and sheets, phone mode (Back closes a sheet, two fingers zoom a window), undo/redo, trash, reset, toasts |
+| `55-feedback.js` | the feedback loop: the log (`jaskinia:dziennik`), "To mnie uwiera" notes pinned to the moment (`jaskinia:uwagi`), "Paczka dla Claude'a" (file or text), the Settings section "Uwagi i paczka" |
+| `version.txt` | the version number the top bar shows; `render.py` stamps it with the build time into `JASK_BUILD` |
 
 Phone mode switches on when the stage is narrower than 700 px: one window at a time, a dock of window chips at the bottom, menus as bottom sheets.
 
@@ -43,19 +49,19 @@ Interface strings are written in Polish in the source and wrapped in `t('…')`.
 
 ## Before you propose a change
 
-- Run `node tools/jk_test.mjs`, `node tools/jk2_test.mjs` and `node tools/jk2_chaos.mjs 400 <seed>`. All must pass. They open the pages over http (`tools/serve.mjs`), because headless Chromium can drop the `localStorage` of `file://` pages across reloads, which would test the browser instead of Jaskinia.
-- For anything visible, take screenshots on desktop and phone (`tools/jk2_look.mjs` shows how) and look at them.
+- Run `node tools/jk_test.mjs`, `node tools/jk2_test.mjs`, `node tools/jk4_test.mjs` and `node tools/jk2_chaos.mjs 400 <seed>`. All must pass. They open the pages over http (`tools/serve.mjs`), because headless Chromium can drop the `localStorage` of `file://` pages across reloads, which would test the browser instead of Jaskinia.
+- For anything visible, take screenshots on desktop and phone (`tools/jk4_look.mjs [dir] [scenario]` shows how) and look at them.
 - Work on a branch and open a pull request. `main` is the owner's.
 - Do not commit generated test pages (`dist/_*.html`) or screenshot folders.
 - Never put tokens anywhere in the repository.
 
-## Known debts (as of 16 Oct 2026)
+## Known debts (as of 16 Oct 2026, v4)
 
 1. The data is a snapshot taken in an agent's sandbox, with no automatic refresh yet.
-2. State lives in one browser; no sync between devices.
+2. State lives in one browser; no sync between devices. The owner often runs Jaskinia as a downloaded file, so a sync built only on the claude.ai artifact would not reach him.
 3. There is no layer for the owner's own judgment of projects (finished, donor, return to it).
 4. Library panels are glued in through a compatibility hook and are Polish only.
 5. The window system is concatenated scripts with shared state. Tests are mostly end-to-end.
-6. In the claude.ai artifact, games open in a new tab, not in a window.
+6. In the claude.ai artifact, games open in a new tab, not in a window (a downloaded file and the owner's own server can open them in a window since v4).
 
 The order in which to tackle these is in the view from above.

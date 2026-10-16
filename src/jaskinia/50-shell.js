@@ -12,6 +12,7 @@ const coarse = matchMedia('(pointer: coarse)');
 /* ---------- undo ---------- */
 const H = () => hist[space.id] || (hist[space.id] = { undo: [], redo: [] });
 function pushUndo(label, before) {
+  logEv(label);
   const hh = H();
   hh.undo.push({ label, L: before });
   if (hh.undo.length > 120) hh.undo.shift();
@@ -31,6 +32,7 @@ function undo() {
   if (!s0) { jtoast(t('Nie ma czego cofnąć')); return; }
   H().redo.push({ label: s0.label, L: clone(L) });
   replaceL(s0.L);
+  logEv(t('cofnięte: {0}', s0.label));
   jtoast(t('Cofnięte: {0}', s0.label));
 }
 function redo() {
@@ -38,6 +40,7 @@ function redo() {
   if (!s0) { jtoast(t('Nie ma czego ponowić')); return; }
   H().undo.push({ label: s0.label, L: clone(L) });
   replaceL(s0.L);
+  logEv(t('ponowione: {0}', s0.label));
   jtoast(t('Ponowione: {0}', s0.label));
 }
 function replaceL(nl) { space.L = L = nl; afterChange(); }
@@ -65,7 +68,7 @@ const spaceName = sp => sp.preset && sp.name === PRESETS[sp.preset] ? t(sp.name)
 function buildChrome() {
   root = h('div', { class: 'jk' });
   const brand = h('button', { class: 'jk-brand', type: 'button', 'aria-haspopup': 'menu', title: t('Menu Jaskini: ustawienia, zapisane układy, kopie, kosz'), onclick: e => mainMenu(e.currentTarget) },
-    h('span', { class: 'mark', 'aria-hidden': 'true' }), h('b', { text: 'Jaskinia' }), icon('chev', 12, 'cv'));
+    h('span', { class: 'mark', 'aria-hidden': 'true' }), h('b', { text: 'Jaskinia' }), h('small', { class: 'jk-ver', text: VER, title: t('Wersja Jaskini: {0}, zbudowana {1}', VER, builtShort()) }), icon('chev', 12, 'cv'));
   const snap = h('button', { class: 'jk-snap', type: 'button', onclick: e => snapInfo(e.currentTarget) });
   tabsEl = h('div', { class: 'jk-tabs', role: 'tablist', 'aria-label': t('Twoje układy okien') });
   tabsEl.addEventListener('wheel', e => { if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { tabsEl.scrollLeft += e.deltaY; e.preventDefault(); } }, { passive: false });
@@ -82,8 +85,9 @@ function buildChrome() {
   statusEl = h('div', { class: 'jk-status' });
   selBox = h('div', { class: 'jk-selbox' });
   const helpBtn = h('button', { class: 'jk-help-b', type: 'button', onclick: e => openHelp(e.currentTarget) }, icon('help', 15), h('span', { text: t('Jak to działa') }));
+  const uwBtn = h('button', { class: 'jk-uw-b', type: 'button', title: t('To mnie uwiera: zapisz uwagę przypiętą do tej chwili (Ctrl+.)'), 'aria-label': t('To mnie uwiera'), onclick: e => uwagaPop(e.currentTarget) }, icon('flag', 15));
   bar = h('header', { class: 'jk-bar' }, brand, snap, spaceBtn, tabsW,
-    h('div', { class: 'jk-tools' }, statusEl, undoBtn, redoBtn, h('span', { class: 'jk-sep' }), selBox, helpBtn));
+    h('div', { class: 'jk-tools' }, statusEl, undoBtn, redoBtn, h('span', { class: 'jk-sep' }), selBox, uwBtn, helpBtn));
   stage = h('main', { class: 'jk-stage', 'aria-label': t('Okna') });
   dropEl = h('div', { class: 'jk-drop', hidden: true }, h('span'));
   compassEl = h('div', { class: 'jk-compass', hidden: true }, ['top', 'left', 'center', 'right', 'bottom'].map(z => h('i', { 'data-z': z }, icon(z === 'center' ? 'swap' : 'chev', 14))));
@@ -98,11 +102,20 @@ function buildChrome() {
   document.head.append(selStyle);
   renderSnap();
 }
+/* how old the snapshot is, said in the bar itself: a day-old snapshot must not pass for today */
+function snapAgeText() {
+  const age = snapAgeDays();
+  if (age < 1 / 24) return t('sprzed chwili');
+  if (age < 1) return t('sprzed {0} godz.', Math.max(1, Math.round(age * 24)));
+  return t('sprzed {0}', tn(Math.max(1, Math.round(age)), 'dnia', 'dni', 'dni'));
+}
+function builtShort() { return BUILD.built ? dshort(new Date(BUILD.built.replace('Z', ':00Z'))) : '?'; }
 function renderSnap() {
   const el = bar.querySelector('.jk-snap'), age = snapAgeDays();
-  fill(el, h('small', { text: t('zrzut') }), h('b', { text: dshort(new Date(SNAP * 1000)) }));
+  fill(el, h('small', { text: t('zrzut') + ' · ' + snapAgeText() }), h('b', { text: dshort(new Date(SNAP * 1000)) }));
+  el.classList.toggle('stale', age >= 1);
   el.classList.toggle('old', age > 7);
-  el.title = t('Dane: zrzut repozytoriów z {0}. Kolory pokazują stan z tamtej chwili.', dshort(new Date(SNAP * 1000)));
+  el.title = t('Dane: zrzut repozytoriów z {0} ({1}). Commitów zrobionych później Jaskinia nie zna. Kolory pokazują stan z chwili zrzutu.', dshort(new Date(SNAP * 1000)), snapAgeText());
 }
 
 /* ---------- layout on screen ---------- */
@@ -135,7 +148,7 @@ function apply() {
     drawDividers(L.max ? [] : rects.divs);
   }
   root.classList.toggle('has-max', !phone && !!L.max);
-  if (was !== phone) { for (const id of ids) updateHead(id); hideSheet(); }
+  if (was !== phone) { for (const id of ids) updateHead(id); hideSheet(); logEv(phone ? t('tryb telefonu: jedno okno naraz ({0})', `${W}×${Hh}`) : t('tryb biurka ({0})', `${W}×${Hh}`)); }
   renderDock();
   tabArrows();
 }
@@ -219,6 +232,21 @@ function makeWin(id) {
     e.preventDefault();
     setZoom(id, w.z * Math.exp(-clamp(e.deltaY, -120, 120) * 0.0011), true);
   }, { passive: false });
+  // two fingers over a window zoom its content, like Ctrl + wheel on the desk (the page itself never zooms: 05_MOBILE 01:03)
+  let pin = null;
+  const span = e => Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY) || 1;
+  body.addEventListener('touchstart', e => {
+    const w = L.wins[id];
+    if (e.touches.length === 2 && w && !typeOf(w).noZoom) pin = { d0: span(e), z0: w.z || 1 };
+  }, { passive: true });
+  body.addEventListener('touchmove', e => {
+    if (!pin || e.touches.length !== 2) return;
+    if (e.cancelable) e.preventDefault();
+    setZoom(id, pin.z0 * span(e) / pin.d0, true);
+  }, { passive: false });
+  const pinEnd = e => { if (pin && e.touches.length < 2) pin = null; };
+  body.addEventListener('touchend', pinEnd, { passive: true });
+  body.addEventListener('touchcancel', pinEnd, { passive: true });
   const ro = new ResizeObserver(() => { const rt = RT.get(id); if (!rt) return; clearTimeout(rt.timer); rt.timer = setTimeout(() => { if (RT.get(id) && L.wins[id] && rt.space === space.id) refreshWin(id); }, 120); });
   ro.observe(body);
   stage.insertBefore(el, dropEl);
@@ -233,7 +261,7 @@ function wantKey(id) {
   const repo = T.follows ? (w.pin || store.sel) : null;
   let sz = '';
   if (T.sized) { const s0 = innerSize(rt, w); sz = Math.round(s0.w) + 'x' + Math.round(s0.h); }
-  return JSON.stringify([w.type, repo, w.st, sz, T.stats ? L.stats : null, prefs.lang, T.zoomKey ? zEff(w) : 0]);
+  return JSON.stringify([w.type, repo, w.st, sz, T.stats ? L.stats : null, prefs.lang, T.zoomKey ? zEff(w) : 0, w.type === 'gra' ? gamesInWindow() : 0]);
 }
 function refreshWin(id) {
   const rt = RT.get(id), w = L.wins[id];
@@ -281,7 +309,7 @@ function renderWin(id, key) {
   rt.zoomer.style.zoom = zEff(w);
   let after = null;
   try { after = T.render(rt.zoomer, ctxFor(id, innerSize(rt, w), repo)); }
-  catch (err) { console.error(err); rt.zoomer.replaceChildren(h('p', { class: 'jk-err', text: t('To okno nie dało się narysować: {0}', err.message) })); }
+  catch (err) { console.error(err); logEv(t('błąd okna {0}: {1}', w.type, err.message)); rt.zoomer.replaceChildren(h('p', { class: 'jk-err', text: t('To okno nie dało się narysować: {0}', err.message) })); }
   fixIds(rt.zoomer, id);
   rt.key = wantKey(id); // after drawing: a renderer may settle its own state (the wall places new cards once)
   void key;
@@ -350,11 +378,43 @@ function rememberType(type) {
   savePrefs();
 }
 function split(id, side, type = 'wybor') {
-  if (isFloat(id)) { jtoast(t('Pływające okno najpierw wstaw do układu, potem dziel.')); return null; }
+  if (isFloat(id)) return splitFloat(id, side, type);
   const nid = newWinId();
   if (phone) side = 'bottom';
   if (commit(t('podział okna {0}', tname(id)), () => { if (!splitWin(L, id, side, nid, type)) return false; if (type === 'notatki') L.wins[nid].st.note = noteNew(); })) { focusWin(nid); if (phone) apply(); return nid; }
   return null;
+}
+/* dividing a floating window: the new window floats beside it (04_PC 00:50: "Pływające okno najpierw wstaw do układu" twice).
+   Halves of a big float; a small one gets a twin next to it. */
+function splitFloat(id, side, type) {
+  const W = stage.clientWidth || 1600, Hh = stage.clientHeight || 900, nid = newWinId();
+  const ok = commit(t('podział pływającego okna {0}', tname(id)), () => {
+    const f = L.floats.find(x => x.id === id);
+    if (!f) return false;
+    L.wins[nid] = { type, z: 1, pin: null, st: {} };
+    if (type === 'notatki') L.wins[nid].st.note = noteNew();
+    let n;
+    if (side === 'right') {
+      if (f.w * W / 2 >= 260) { f.w /= 2; n = { x: f.x + f.w, y: f.y, w: f.w, h: f.h }; }
+      else n = { x: Math.min(f.x + f.w, Math.max(0, 1 - f.w)), y: f.y, w: f.w, h: f.h };
+    } else {
+      if (f.h * Hh / 2 >= 150) { f.h /= 2; n = { x: f.x, y: f.y + f.h, w: f.w, h: f.h }; }
+      else n = { x: f.x, y: Math.min(f.y + f.h, Math.max(0, 1 - f.h)), w: f.w, h: f.h };
+    }
+    L.floats.push({ id: nid, ...n, anchor: null });
+  });
+  if (!ok) return null;
+  focusWin(nid);
+  return nid;
+}
+/* after a session of splitting (04_PC: about 20 "Pusty" windows), the empty ones go in one step */
+function emptyWins() { return allIds().filter(id => L.wins[id] && L.wins[id].type === 'wybor'); }
+function closeEmpty() {
+  const ids = emptyWins();
+  if (!ids.length) { jtoast(t('Nie ma pustych okien.')); return; }
+  let n = 0;
+  if (commit(t('zamknięcie pustych okien'), () => { for (const id of ids) if (L.wins[id] && allIds().length > 1 && closeWin(L, id)) n++; return n ? undefined : false; }))
+    jtoast(t('Zamknięte puste okna: {0}.', n), { label: t('Cofnij'), act: () => undo() });
 }
 function closeW(id) {
   const name = tname(id);
@@ -379,6 +439,7 @@ function raiseFloat(id) {
 function toggleMax(id) {
   if (!L.wins[id] || phone) return;
   L.max = L.max === id ? null : id;
+  logEv(L.max ? t('na cały ekran: {0}', tname(id)) : t('powrót do układu z {0}', tname(id)));
   closeMenus(); apply();
   for (const x of allIds()) updateHead(x);
   persist();
@@ -434,7 +495,7 @@ function setStats(patch) {
 function select(name, via) {
   if (!R[name]) return;
   const changed = store.sel !== name;
-  if (changed) { store.sel = name; updateSelStyle(); renderSelBox(); persist(); }
+  if (changed) { store.sel = name; updateSelStyle(); renderSelBox(); persist(); logEv(t('zaznaczony: {0}', R[name].short)); }
   for (const id of allIds()) { refreshWin(id); RT.get(id)?.onSel?.(name); }
   if (changed && phone && via === 'win') showSelSheet(name);
 }
@@ -662,10 +723,23 @@ function resizeDown(e, id, dir) {
 
 /* ---------- menus and pop-ups ---------- */
 let openPop = null;
+/* On a phone, Back closes the sheet on top instead of leaving Jaskinia (05_MOBILE 02:45: Back took Jozz out of Jaskinia
+   while a sheet was open). One history entry of our own stands under the sheets. It is pushed when the first sheet opens and is never
+   taken back by code (a history.back() racing a new sheet once walked out of the page): after a sheet closes by a tap, the
+   entry simply stays, so the next sheet reuses it, and a Back with nothing open only steps off it. */
+const backGuard = { on: (() => { try { return !!(history.state && history.state.jkSheet); } catch { return false; } })() };
+function guardBack() {
+  if (backGuard.on) return;
+  try { history.pushState({ jkSheet: 1 }, ''); backGuard.on = true; } catch { /* a host that forbids history: Back stays the browser's */ }
+}
+addEventListener('popstate', e => {
+  backGuard.on = !!(e.state && e.state.jkSheet);
+  if (openPop) openPop.close(true);
+});
 function showPopover(el, anchor, at, opts = {}) {
   closeMenus();
   const asSheet = phone && opts.sheet !== false;
-  if (asSheet) el.classList.add('sheet');
+  if (asSheet) { el.classList.add('sheet'); guardBack(); }
   document.body.append(el);
   if (!asSheet) {
     const r = at ? { left: at.x, right: at.x, top: at.y, bottom: at.y } : anchor.getBoundingClientRect();
@@ -695,6 +769,8 @@ function showPopover(el, anchor, at, opts = {}) {
 function closeMenus() { if (openPop) openPop.close(); }
 function openMenu(anchor, items, at, cls = '', opts = {}) {
   const el = h('div', { class: 'jk-menu ' + cls, role: 'menu' });
+  const head0 = items.find(it => it && it.head);
+  logEv(t('menu: {0}', head0 ? head0.head : (items.find(it => it && it.label)?.label || '…')));
   const btns = [];
   let close = null;
   for (const it of items) {
@@ -704,7 +780,7 @@ function openMenu(anchor, items, at, cls = '', opts = {}) {
     if (it.note) { el.append(h('p', { class: 'mi-note', text: it.note })); continue; }
     const b = h('button', { class: 'mi' + (it.checked ? ' on' : '') + (it.danger ? ' danger' : '') + (it.sub ? ' has-sub' : ''), type: 'button', disabled: !!it.disabled,
       role: it.checked != null ? 'menuitemradio' : 'menuitem', 'aria-checked': it.checked != null ? String(!!it.checked) : null,
-      onclick: () => { if (it.sub) { it.sub(b); return; } close(); it.act?.(); } },
+      onclick: () => { if (it.sub) { it.sub(b); return; } logEv(t('wybrane: {0}', it.label)); close(); it.act?.(); } },
       h('span', { class: 'mi-i' }, it.icon ? icon(it.icon, 15) : it.checked ? icon('check', 15) : null),
       h('span', { class: 'mi-l' }, h('span', { text: it.label }), it.desc ? h('small', { text: it.desc }) : null),
       it.hint ? h('kbd', { class: 'mi-h', text: it.hint }) : it.sub ? icon('arrowR', 13, 'mi-sub') : null);
@@ -757,14 +833,19 @@ function winMenu(id, anchor, at) {
     { label: t('Zmień nazwę okna…'), icon: 'pencil', hint: 'F2', act: () => renameWin(id) },
     w.title ? { label: t('Przywróć nazwę „{0}”', t(T.name)), icon: 'reset', act: () => commit(t('nazwa okna'), () => { delete w.title; }) } : null,
     { sep: true },
-    !fl && !phone ? { label: t('Podziel: nowe okno obok'), icon: 'splitRow', act: () => split(id, 'right') } : null,
-    !fl ? { label: phone ? t('Dodaj okno pod tym') : t('Podziel: nowe okno pod spodem'), icon: 'splitCol', act: () => split(id, 'bottom') } : null,
+    !phone ? { label: t('Podziel: nowe okno obok'), icon: 'splitRow', act: () => split(id, 'right') } : null,
+    { label: phone ? t('Dodaj okno pod tym') : t('Podziel: nowe okno pod spodem'), icon: 'splitCol', act: () => split(id, 'bottom') },
     !phone ? { label: mx ? t('Wróć do układu') : t('Na cały ekran'), icon: mx ? 'restore' : 'max', hint: mx ? 'Esc' : 'Ctrl+Spacja', act: () => toggleMax(id) } : null,
     !phone ? (fl ? { label: t('Wstaw z powrotem do układu'), icon: 'dock', act: () => dock(id) }
       : { label: t('Wyjmij: niech pływa nad resztą'), icon: 'float', disabled: leafIds(L.tree).length < 2, act: () => floatWin(id) }) : null,
     T.follows ? { label: w.pin ? t('Odepnij od {0}', R[w.pin]?.short) : t('Przypnij do {0}', R[store.sel]?.short), icon: 'pin', act: () => togglePin(id) } : null,
+    w.type === 'sciana' ? { sep: true } : null,
+    w.type === 'sciana' ? { label: t('Pokaż wszystko'), icon: 'fit', hint: '0', act: () => WALLS.get(id)?.fit() } : null,
+    w.type === 'sciana' ? { label: t('Nowa notatka'), icon: 'note', act: () => WALLS.get(id)?.addNote() } : null,
+    w.type === 'sciana' ? { label: t('Ułóż…'), icon: 'grid4', sub: b => arrangeMenu(b, ctxFor(id, innerSize(RT.get(id), w), null)) } : null,
+    w.type === 'sciana' ? { label: t('Widok ściany…'), icon: 'eye', sub: b => wallViewMenu(b, ctxFor(id, innerSize(RT.get(id), w), null)) } : null,
     { sep: true },
-    !T.noZoom ? { label: t('Przybliż zawartość'), icon: 'plus', hint: 'Ctrl+kółko', act: () => zoomBy(id, 0.1) } : null,
+    !T.noZoom ? { label: t('Przybliż zawartość'), icon: 'plus', hint: phone ? t('dwa palce') : 'Ctrl+kółko', act: () => zoomBy(id, 0.1) } : null,
     !T.noZoom ? { label: t('Oddal zawartość'), icon: 'minus', act: () => zoomBy(id, -0.1) } : null,
     !T.noZoom ? { label: t('Powiększenie 100%'), icon: 'reset', disabled: w.z === 1, act: () => setZoom(id, 1) } : null,
     { sep: true },
@@ -869,6 +950,7 @@ function hideSheet() { clearTimeout(sheetT); if (sheetEl) sheetEl.hidden = true;
 
 /* ---------- toasts that can take a step back ---------- */
 function jtoast(msg, action, ms) {
+  logEv(t('komunikat: {0}', msg));
   const el = h('div', { class: 'jk-toast', role: 'status' }, h('span', { text: msg }),
     action ? h('button', { class: 'jk-toast-b', type: 'button', text: action.label, onclick: () => { el.remove(); action.act(); } }) : null);
   toastBox.append(el);
@@ -888,6 +970,9 @@ function mainMenu(anchor) {
     { label: nTrash ? t('Kosz ({0})', nTrash) : t('Kosz'), desc: t('usunięte układy i notatki bez okna'), icon: 'trash', act: () => openSettings('kosz') },
     { label: t('Eksport i import…'), desc: t('przenieś Jaskinię na inne urządzenie'), icon: 'download', act: () => openSettings('dane') },
     { sep: true },
+    { label: t('To mnie uwiera…'), desc: t('uwaga przypięta do tej chwili'), icon: 'flag', hint: 'Ctrl+.', act: () => uwagaPop(anchor) },
+    { label: t('Uwagi i paczka dla Claude\'a…'), desc: uwagi.length ? tn(uwagi.length, 'uwaga', 'uwagi', 'uwag') : t('dziennik, wersja, urządzenie'), icon: 'archive', act: () => openSettings('uwagi') },
+    { sep: true },
     { label: t('Zresetuj całą Jaskinię…'), desc: t('układy startowe; najpierw zrobię kopię'), icon: 'reset', act: () => askReset(anchor) },
     { sep: true },
     { label: t('Jak to działa'), icon: 'help', act: () => openHelp(anchor) },
@@ -898,8 +983,9 @@ function snapInfo(anchor) {
   const C = D.estate.coverage, age = snapAgeDays();
   const el = h('div', { class: 'jk-menu jk-helpbox', role: 'dialog', 'aria-label': t('O danych') },
     h('h3', { text: t('Skąd są dane') }),
-    h('p', null, t('Zrzut repozytoriów z {0} ({1}). Pokrycie: {2} z {3} repo.', dshort(new Date(SNAP * 1000)), age < 1 ? t('dziś') : tn(Math.floor(age), 'dzień', 'dni', 'dni') + ' ' + t('temu'), C.collected, C.expected)),
-    h('p', null, t('Kolory życia pokazują stan w chwili zrzutu, nie dziś: stary zrzut nie udaje, że projekty umarły. Czego nie ma w zrzucie, tego Jaskinia nie wie.')),
+    h('p', { class: 'hb-ver' }, h('b', { text: 'Jaskinia ' + VER }), ' · ' + t('zbudowana {0}', builtShort()) + ' · ' + t('działa jako: {0}', t(PLACE_NAME[PLACE]))),
+    h('p', null, t('Zrzut repozytoriów z {0} ({1}). Pokrycie: {2} z {3} repo.', dshort(new Date(SNAP * 1000)), snapAgeText(), C.collected, C.expected)),
+    h('p', null, t('Kolory życia pokazują stan w chwili zrzutu, nie dziś: stary zrzut nie udaje, że projekty umarły. Czego nie ma w zrzucie, tego Jaskinia nie wie: commity zrobione później tu nie istnieją, a na Pulsie dni po zrzucie są zakreskowane.')),
     age > 7 ? h('p', { class: 'warn', text: t('Zrzut ma ponad tydzień. Poproś Claude o odświeżenie (regen), żeby zobaczyć nowe commity.') }) : null);
   showPopover(el, anchor);
 }
@@ -989,6 +1075,7 @@ function tabArrows() {
 function setSpace(id) {
   const sp = store.spaces.find(x => x.id === id) || store.spaces[0];
   closeMenus(); hideSheet();
+  if (!space || space.id !== sp.id) logEv(t('układ: {0}', spaceName(sp)), { u: spaceName(sp) });
   store.cur = sp.id; space = sp; L = sp.L;
   renderTabs(); updateUndoUI();
   apply();
@@ -1027,6 +1114,7 @@ function allSpacesMenu(anchor) {
     ...store.spaces.map(sp => ({ label: spaceName(sp), desc: sp.purpose || tn(leafIds(sp.L.tree).length + sp.L.floats.length, 'okno', 'okna', 'okien'), checked: sp.id === store.cur, act: () => setSpace(sp.id) })),
     { sep: true },
     { label: t('Nowy układ…'), icon: 'plus', act: () => newSpaceMenu(anchor) },
+    emptyWins().length > 1 ? { label: t('Zamknij puste okna ({0})', emptyWins().length), icon: 'close', act: () => closeEmpty() } : null,
     { label: t('Ten układ: więcej…'), icon: 'more', act: () => spaceMenu(space.id, anchor) },
   ], null, 'spaces');
 }
@@ -1049,6 +1137,7 @@ function spaceMenu(id, anchor, at) {
       { sep: true }, { label: t('Wszystkie zapisane…'), icon: 'archive', act: () => openSettings('uklady') },
     ]) },
     { label: t('Powiel'), icon: 'copy', act: () => addSpace(spaceName(sp) + ' ' + t('(kopia)'), remapLayout(sp.L, new Set(), store.views), null, id, sp.purpose) },
+    id === store.cur ? { label: t('Zamknij puste okna'), desc: emptyWins().length ? tn(emptyWins().length, 'okno „Pusty”', 'okna „Pusty”', 'okien „Pusty”') : t('nie ma pustych'), icon: 'close', disabled: !emptyWins().length, act: () => closeEmpty() } : null,
     { label: t('Eksportuj ten układ…'), icon: 'download', act: () => openSettings('dane') },
     { sep: true },
     i > 0 ? { label: t('Przesuń w lewo'), icon: 'arrowL', act: () => moveSpace(id, -1) } : null,
@@ -1267,6 +1356,7 @@ function bindKeys() {
     }
     if (mod && !e.altKey && e.key.toLowerCase() === 's') { e.preventDefault(); saveCurrent(); return; }
     if (mod && e.key === ',') { e.preventDefault(); openSettings('wyglad'); return; }
+    if (mod && e.key === '.') { e.preventDefault(); uwagaPop(); return; }
     if (typing) return;
     const k = e.key.toLowerCase();
     if (mod && !e.altKey && k === 'z') { e.preventDefault(); if (e.shiftKey) redo(); else undo(); return; }
@@ -1274,6 +1364,10 @@ function bindKeys() {
     if (e.key === 'F2' && L.focus && L.wins[L.focus]) { e.preventDefault(); renameWin(L.focus); }
   });
 }
+
+/* a game opens inside a window only where frames are possible (a downloaded file, Jozz's own server) and he wants it there;
+   by default the desk opens a window and the phone a new tab, where the game gets the whole screen */
+function gamesInWindow() { return !!B.HOSTED && (prefs.games === 'okno' || (prefs.games !== 'karta' && !phone)); }
 
 /* ---------- start ---------- */
 function firstHint() {
@@ -1288,6 +1382,7 @@ function boot() {
   applyLook();
   buildChrome();
   store = loadStore();
+  logEv(t('start: Jaskinia {0}, {1}, okno {2}', VER, t(PLACE_NAME[PLACE]), `${innerWidth}×${innerHeight}`), { v: VER, place: PLACE });
   space = store.spaces.find(sp => sp.id === store.cur) || store.spaces[0];
   L = space.L;
   updateSelStyle(); renderSelBox(); renderTabs(); updateUndoUI();
@@ -1305,7 +1400,8 @@ function boot() {
   B.HOOK.refresh = () => { for (const id of allIds()) { const rt = RT.get(id); if (rt) rt.key = null; refreshWin(id); } };
   B.HOOK.play = r => {
     select(r.name);
-    if (!B.HOSTED) return false; // the link opens the game in a new tab
+    logEv(t('zagraj: {0} ({1})', r.short, gamesInWindow() ? t('w oknie') : t('w nowej karcie')));
+    if (!gamesInWindow()) return false; // the link opens the game in a new tab
     const gid = allIds().find(id => L.wins[id].type === 'gra');
     if (gid) { const w = L.wins[gid]; if (w.pin && w.pin !== r.name) commit(t('gra: {0}', r.short), () => { w.pin = r.name; }); focusWin(gid); if (phone) phoneSwitch(gid); }
     else openWinOfType('gra', { pin: r.name, fresh: true, w: 0.72, h: 0.86 });
@@ -1319,5 +1415,5 @@ function boot() {
   maybeAutoBackup();
   showNotices();
   firstHint();
-  window.__JASK = { get L() { return L; }, get store() { return store; }, get phone() { return phone; }, RT, apply, select, commit, undo, redo, setSpace, layoutRects, leafIds, rects: () => rects, prefs, openSettings, readBackups, persistNow };
+  window.__JASK = { get L() { return L; }, get store() { return store; }, get phone() { return phone; }, RT, WALLS, apply, select, commit, undo, redo, setSpace, layoutRects, leafIds, rects: () => rects, prefs, openSettings, readBackups, persistNow, get log() { return jlog; }, get uwagi() { return uwagi; }, packageData, packageText };
 }

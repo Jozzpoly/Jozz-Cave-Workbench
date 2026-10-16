@@ -12,7 +12,7 @@ Everything is generated from the repositories themselves: git history, the GitHu
 
 > Jaskinia to warsztat Jozza nad wszystkimi jego repo: jeden ekran z oknami, które układa sam. Dane biorą się z gita i GitHuba, a znaczenie projektów należy do Ownera. Generator jest opisany po polsku w [GENERATOR.md](GENERATOR.md), a widok z góry z 16.10.2026 w [docs/2026-10-16-z-gory.md](docs/2026-10-16-z-gory.md).
 
-**Status:** v2, published 14 Oct 2026 as a private claude.ai artifact. The data is a snapshot of 14 Oct 2026, 08:21 (Warsaw).
+**Status:** v4, published 16 Oct 2026 as a private claude.ai artifact (what changed: [docs/feedback/2026-10-16-v4.md](docs/feedback/2026-10-16-v4.md)). The data is a snapshot of 14 Oct 2026, 08:21 (Warsaw).
 
 **The project is public; the instance is private.** This repository holds everything needed to build, test and study Jaskinia, with data for the owner's **24 public repositories**. His own Jaskinia also covers 5 private repositories and his own words from conversations. That layer stays private (`private/`, never committed). [tools/public_copy.py](tools/public_copy.py) produces this public copy and scans it for private traces.
 
@@ -21,7 +21,7 @@ Everything is generated from the repositories themselves: git history, the GitHu
 | file | what |
 |---|---|
 | `dist/jaskinia-web.html` | Jaskinia as one self-contained page (about 1.3 MB, data inside). Open it in a browser; games open inside windows. |
-| `dist/jaskinia.html` | The same page for the claude.ai artifact host. Games open in a new tab there, because the host does not allow frames. |
+| `dist/jaskinia.html` | The same page for the claude.ai artifact host. Inside claude.ai games open in a new tab, because the host does not allow frames; the same file opened from a disk plays them in windows. |
 | `dist/biblioteka*.html` | The Library, Jaskinia's single-page predecessor, built from the same data. |
 | `dist/biblioteka-dla-agentow.md` | A plain-text brief of every project for agents. |
 
@@ -29,7 +29,7 @@ State (layouts, notes, settings) lives in the browser's `localStorage`, so each 
 
 ## Build identity
 
-The code in this repository is the code of the build the owner recorded himself using on 14–16 Oct 2026. The data differs: the copy here has the 24 public repositories, while his artifact has all 29. Versions of the claude.ai artifact are listed in [docs/VERSIONS.md](docs/VERSIONS.md).
+Every build shows its version next to the name in the top bar (from `src/jaskinia/version.txt`) and its build time in Settings → O Jaskini. The data differs between copies: this repository has the 24 public repositories, while the owner's artifact has all 29. Versions of the claude.ai artifact are listed in [docs/VERSIONS.md](docs/VERSIONS.md).
 
 ## Build and test
 
@@ -39,6 +39,7 @@ python3 -I tools/render.py --app jaskinia          # dist/jaskinia.html
 python3 -I tools/render.py --app jaskinia --host web
 node tools/jk_test.mjs                             # 52 checks: windows, splits, floats, gestures, persistence
 node tools/jk2_test.mjs                            # 76 checks: store v2, notes, trash, backups, import, wall, stats periods, phone
+node tools/jk4_test.mjs                            # 40 checks: what the recordings of 15–16 Oct showed, the feedback loop, the three places it runs
 node tools/jk2_chaos.mjs 400 7                     # destruction run: hundreds of random actions on desktop and phone, invariants, reload = same state
 ```
 

@@ -295,7 +295,8 @@ for f in families:
         L.append(f"- Po co (hipoteza): {r['identity']}")
         if r["readme"].get("lead"):
             L.append(f"- README: {r['readme']['lead'][:300]}")
-        L.append(f"- Życie: {r['life']} · ostatnia aktywność: {ago(r['last_ts'])} · commitów {r['commits']} · gałęzi {len(r['branches'])} · PR otwartych {r['prs']['open']}")
+        prs = "PR otwartych: nieznane (API nie widziało tego repo)" if r.get("api") is False else f"PR otwartych {r['prs']['open']}"
+        L.append(f"- Życie: {r['life']} · ostatnia aktywność: {ago(r['last_ts'])} · commitów {r['commits']} · gałęzi {len(r['branches'])} · {prs}")
         st = r.get("state") or {}
         if st.get("status"):
             L.append(f"- Stan według repo (`{st['path']}`{', ' + st['date'] if st.get('date') else ''}): „{st['status']}”")

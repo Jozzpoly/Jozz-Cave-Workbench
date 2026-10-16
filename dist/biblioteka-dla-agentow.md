@@ -251,7 +251,7 @@ _Czy da się złożyć całość: żywą krainę, w której mieszkańcy żyją z
 ### Mini_Feniks
 - Po co (hipoteza): Poważna próba złożenia jak największej części marzenia o Feniksie w jedną żywą krainę; po pierwszym graniu budowa wstrzymana, trwa ocena fundamentu.
 - README: Poważna próba zrealizowania możliwie największej części marzenia o Feniksie, na jaką pozwalają nasze możliwości. Budujemy własne dzieło, konsekwentnie rozwijając jedną całość. Nie jest to demonstrator technologii ani celowo prowizoryczna wersja przyszłej gry.
-- Życie: żywe · ostatnia aktywność: dziś · commitów 8 · gałęzi 1 · PR otwartych 0
+- Życie: żywe · ostatnia aktywność: dziś · commitów 8 · gałęzi 1 · PR otwartych: nieznane (API nie widziało tego repo)
 - Dokumenty wejścia: `AGENTS.md`, `README.md`
 - Repo: https://github.com/Jozzpoly/Mini_Feniks
 

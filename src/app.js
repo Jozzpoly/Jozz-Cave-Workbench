@@ -53,6 +53,8 @@ function plural(n, one, few, many) {
   return many;
 }
 const pl = (n, one, few, many) => `${fmt(n)} ${plural(n, one, few, many)}`;
+/* unknown is not zero: a repo the API could not see has no PR count, not a zero */
+const prOpenTxt = r => r.api === false ? 'otwarte PR: nieznane (brak danych z API)' : pl(r.prs.open, 'otwarty PR', 'otwarte PR', 'otwartych PR');
 
 function ageDays(ts) { return ts ? (nowS() - ts) / DAY : null; }
 function heatOf(ts) {
@@ -677,16 +679,18 @@ function panoramaView() {
   };
   return v;
 }
+/* the pulse of all repos together, day by day. It ends where the snapshot ends: the days after it are not known,
+   so they are hatched, never drawn as silent days (unknown is not zero). */
 function seismo() {
   const days = D.estate.estate_days;
-  const t0 = Date.parse('2026-05-01T12:00:00Z') / 1000;
-  const end = Math.floor(nowS() / DAY), start = Math.floor(t0 / DAY);
-  const n = end - start + 1, W = 1200, Hh = 64;
+  const start = Math.floor(Date.parse('2026-05-01T12:00:00Z') / 1000 / DAY);
+  const endSnap = Math.floor(SNAP / DAY), endNow = Math.max(endSnap, Math.floor(nowS() / DAY));
+  const n = endNow - start + 1, nk = endSnap - start + 1, W = 1200, Hh = 64;
   const vals = []; let mx = 1;
-  for (let i = 0; i < n; i++) { const k = new Date((start + i) * DAY * 1000).toISOString().slice(0, 10); const v0 = days[k] || 0; vals.push(v0); mx = Math.max(mx, v0); }
+  for (let i = 0; i < nk; i++) { const k = new Date((start + i) * DAY * 1000).toISOString().slice(0, 10); const v0 = days[k] || 0; vals.push(v0); mx = Math.max(mx, v0); }
   const bw = W / n;
   const svg = s('svg', { class: 'seismo', viewBox: `0 0 ${W} ${Hh + 2}`, preserveAspectRatio: 'none', role: 'img',
-    'aria-label': `Wszystkie repo razem, dzień po dniu od maja 2026. Rekord: ${fmt(mx)} commitów jednego dnia.` });
+    'aria-label': `Wszystkie repo razem, dzień po dniu od maja 2026 do zrzutu z ${DS.format(new Date(SNAP * 1000))}. Rekord: ${fmt(mx)} commitów jednego dnia.` });
   svg.append(s('line', { x1: 0, x2: W, y1: Hh + .5, y2: Hh + .5, stroke: 'var(--rule-2)', 'vector-effect': 'non-scaling-stroke' }));
   vals.forEach((v0, i) => {
     if (!v0) return;
@@ -695,14 +699,51 @@ function seismo() {
     svg.append(s('rect', { x: i * bw + bw * 0.12, y: Hh - bh, width: Math.max(0.8, bw * 0.76), height: bh, fill: lvl >= 1 ? `var(${heatVar(lvl)})` : 'var(--cold)' },
       s('title', { text: `${new Date((start + i) * DAY * 1000).toISOString().slice(0, 10)}: ${pl(v0, 'commit', 'commity', 'commitów')}` })));
   });
+  const plot = h('div', { class: 'seismo-plot' }, svg);
+  const after = endNow - endSnap;
+  if (after >= 1) plot.append(h('div', { class: 'seismo-after', style: { left: (nk / n * 100).toFixed(3) + '%' },
+    title: `Po zrzucie z ${DS.format(new Date(SNAP * 1000))}: brak danych (${pl(after, 'dzień', 'dni', 'dni')}). To nie są dni bez commitów, tylko dni, których zrzut nie widział.` }));
   const months = h('div', { class: 'seismo-m', 'aria-hidden': 'true' });
-  for (let m = 4; m <= 9; m++) {
-    const ts = Date.UTC(2026, m, 1) / 1000; if (ts / DAY > end) break;
-    const pct = ((ts / DAY) - start) / n * 100;
-    months.append(h('span', { class: pct > 86 ? 'end' : null, style: { left: pct.toFixed(2) + '%' }, text: new Intl.DateTimeFormat('pl-PL', { month: 'long', timeZone: 'UTC' }).format(new Date(ts * 1000)) }));
+  const MON = new Intl.DateTimeFormat('pl-PL', { month: 'long', timeZone: 'UTC' }), MSH = new Intl.DateTimeFormat('pl-PL', { month: 'short', timeZone: 'UTC' });
+  for (let y = 2026, m = 4; ; m++) {
+    if (m > 11) { m = 0; y++; }
+    const ts = Date.UTC(y, m, 1) / 1000;
+    if (ts / DAY > endNow) break;
+    const pct = Math.max(0, (ts / DAY - start) / n * 100), dt = new Date(ts * 1000), yr = m === 0 ? ' ' + y : '';
+    const full = MON.format(dt) + yr;
+    months.append(h('span', { style: { left: pct.toFixed(2) + '%' }, 'data-pct': pct.toFixed(2), 'data-full': full, 'data-short': MSH.format(dt).replace('.', '') + yr, text: full }));
   }
+  requestAnimationFrame(() => fitTicks(months));
   return h('section', { class: 'wrap seismo-wrap', 'aria-label': 'Puls estate’u' },
-    h('div', { class: 'seismo-h' }, h('span', { text: 'Puls: wszystkie repo razem, dzień po dniu od maja 2026' }), h('a', { href: '#historia', text: 'Pełna historia' })), svg, months);
+    h('div', { class: 'seismo-h' }, h('span', { text: `Puls: wszystkie repo razem, dzień po dniu od maja 2026 do zrzutu (${DS.format(new Date(SNAP * 1000))})` }), h('a', { href: '#historia', text: 'Pełna historia' })), plot, months);
+}
+/* names under a chart never print over each other or past the right edge: full names, else short ones, else fewer.
+   Positions are in per cent of the row, so a window's own zoom does not matter. */
+function fitTicks(box) {
+  if (!box || !box.isConnected) return;
+  const sp = [...box.children];
+  const place = () => {
+    const bb = box.getBoundingClientRect();
+    if (!bb.width) return;
+    for (const e of sp) {
+      e.style.left = e.dataset.pct + '%'; e.classList.remove('moved');
+      const b = e.getBoundingClientRect();
+      if (b.right > bb.right + 0.5) { e.style.left = Math.max(0, (bb.width - b.width) / bb.width * 100) + '%'; e.classList.add('moved'); }
+    }
+  };
+  const clash = () => { let prev = null; for (const e of sp) { if (e.style.visibility === 'hidden') continue; const b = e.getBoundingClientRect(); if (prev && b.left < prev.right + 4) return true; prev = b; } return false; };
+  for (const e of sp) { e.textContent = e.dataset.full; e.style.visibility = ''; }
+  place();
+  if (!clash()) return;
+  for (const e of sp) e.textContent = e.dataset.short;
+  place();
+  if (!clash()) return;
+  for (const step of [2, 3, 4]) {
+    sp.forEach((e, i) => { e.style.visibility = i % step && i !== sp.length - 1 ? 'hidden' : ''; });
+    if (!clash()) return;
+    sp.forEach((e, i) => { e.style.visibility = i % step ? 'hidden' : ''; });
+    if (!clash()) return;
+  }
 }
 /* the worlds you can open and play right now (GitHub Pages), freshest first */
 function playStrip() {
@@ -1045,7 +1086,11 @@ function heatChip(r) {
 }
 /* Play. Inside the claude.ai artifact a game can only open in a new tab: frames of other sites are blocked there.
    A self-hosted build (render.py --host web) opens the game inside the page, in the player below. */
-const HOSTED = typeof BIB_HOST !== 'undefined' && BIB_HOST === 'web';
+/* Where the page runs decides it: a self-hosted build (render.py --host web) and a page opened as a downloaded file
+   (file:// on a computer, content:// on a phone) may frame other sites; the claude.ai artifact may not.
+   window.__JASK_PLACE ('plik' | 'claude' | 'web') lets a test pretend to be one of them. */
+const RUNS_LOCAL = (() => { try { if (window.__JASK_PLACE) return window.__JASK_PLACE === 'plik'; } catch { /* fine */ } return location.protocol === 'file:' || location.protocol === 'content:'; })();
+const HOSTED = (typeof BIB_HOST !== 'undefined' && BIB_HOST === 'web') || RUNS_LOCAL || (() => { try { return window.__JASK_PLACE === 'web'; } catch { return false; } })();
 function playA(r, attrs, ...kids) {
   const a = h('a', Object.assign({ href: r.pages, target: '_blank', rel: 'noopener' }, attrs), ...kids);
   a.addEventListener('click', e => {
@@ -1584,7 +1629,7 @@ function agentBrief() {
     for (const n of f.repos) {
       const r = R[n], decl = r.branches.filter(b => b.roles.includes('wskazana')).map(b => b.n);
       const st = senseOf('repo:' + r.name);
-      lines.push(`- ${r.name}${r.private ? ' (prywatne)' : ''} [${r.life}]: ${senseText(r)} [${st ? SENSE_WORD[st.status] : 'hipoteza'}]. Ostatni commit ${ago(r.last_ts)}; ${pl(r.commits, 'commit', 'commity', 'commitów')}, ${pl(r.branches.length, 'gałąź', 'gałęzie', 'gałęzi')}, ${pl(r.prs.open, 'otwarty PR', 'otwarte PR', 'otwartych PR')}.${decl.length ? ' Dokumenty wskazują: ' + decl.join(', ') + '.' : ''}${r.docs.length ? ' Wejście: ' + r.docs.slice(0, 4).map(d => d.p).join(', ') + '.' : ''}${r.pages ? ' Pages: ' + r.pages : ''}`);
+      lines.push(`- ${r.name}${r.private ? ' (prywatne)' : ''} [${r.life}]: ${senseText(r)} [${st ? SENSE_WORD[st.status] : 'hipoteza'}]. Ostatni commit ${ago(r.last_ts)}; ${pl(r.commits, 'commit', 'commity', 'commitów')}, ${pl(r.branches.length, 'gałąź', 'gałęzie', 'gałęzi')}, ${prOpenTxt(r)}.${decl.length ? ' Dokumenty wskazują: ' + decl.join(', ') + '.' : ''}${r.docs.length ? ' Wejście: ' + r.docs.slice(0, 4).map(d => d.p).join(', ') + '.' : ''}${r.pages ? ' Pages: ' + r.pages : ''}`);
       if (r.state?.status) lines.push(`  Stan według repo (${r.state.path}${r.state.date ? ', ' + r.state.date : ''}): „${r.state.status}”`);
       for (const f0 of (r.findings || []).filter(x => x.sev === 'high' || x.sev === 'mid')) {
         const d0 = decision[f0.id];
@@ -1641,7 +1686,7 @@ function agentsView() {
       h('p', null, 'Źródła generatora leżą obok strony: ', SOURCES.map((f, i) => [i ? ', ' : '', h('a', { href: 'zrodla/' + f, target: '_blank', rel: 'noopener' }, h('code', { text: f }))]), '.')),
     h('div', { class: 'agent-index', style: { marginTop: '26px' } }, D.families.flatMap(f => f.repos.map(n => {
       const r = R[n], decl = r.branches.filter(b => b.roles.includes('wskazana')).map(b => b.n), st = senseOf('repo:' + n);
-      return h('p', null, h('b', { text: r.name }), ` (${f.name}${r.private ? ', prywatne' : ''}). ${senseText(r)} [${st ? SENSE_WORD[st.status] : 'hipoteza'}]. Ostatni commit ${ago(r.last_ts)}. ${pl(r.commits, 'commit', 'commity', 'commitów')}, ${pl(r.branches.length, 'gałąź', 'gałęzie', 'gałęzi')}, ${pl(r.prs.open, 'otwarty PR', 'otwarte PR', 'otwartych PR')}. `,
+      return h('p', null, h('b', { text: r.name }), ` (${f.name}${r.private ? ', prywatne' : ''}). ${senseText(r)} [${st ? SENSE_WORD[st.status] : 'hipoteza'}]. Ostatni commit ${ago(r.last_ts)}. ${pl(r.commits, 'commit', 'commity', 'commitów')}, ${pl(r.branches.length, 'gałąź', 'gałęzie', 'gałęzi')}, ${prOpenTxt(r)}. `,
         decl.length ? ['Dokumenty wskazują: ', decl.map((d, i) => [i ? ', ' : '', h('code', { text: d })]), '. '] : null,
         r.docs.length ? ['Wejście: ', r.docs.slice(0, 4).map((d, i) => [i ? ', ' : '', h('code', { text: d.p })]), '. '] : null,
         h('a', { href: r.url, target: '_blank', rel: 'noopener', text: r.url }));
@@ -1727,7 +1772,7 @@ function digest(focus) {
     lines.push(`\n# Rodzina: ${f.name}. Pytanie rodziny (hipoteza): ${f.question}`);
     for (const n of f.repos) {
       const r = R[n], decl = r.branches.filter(b => b.roles.includes('wskazana')).map(b => b.n), st = senseOf('repo:' + n);
-      lines.push(`- ${r.name} (krótko: ${r.short}${r.private ? ', prywatne' : ''}). Sens: ${senseText(r)} [${st ? SENSE_WORD[st.status] : 'hipoteza'}]. README: ${(r.readme?.lead || '').slice(0, 220)}. Ostatni commit: ${ago(r.last_ts)}. Commity ${r.commits}, gałęzie ${r.branches.length}, PR otwarte ${r.prs.open} (szkice ${r.prs.draft}), scalone ${r.prs.merged}. CI łącznie ${r.ci.runs}. ${decl.length ? 'Dokumenty wskazują gałęzie: ' + decl.join(', ') + '. ' : ''}${r.alias_groups.length ? 'Aliasy: ' + r.alias_groups.map(g => g.join(' = ')).slice(0, 4).join('; ') + '. ' : ''}${r.pages ? 'Pages: ' + r.pages + '. ' : ''}${r.stated.length ? 'Słowa Ownera: ' + r.stated.join(' ') : ''} Życie: ${r.life}.${r.state?.status ? ` Stan według repo (${r.state.path}, ${r.state.date || 'bez daty'}): ${r.state.status}${r.state.next?.length ? ' Dalej: ' + r.state.next.map(x => x.t).join(' / ') : ''}.` : ''}${(r.findings || []).length ? ' Ustalenia: ' + r.findings.filter(x => x.sev !== 'info').map(x => `[${SEV[x.sev]}${decision[x.id] ? ', decyzja: ' + DECISION[decision[x.id].status] : ''}] ${x.title.replace(/`/g, '')}`).join(' ') : ''}`);
+      lines.push(`- ${r.name} (krótko: ${r.short}${r.private ? ', prywatne' : ''}). Sens: ${senseText(r)} [${st ? SENSE_WORD[st.status] : 'hipoteza'}]. README: ${(r.readme?.lead || '').slice(0, 220)}. Ostatni commit: ${ago(r.last_ts)}. Commity ${r.commits}, gałęzie ${r.branches.length}, ${r.api === false ? 'PR i CI: nieznane (API nie widziało tego repo w tym zrzucie). ' : `PR otwarte ${r.prs.open} (szkice ${r.prs.draft}), scalone ${r.prs.merged}. CI łącznie ${r.ci.runs}. `}${decl.length ? 'Dokumenty wskazują gałęzie: ' + decl.join(', ') + '. ' : ''}${r.alias_groups.length ? 'Aliasy: ' + r.alias_groups.map(g => g.join(' = ')).slice(0, 4).join('; ') + '. ' : ''}${r.pages ? 'Pages: ' + r.pages + '. ' : ''}${r.stated.length ? 'Słowa Ownera: ' + r.stated.join(' ') : ''} Życie: ${r.life}.${r.state?.status ? ` Stan według repo (${r.state.path}, ${r.state.date || 'bez daty'}): ${r.state.status}${r.state.next?.length ? ' Dalej: ' + r.state.next.map(x => x.t).join(' / ') : ''}.` : ''}${(r.findings || []).length ? ' Ustalenia: ' + r.findings.filter(x => x.sev !== 'info').map(x => `[${SEV[x.sev]}${decision[x.id] ? ', decyzja: ' + DECISION[decision[x.id].status] : ''}] ${x.title.replace(/`/g, '')}`).join(' ') : ''}`);
     }
   }
   lines.push('\n# Lekcje między światami');
@@ -1879,10 +1924,10 @@ if (!JASK) addEventListener('resize', () => {
 
 /* Jaskinia reuses every panel of the Library through this one door */
 if (JASK) window.__BIB = {
-  D, R, FAM, LIFE, LIFE_ORDER, SEV, SNAP, DAY, FOUNDED, FENIKS, CH, HOOK, HOSTED, cap, UI, decision, sense,
+  D, R, FAM, LIFE, LIFE_ORDER, SEV, SNAP, DAY, FOUNDED, FENIKS, CH, HOOK, HOSTED, RUNS_LOCAL, cap, UI, decision, sense,
   h, s, $, $$, fmt, pl, plural, ago, when, day, heatOf, heatVar, heatWord, cssv, hashStr, rng, routeFor, DF, DS, DFS, TF, LDAY, DKEY, isoTs,
   sigil, drawSigil, redrawSigils, spark, squarify, parcelMap, parcelValue, fitParcelLabels, tip, untip, toast, copyText, openUrl,
-  seismo, playStrip, findingsFeed, findingItem, changesStrip, katasterSection, lifeBadge, sevTag, heatChip, mixBar, stateNote, kDetail,
+  seismo, fitTicks, playStrip, findingsFeed, findingItem, changesStrip, katasterSection, lifeBadge, sevTag, heatChip, mixBar, stateNote, kDetail,
   repoView, forestPanel, forestChart, branchTable, rhythmPanel, clockPanel, clockChart, weekStrip, prPanel, lessonCard,
   ridgeline, historyView, knowledgeView, agentsView, playA, playIcon, openPlayer, rawRecord, senseText, noteLag, fact,
 };

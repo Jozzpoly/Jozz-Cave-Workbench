@@ -270,7 +270,7 @@ function statFacts(m) {
   let allBest = 0, allBestDi = 0;
   full.forEach((x, di) => { if (x > allBest) { allBest = x; allBestDi = di; } });
   const mostBr = P.slice().sort((a, b) => b.r.branches.length - a.r.branches.length)[0];
-  const mostPr = P.slice().sort((a, b) => b.r.prs.open - a.r.prs.open)[0];
+  const seen = P.filter(p => p.r.api !== false), mostPr = seen.slice().sort((a, b) => b.r.prs.open - a.r.prs.open)[0]; // a repo the API did not see has no count
   const ws = m.ws, activeSince = full.slice(0, ws.start + 1).filter(x => x > 0).length;
   const T = D.estate.totals;
   const f = (k, v, sub) => h('li', null, h('span', { text: k }), h('b', { text: v }), h('small', { text: sub }));
@@ -278,7 +278,7 @@ function statFacts(m) {
     f(t('rekord dnia'), allBest ? tn(allBest, 'commit', 'commity', 'commitów') : '—', allBest ? diText(allBestDi) : ''),
     f(t('najdłuższa seria'), tn(bestRun, 'dzień', 'dni', 'dni') + t(' z rzędu'), bestRun ? t('do {0}', diText(runEnd)) : ''),
     f(t('najwięcej gałęzi'), mostBr ? mostBr.r.short : '—', mostBr ? tn(mostBr.r.branches.length, 'gałąź', 'gałęzie', 'gałęzi') : ''),
-    f(t('najwięcej otwartych PR'), mostPr && mostPr.r.prs.open ? mostPr.r.short : '—', mostPr && mostPr.r.prs.open ? tn(mostPr.r.prs.open, 'otwarty', 'otwarte', 'otwartych') : t('brak')),
+    f(t('najwięcej otwartych PR'), mostPr && mostPr.r.prs.open ? mostPr.r.short : seen.length ? '—' : '?', mostPr && mostPr.r.prs.open ? tn(mostPr.r.prs.open, 'otwarty', 'otwarte', 'otwartych') : seen.length ? t('brak') : t('nie wiem: brak danych z API')),
     f(t('aktywne dni od początku'), t('{0} z {1}', activeSince, ws.start + 1),
       ws.before ? t('od {0}; pierwszy commit {1}', diText(ws.start), diText(ws.first)) : t('pierwszy commit {0}', diText(ws.first))),
     f(t('całość na GitHubie'), tn(T.commits, 'commit', 'commity', 'commitów'), t('{0} repo · {1} gałęzi · {2} przebiegów CI · {3} PR', T.repos, T.branches, fmt(T.ci_runs), T.prs)));
