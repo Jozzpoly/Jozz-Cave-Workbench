@@ -780,7 +780,7 @@ function openMenu(anchor, items, at, cls = '', opts = {}) {
     if (it.note) { el.append(h('p', { class: 'mi-note', text: it.note })); continue; }
     const b = h('button', { class: 'mi' + (it.checked ? ' on' : '') + (it.danger ? ' danger' : '') + (it.sub ? ' has-sub' : ''), type: 'button', disabled: !!it.disabled,
       role: it.checked != null ? 'menuitemradio' : 'menuitem', 'aria-checked': it.checked != null ? String(!!it.checked) : null,
-      onclick: () => { if (it.sub) { it.sub(b); return; } logEv(t('wybrane: {0}', it.label)); close(); it.act?.(); } },
+      onclick: () => { if (it.sub) { it.sub(b); return; } logEv(t('wybrane: {0}', it.logSafe || it.label)); close(); it.act?.(); } },
       h('span', { class: 'mi-i' }, it.icon ? icon(it.icon, 15) : it.checked ? icon('check', 15) : null),
       h('span', { class: 'mi-l' }, h('span', { text: it.label }), it.desc ? h('small', { text: it.desc }) : null),
       it.hint ? h('kbd', { class: 'mi-h', text: it.hint }) : it.sub ? icon('arrowR', 13, 'mi-sub') : null);
