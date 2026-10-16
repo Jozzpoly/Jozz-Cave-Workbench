@@ -179,9 +179,11 @@ try {
     const actual=await inner.locator('#sha').textContent();
     const state=(await probe())[0];
     console.log('LIVE_GITHUB_OBSERVATION',JSON.stringify({project:names[0],status:observed,sha:actual,receiverClaim:state?.observation}));
+    await win.locator('.b-mx').click();
+    await page.waitForTimeout(250);
     await page.screenshot({path:path.join(root,'shots','gpt-temp-live-source.png'),fullPage:true});
     if(observed.includes('GET HTTP 200')){
-      return /^[a-f0-9]{40}$/.test(actual)&&
+      return /^[a-f0-9]{40}$/.test(actual) && (await inner.locator('#sha').textContent())===actual &&
         (await probe()).some(x=>x.observation?.sha===actual&&x.observation.verification==='receiver-claimed-only');
     }
     return observed.includes('NIEZNANE')&&actual==='NIEZNANY'&&(await probe()).every(x=>!x.observation);
