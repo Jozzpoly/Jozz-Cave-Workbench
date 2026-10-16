@@ -59,6 +59,20 @@ Compare JupyterLab extensible shell/command registry, VS Code webview sandboxed 
 
 A genuinely meaningful next falsifier would connect **two real, independently running Jozzpoly project builds**, with a bounded question, explicit action effects or source receipts, and a native-source/ordinary browser counterfactual. Merely drawing two panes has no Medium value.
 
+## Attribution of GPT work (explicit, not a verified bot identity)
+
+This branch's GPT D11–D13 experiments were implemented and tested by **ChatGPT / GPT-6**, using the repository access connected to **Jozzpoly**. Earlier commits therefore show `Jozzpoly` as Git author/committer; that is the **credential identity**, not evidence that the Owner wrote, reviewed, or approved the changes. Do not rewrite those historical commits merely to change attribution.
+
+For subsequent GPT-written commits through this GitHub connector, use a visible subject prefix `gpt6(scope): …` and these message trailers:
+
+```text
+Agent-Performed-By: ChatGPT (OpenAI GPT-6)
+Recorded-Via: GitHub connector authorized as Jozzpoly
+Owner-Approval: not implied
+```
+
+These are **self-declared provenance**, not a cryptographically verified author identity or a GitHub contributor/avatar. Do not invent a `Co-authored-by` email for an unconnected agent, use Claude/Codex's identities, or treat the credential account as proof of human authorship. A future separately authorized GitHub bot/account could provide distinct verified account attribution; until then, the precise credit is in the commit message and evidence links.
+
 ## Do not merge or deploy by momentum
 
 Keep the public Jaskinia `main` under Claude's control. Treat this experiment as expendable and remove it if C1/v4 or real trials make the idea redundant. In any future live experiment separate `Owner felt it works` from `Chromium asserted it` and `recipient confirmed action` from `parent sent input`.
