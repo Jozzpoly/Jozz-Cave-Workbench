@@ -1,0 +1,39 @@
+name: GPT TEMP — v4.1 public Cloudflare candidate (NO DEPLOY)
+on:
+  push:
+    branches:
+      - experiment/gpt-temporary-cloudflare-v41-2026-10-16
+permissions:
+  contents: read
+concurrency:
+  group: gpt-temp-cf-stage-v41
+  cancel-in-progress: true
+jobs:
+  public-candidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Restore locked frontend dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Stage exactly the PR-v4.1 public static assets (no API credentials)
+        run: python3 -I experiments/gpt-cloudflare-v41/prepare.py --root . --output "$RUNNER_TEMP/jaskinia-gpt-stage-v41"
+      - name: Smoke real Jaskinia desktop / touch and prove no private asset endpoint
+        run: node experiments/gpt-cloudflare-v41/smoke.mjs "$RUNNER_TEMP"
+      - name: Pack only curated files and browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gpt-jaskinia-v41-cloudflare-stage-not-deployed
+          retention-days: 5
+          if-no-files-found: error
+          path: |
+            ${{ runner.temp }}/jaskinia-gpt-stage-v41/site/
+            ${{ runner.temp }}/jaskinia-gpt-stage-v41/wrangler.jsonc
+            shots/gpt-stage-v41/
