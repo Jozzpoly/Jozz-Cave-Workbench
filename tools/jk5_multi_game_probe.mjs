@@ -103,7 +103,7 @@ try {
 } finally {
   if (ctx) await ctx.close();
   if (browser) await browser.close();
-  if (server) await new Promise(resolve => server.close(resolve));
+  if (server) server.close(); // serve() exposes a no-argument close wrapper
   for (const file of files) fs.rmSync(path.join(dist, file), { force: true });
 }
 process.exit(failed ? 1 : 0);
