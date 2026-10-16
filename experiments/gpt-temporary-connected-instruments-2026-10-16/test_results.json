@@ -5,6 +5,7 @@
   "missing_ACK_is_uncertain_no_retry": true,
   "other_window_independent": true,
   "false_ACK_rejected": true,
+  "private_project_not_disclosed": true,
   "dangerous_URL_rejected": true,
   "dispose_unsubscribes": true,
   "page_errors": []
