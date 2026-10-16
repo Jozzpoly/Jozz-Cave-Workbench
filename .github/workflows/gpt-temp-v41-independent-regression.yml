@@ -1,0 +1,45 @@
+name: GPT TEMP — independent v4.1 full regression (NO DEPLOY)
+on:
+  push:
+    branches:
+      - experiment/gpt-temporary-cloudflare-v41-2026-10-16
+    paths:
+      - '.github/workflows/gpt-temp-v41-independent-regression.yml'
+      - 'experiments/gpt-cloudflare-v41/**'
+permissions:
+  contents: read
+jobs:
+  v41-exact:
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - name: Qualify exact unchanged v4.1 product sources
+        run: |
+          test "$(git merge-base efbc980658e05decbee683930dedb1102214bc4b HEAD)" = efbc980658e05decbee683930dedb1102214bc4b
+          test -z "$(git diff --name-only efbc980658e05decbee683930dedb1102214bc4b HEAD -- src data tools dist package.json package-lock.json)"
+      - name: Opus original 52 UI assertions
+        run: node tools/jk_test.mjs
+      - name: Opus v2 76 assertions
+        run: node tools/jk2_test.mjs
+      - name: Opus v4.1 61 assertions
+        run: node tools/jk4_test.mjs
+      - name: Preserve tests' real screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gpt-v41-independent-exact-regression
+          retention-days: 5
+          if-no-files-found: warn
+          path: |
+            shots/jk4t/
+            shots/jk2t/
+            shots/jkt/
