@@ -1407,12 +1407,13 @@ function boot() {
   B.HOOK.go = hash => { const m = /^#repo~(.+)$/.exec(decodeURIComponent(hash)); if (m && R[m[1]]) select(m[1], 'win'); };
   B.HOOK.refresh = () => { for (const id of allIds()) { const rt = RT.get(id); if (rt && !typeOf(L.wins[id]).live) rt.key = null; refreshWin(id); } }; // a theme change never restarts a running lab
   B.HOOK.play = r => {
-    select(r.name);
-    logEv(t('zagraj: {0} ({1})', r.short, gamesInWindow() ? t('w oknie') : t('w nowej karcie')));
-    if (!gamesInWindow()) return false; // the link opens the game in a new tab
-    const gid = allIds().find(id => L.wins[id].type === 'gra');
-    if (gid) { const w = L.wins[gid]; if (w.pin && w.pin !== r.name) commit(t('gra: {0}', r.short), () => { w.pin = r.name; }); focusWin(gid); if (phone) phoneSwitch(gid); }
-    else openWinOfType('gra', { pin: r.name, fresh: true, w: 0.72, h: 0.86 });
+    const inWindow = gamesInWindow();
+    logEv(t('zagraj: {0} ({1})', r.short, inWindow ? t('w oknie') : t('w nowej karcie')));
+    if (!inWindow) { select(r.name); return false; } // the link opens the game in a new tab
+    // Explicit "Zagraj" starts a new, pinned game instance. It must not silently
+    // replace another running game, or change another window that follows store.sel.
+    // Manually created unpinned "Gra" windows can still follow the selected project.
+    openWinOfType('gra', { pin: r.name, fresh: true, w: 0.72, h: 0.86 });
     return true;
   };
   new ResizeObserver(() => apply()).observe(stage);
