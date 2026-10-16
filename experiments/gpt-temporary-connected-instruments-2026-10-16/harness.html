@@ -1,8 +1,8 @@
 <!doctype html><html lang="pl"><head><meta charset="utf-8"><title>Jaskinia GPT temporary integration contract harness</title><style>body{background:#1b2933;color:#eee;font:14px system-ui}.panes{display:grid;grid-template-columns:1fr 1fr;gap:12px;height:610px}.pane{border:1px solid #789;overflow:auto}h2{font-size:16px}</style></head><body>
 <h1>Jaskinia GPT • protokół niezależnych instrumentów</h1><p>Minimalny kontrakt shell c.onSel/c.save/c.onDispose. Nie zastępuje E2E kompletnej Jaskini.</p>
-<button id="select-b">Zaznacz ReflexBrain</button><button id="select-c">Zaznacz Combat</button><button id="destroy-a">Zamknij instrument A</button>
+<button id="select-b">Zaznacz ReflexBrain</button><button id="select-c">Zaznacz Combat</button><button id="select-private">Zaznacz prywatny</button><button id="destroy-a">Zamknij instrument A</button>
 <div class="panes"><section><h2>Okno A</h2><div id="pane-a" class="pane" style="height:500px"></div></section><section><h2>Okno B</h2><div id="pane-b" class="pane" style="height:500px"></div></section></div>
-<script>const TYPES={};</script><script src="./42-gpt-temp-instrument.js"></script>
+<script>const TYPES={}; const R={Mini_Feniks:{private:false},"ReflexBrain-Lab":{private:false},"Combat-Lab":{private:false},"VeryPrivateProject":{private:true}};</script><script src="./42-gpt-temp-instrument.js"></script>
 <script>
 (()=>{
  let selected='Mini_Feniks';const handlers={};const disposers={};const windows={};
@@ -11,6 +11,7 @@
  const select=n=>{selected=n;Object.values(handlers).forEach(fn=>fn(n))};
  document.getElementById('select-b').onclick=()=>select('ReflexBrain-Lab');
  document.getElementById('select-c').onclick=()=>select('Combat-Lab');
+ document.getElementById('select-private').onclick=()=>select('VeryPrivateProject');
  document.getElementById('destroy-a').onclick=()=>{(disposers.a||[]).forEach(fn=>fn());delete handlers.a; document.getElementById('pane-a').replaceChildren()};
  window.GPT_TEST={select,windows};
 })();</script></body></html>
