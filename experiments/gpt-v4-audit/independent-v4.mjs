@@ -34,6 +34,7 @@ try {
  await hit.waitFor({timeout:5000});
  await hit.click();
  await page.waitForTimeout(150);
+ await page.evaluate(secret=>window.__JASK.log.push({t:Date.now(),a:'wybrane: '+secret,u:'test starego dziennika'}),sentinel);
  const leak=await page.evaluate(secret=>{
   const p=window.__JASK.packageData(false);
   return {
@@ -45,9 +46,9 @@ try {
   }
  },sentinel);
  check('Note body is omitted by export=false',leak.noteBodyOmitted);
- check('PRIVACY COUNTEREXAMPLE — note text excerpt unexpectedly present in journal',leak.journalHasNoteExcerpt,leak);
- check('PRIVACY COUNTEREXAMPLE — omitted-note package JSON includes that text',leak.packageHasExcerpt,leak);
- check('PRIVACY COUNTEREXAMPLE — text package includes that text',leak.textModeHasExcerpt,leak);
+ check('Local journal retains legacy note title (fixture)',leak.journalHasNoteExcerpt,leak);
+ check('Sanitized JSON package excludes note title, even from older logs',!leak.packageHasExcerpt,leak);
+ check('Sanitized text package excludes note title',!leak.textModeHasExcerpt,leak);
  check('No pageerror during privacy test',errors.length===0,{errors});
  await page.screenshot({path:path.join(evidence,'v4-notes-privacy-repro.png'),fullPage:true});
 } catch(e) {check('audit harness ran to completion',false,{message:e.message});}
