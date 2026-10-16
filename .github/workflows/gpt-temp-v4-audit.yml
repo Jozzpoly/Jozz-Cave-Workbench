@@ -1,0 +1,42 @@
+name: GPT TEMP — independent Opus v4 verification
+on:
+  push:
+    branches:
+      - experiment/gpt-temporary-v4-audit-2026-10-16
+permissions:
+  contents: read
+concurrency:
+  group: gpt-temp-v4-verification
+  cancel-in-progress: true
+jobs:
+  evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install exact PR lockfile
+        run: npm ci --no-audit --no-fund
+      - name: Install browser
+        run: npx playwright install --with-deps chromium
+      - name: Generate Jaskinia v4 public web build from source
+        run: python3 -I tools/render.py --app jaskinia --host web
+      - name: Opus baseline E2E 52
+        run: node tools/jk_test.mjs
+      - name: Opus v2 E2E 76
+        run: node tools/jk2_test.mjs
+      - name: Opus v4 E2E 40
+        run: node tools/jk4_test.mjs
+      - name: Full app independent redaction counterexample
+        run: node experiments/gpt-v4-audit/independent-v4.mjs
+      - name: Preserve synthetic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gpt-v4-independent-evidence
+          retention-days: 5
+          path: |
+            shots/gpt-v4-audit/
