@@ -1,0 +1,38 @@
+name: GPT TEMP — independent v5 43 instrument checks (NO DEPLOY)
+on:
+  push:
+    branches:
+      - experiment/gpt-temporary-cloudflare-v41-2026-10-16
+    paths:
+      - '.github/workflows/gpt-temp-v5-independent.yml'
+permissions:
+  contents: read
+jobs:
+  exact-opus-v5:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 8d7b1141105d1442eb7690bb345193a386485954
+          path: qualified-v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install exact v5 lockfile
+        working-directory: qualified-v5
+        run: npm ci --no-audit --no-fund
+      - name: Install Chromium
+        working-directory: qualified-v5
+        run: npx playwright install --with-deps chromium
+      - name: Re-run Opus 43 v5 instrument assertions in real Chromium
+        working-directory: qualified-v5
+        run: node tools/jk5_test.mjs
+      - name: Save exact run screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gpt-v5-independent-exact-instrument-tests
+          retention-days: 5
+          if-no-files-found: warn
+          path: qualified-v5/shots/jk5t/
