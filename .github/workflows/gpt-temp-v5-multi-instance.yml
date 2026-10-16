@@ -1,0 +1,36 @@
+name: GPT TEMP — v5 independent instrument identities (NO DEPLOY)
+on:
+  push:
+    branches:
+      - experiment/gpt-temporary-cloudflare-v41-2026-10-16
+    paths:
+      - 'research/gpt-v5-multi-instance/**'
+      - '.github/workflows/gpt-temp-v5-multi-instance.yml'
+permissions:
+  contents: read
+jobs:
+  v5-multi-instance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: 8d7b1141105d1442eb7690bb345193a386485954
+          path: qualified-v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - name: Two real-code v5 instrument windows and two Gra followers
+        run: node research/gpt-v5-multi-instance/real-code-smoke.mjs
+      - name: Preserve synthetic evidence only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gpt-v5-instance-real-code-synthetic-ci
+          retention-days: 5
+          if-no-files-found: warn
+          path: shots/gpt-v5-instances/
