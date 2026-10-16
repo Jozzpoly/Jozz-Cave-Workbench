@@ -1,0 +1,13 @@
+# the owner's private layer and anything built from it never enter a public repository
+private/
+# dependencies (fonts and Playwright come from npm install), caches, test output
+node_modules
+__pycache__/
+*.pyc
+shots/
+dist/_*.html
+# screen recordings and frames cut from them show the owner's whole screen
+frames/
+*.mp4
+*.mov
+*.webm

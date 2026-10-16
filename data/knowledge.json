@@ -1,0 +1,783 @@
+{
+ "families": [
+  {
+   "id": "zywe",
+   "name": "Żywe istoty",
+   "question": "Czy postać w grze może naprawdę żyć: czuć, pamiętać, działać sama i być partnerem?",
+   "repos": [
+    "ReflexBrain-Lab",
+    "Companion-Brain-Lab",
+    "Llm-Live-NPC",
+    "Gloopipelago",
+    "Cognitive-Ecology-Lab"
+   ]
+  },
+  {
+   "id": "cialo",
+   "name": "Ciało i ruch",
+   "question": "Jak dać graczowi i aktorowi fizyczne ciało, które słucha intencji, zamiast przeszkadzać?",
+   "repos": [
+    "Combat-Lab",
+    "Box3d-Character-Controler",
+    "Jozz-Universal-Rig-Editor"
+   ]
+  },
+  {
+   "id": "materia",
+   "name": "Materia i świat",
+   "question": "Z czego jest zrobiony świat: edytowalna materia, cała planeta, skan, który można dotknąć?",
+   "repos": [
+    "FrameMatter-Lab",
+    "Jozz-Splat-Game-Lab"
+   ]
+  },
+  {
+   "id": "maszyny",
+   "name": "Maszyny i pojazdy",
+   "question": "Zbuduj, uruchom, obserwuj, popraw, wsiądź i jedź: warsztat maszyn od wokseli po natywny C.",
+   "repos": [
+    "voxel-aeronautics-workshop",
+    "Box3d_FunProject",
+    "JV-Box3D-Web-experiment",
+    "JV-Box3D-Web-Public",
+    "Jozzue_Vehicles_Sandbox",
+    "PROJECT-ANVIL-Machine-Matter-Physical-Fabric-Laboratory",
+    "WebXR-Lab"
+   ]
+  },
+  {
+   "id": "razem",
+   "name": "Gry ze znajomymi",
+   "question": "Grać razem: karty przy wspólnym stole, wspólny fizyczny świat, kooperacja w sieci lokalnej.",
+   "repos": [
+    "Tysi-c-The-Game",
+    "cloudflare-multiplayer-lab"
+   ]
+  },
+  {
+   "id": "medium",
+   "name": "Medium",
+   "question": "Jak Ty i agenci dzielicie rzeczywistość projektów, żebyś nie był kurierem między nimi?",
+   "repos": [
+    "Shared-Work-Medium-Lab",
+    "Jozz-Cave-Workbench"
+   ]
+  },
+  {
+   "id": "feniks",
+   "name": "Feniks",
+   "question": "Czy da się złożyć całość: żywą krainę, w której mieszkańcy żyją z własnych powodów, a Ty ją tworzysz i przekształcasz?",
+   "repos": [
+    "Mini_Feniks"
+   ]
+  },
+  {
+   "id": "poczatki",
+   "name": "Pierwsze próby",
+   "question": "Od czego zaczęło się na GitHubie: mod do Minecrafta, vibe-coding, pusty pomysł.",
+   "repos": [
+    "Simply_game_experiment",
+    "MinecraftLike-Fun-Project"
+   ]
+  }
+ ],
+ "short": {
+  "PROJECT-ANVIL-Machine-Matter-Physical-Fabric-Laboratory": "PROJECT ANVIL",
+  "voxel-aeronautics-workshop": "Voxel Aeronautics Workshop",
+  "cloudflare-multiplayer-lab": "MultiWorld",
+  "Tysi-c-The-Game": "Tysiąc",
+  "Jozz-Universal-Rig-Editor": "JURE",
+  "Box3d-Character-Controler": "Box3D Character Controller",
+  "Box3d_FunProject": "Box3D Native",
+  "JV-Box3D-Web-experiment": "JV Web",
+  "JV-Box3D-Web-Public": "JV Web Public",
+  "Jozzue_Vehicles_Sandbox": "Jozzue Vehicles",
+  "Shared-Work-Medium-Lab": "Medium",
+  "Mini_Feniks": "MiniFeniks",
+  "Jozz-Cave-Workbench": "Cave Workbench",
+  "Jozz-Splat-Game-Lab": "Splat Game Lab",
+  "Simply_game_experiment": "Simply Game",
+  "MinecraftLike-Fun-Project": "MinecraftLike",
+  "Companion-Brain-Lab": "Companion Brain",
+  "ReflexBrain-Lab": "ReflexBrain",
+  "Llm-Live-NPC": "LLM Live NPC",
+  "FrameMatter-Lab": "FrameMatter",
+  "WebXR-Lab": "Riftworks (WebXR)",
+  "Combat-Lab": "Combat Lab",
+  "Gloopipelago": "Gloopipelago",
+  "Cognitive-Ecology-Lab": "Cognitive Ecology"
+ },
+ "identity": {
+  "Mini_Feniks": "Poważna próba złożenia jak największej części marzenia o Feniksie w jedną żywą krainę; po pierwszym graniu budowa wstrzymana, trwa ocena fundamentu.",
+  "Jozz-Cave-Workbench": "Przyszły dom Jaskini, Twojego warsztatu nad wszystkimi projektami. Na razie bez commitów.",
+  "ReflexBrain-Lab": "Czy tani, lokalny mechanizm uczący się wyciągnie znaczenie z prywatnego doświadczenia żyjącego, ucieleśnionego aktora.",
+  "Companion-Brain-Lab": "Towarzysz gracza z prawdziwym, lokalnym mózgiem: autonomia, współpraca taktyczna i szybkie polecenia.",
+  "Llm-Live-NPC": "NPC napędzany małym LLM, który mieszka w świecie: widzi tylko swoje, pamięta i działa wyłącznie przez sprawdzone możliwości świata.",
+  "Gloopipelago": "Obserwatorium żywej ewolucji: mały świat, w którym proste organizmy tworzą czytelne historie.",
+  "Combat-Lab": "Odkrywanie ucieleśnionej walki i ruchu. Na main stoi neutralna próbka, a prawdziwe eksperymenty żyją na osobnych gałęziach.",
+  "Box3d-Character-Controler": "Laboratorium ucieleśnionego gracza: fizyczne ciało, które nie odbiera kontroli ani frajdy. Tu powstała lekcja E17.",
+  "Jozz-Universal-Rig-Editor": "Lokalny warsztat do riggowania intencji na prawdziwych assetach. Fundament przetestowałeś, potem świadomie go wstrzymałeś.",
+  "FrameMatter-Lab": "Edytowalna materia świata, która bywa statyczna albo dynamiczna i nie traci przy tym tożsamości (Godot).",
+  "Jozz-Splat-Game-Lab": "Prawdziwe skany Gaussian Splatting zamienione w światy gry, które można fizycznie testować.",
+  "voxel-aeronautics-workshop": "Warsztat maszyn budowanych blok po bloku: budujesz, uruchamiasz w fizyce i rozumiesz, dlaczego lecą albo się rozpadają.",
+  "Box3d_FunProject": "Natywny sandbox pojazdów w C17 na silniku Box3D Erina Catto. README na main to wciąż README samego silnika.",
+  "JV-Box3D-Web-experiment": "JV Web: przeglądarkowa linia Jozz Vehicle, którą można prowadzić na komputerze i telefonie; demo dla znajomych.",
+  "JV-Box3D-Web-Public": "Publiczne wdrożenie JV Web, zawierające wyłącznie gotowe artefakty.",
+  "Jozzue_Vehicles_Sandbox": "Następna generacja Jozz Vehicle w pętli: buduj, uruchom, obserwuj, popraw, wsiądź i jedź.",
+  "PROJECT-ANVIL-Machine-Matter-Physical-Fabric-Laboratory": "Maszyny z materii zamiast katalogu części: malujesz w materii właściwości, a laboratorium kompiluje je do fizyki.",
+  "WebXR-Lab": "Riftworks: inżynieryjny sandbox w przeglądarce i VR z krótką pętlą zbuduj, uruchom, obserwuj, popraw.",
+  "Tysi-c-The-Game": "Tysiąc w przeglądarce dla znajomych: prywatne stoły, boty i fizyczny język kart.",
+  "cloudflare-multiplayer-lab": "MultiWorld: wspólny fizyczny świat w przeglądarce. Serwer na Cloudflare liczy fizykę Box3D.",
+  "Shared-Work-Medium-Lab": "Medium: wspólna praca Ciebie, ChatGPT, Codexa i Claude nad rzeczywistością projektów. Stąd wyrasta ta Biblioteka.",
+  "Simply_game_experiment": "„Vibe koding”: roguelike 2D z maja 2025, jeden z pierwszych eksperymentów z AI na GitHubie.",
+  "MinecraftLike-Fun-Project": "Puste repo bez żadnego commita, czyli miejsce zostawione na pomysł.",
+  "Cognitive-Ecology-Lab": "Pytało, czy mechanizmy poznawcze, które współpracują albo rywalizują, dają przewagę, której żaden nie ma osobno. Zamknięte werdyktem Ownera 9 paź 2026 (FAIL); pytanie zostaje zapisane, laboratorium nie jest kontynuowane."
+ },
+ "stated": {},
+ "estate_stated": [],
+ "prolog": [
+  {
+   "when": "23.05.2025",
+   "what": "Simply Game, czyli „Vibe koding”.",
+   "kind": "measured"
+  },
+  {
+   "when": "10.05.2026",
+   "what": "Box3D Native otwiera falę 2026.",
+   "kind": "measured"
+  },
+  {
+   "when": "03.10.2026",
+   "what": "Powstaje Medium (Shared-Work-Medium-Lab).",
+   "kind": "measured"
+  },
+  {
+   "when": "09.10.2026",
+   "what": "Biblioteka v1, czyli ta strona.",
+   "kind": "measured"
+  }
+ ],
+ "laws": [
+  {
+   "id": "spokojne-wejscie",
+   "title": "Spokojne wejście, dokładna głębia",
+   "text": "Panorama otwiera się spokojnie, a każdy fakt ma drogę w dół aż do surowych danych. Surowe źródło jest pełnoprawną ścieżką, nie dodatkiem do schowania.",
+   "origin": "Twoje zachowanie",
+   "sources": [
+    [
+     "Owner Walk 01 (commit 1ec19fa)",
+     "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/blob/1ec19fa/campaigns/open-substrate-2026-10-04/OWNER_WALK_01_BEHAVIOR.md"
+    ]
+   ]
+  },
+  {
+   "id": "bez-rankingu",
+   "title": "Bez globalnego rankingu",
+   "text": "Biblioteka nie ocenia i nie szereguje światów. To, że coś istnieje, nie znaczy, że trzeba to wyświetlić, a tym bardziej przerywać Ci uwagę.",
+   "origin": "Medium · Quiet Presence",
+   "sources": [
+    [
+     "Quiet Presence, PR #5",
+     "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/pull/5"
+    ]
+   ]
+  },
+  {
+   "id": "dwa-czasy",
+   "title": "Dwa czasy obok siebie",
+   "text": "Datowane miejsce zostaje datowane, a żywe drzwi prowadzą do teraźniejszości. Historii się nie przepisuje; ten wzorzec opisuje Memento (RFC 7089).",
+   "origin": "Rozmowa 9.10",
+   "sources": [
+    [
+     "C14, GPT",
+     "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/issues/7#issuecomment-6070022039"
+    ],
+    [
+     "RFC 7089",
+     "https://www.rfc-editor.org/rfc/rfc7089.html"
+    ]
+   ]
+  },
+  {
+   "id": "pokrycie",
+   "title": "Zadeklarowane pokrycie",
+   "text": "Każdy przegląd mówi, ile powinno być i ile jest. Cisza nie oznacza braku.",
+   "origin": "Rozmowa 9.10",
+   "sources": [
+    [
+     "C10, GPT",
+     "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/issues/7#issuecomment-6069939840"
+    ],
+    [
+     "Pominięta wiadomość w Slacku",
+     "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/issues/7#issuecomment-6069975574"
+    ]
+   ]
+  },
+  {
+   "id": "pochodzenie",
+   "title": "Rozdzielone pochodzenie",
+   "text": "To cztery różne fakty: kto coś twierdzi, czym to przyszło, jak ktoś do tego trafił i co naprawdę zmieniło się w projekcie.",
+   "origin": "Rozmowa 9.10",
+   "sources": [
+    [
+     "Agent_Slack",
+     "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/issues/7#issuecomment-6069975574"
+    ],
+    [
+     "C15",
+     "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/issues/7#issuecomment-6070168610"
+    ]
+   ]
+  },
+  {
+   "id": "czytelnosc",
+   "title": "Czytelne dla każdego ciała",
+   "text": "Nic nośnego nie siedzi w zwiniętych elementach, w samym skrypcie ani na płótnie. Ta sama treść musi przetrwać AXTree Opery, web_fetch i gita.",
+   "origin": "Medium",
+   "sources": [
+    [
+     "PR #3",
+     "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/pull/3"
+    ],
+    [
+     "HTMLPreview, PR #5",
+     "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/pull/5#issuecomment-6070107764"
+    ]
+   ]
+  },
+  {
+   "id": "inny-czytelnik",
+   "title": "Dowód od kogoś innego, później",
+   "text": "Wartość zapisu pokazuje późniejszy czytelnik, który nie jest jego twórcą. Twórca nie ocenia sam siebie.",
+   "origin": "Rozmowa 9.10",
+   "sources": [
+    [
+     "Zamknięcie rundy",
+     "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/issues/7#issuecomment-6070395574"
+    ]
+   ]
+  },
+  {
+   "id": "sens-hipoteza",
+   "title": "Agenci proponują sens, Ty go zatwierdzasz",
+   "text": "Każde zdanie o Twoich intencjach jest hipotezą, dopóki go nie potwierdzisz, nie poprawisz albo nie odrzucisz.",
+   "origin": "Twoja odpowiedź 9.10",
+   "sources": [
+    [
+     "Poprawki GPT",
+     "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/issues/7#issuecomment-6070375988"
+    ]
+   ]
+  },
+  {
+   "id": "autorytet",
+   "title": "Autorytet ponad pewność",
+   "text": "Liczy się, kto ma prawo coś stwierdzić, a nie to, jak pewnie to brzmi.",
+   "origin": "Rozmowa o Feniksie",
+   "sources": []
+  },
+  {
+   "id": "front",
+   "title": "Najnowsza gałąź to nie front",
+   "text": "Gdzie żyje praca, mówi README albo PR, a nie data ostatniego commita.",
+   "origin": "Medium",
+   "sources": [
+    [
+     "C6",
+     "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/issues/7#issuecomment-6069787741"
+    ],
+    [
+     "Sonda drzwi frontowych, PR #10",
+     "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/pull/10"
+    ]
+   ]
+  },
+  {
+   "id": "data-slepa",
+   "title": "Świeża data nie widzi sprzeczności",
+   "text": "Dokument może być świeży i jednocześnie błędny. Data aktualizacji nie wykrywa sprzeczności treści.",
+   "origin": "Medium",
+   "sources": [
+    [
+     "C3, PR #15",
+     "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/pull/15"
+    ]
+   ]
+  },
+  {
+   "id": "sens-przed-usunieciem",
+   "title": "Nic nie znika, póki jego sens nie jest zapisany",
+   "text": "Gałąź można usunąć dopiero wtedy, gdy jej znaczenie żyje gdzie indziej. Osiągalność commita to co innego niż znaczenie nazwy.",
+   "origin": "Twoja analiza z GPT (JURE)",
+   "sources": []
+  },
+  {
+   "id": "nieodwracalne",
+   "title": "Nieodwracalne decyzje tylko od Ciebie",
+   "text": "Kasowanie, publikacja prywatnych rzeczy czy zdjęcie pauzy wymagają Twojej decyzji wprost. Wspólne konto nie jest podpisem.",
+   "origin": "Rozmowa 9.10",
+   "sources": [
+    [
+     "Agent_Slack",
+     "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/issues/7#issuecomment-6070401909"
+    ]
+   ]
+  },
+  {
+   "id": "nie-zastepuje",
+   "title": "Biblioteka nie zastępuje celu",
+   "text": "Jeśli Biblioteka zaczyna generować więcej pracy o sobie niż w światach, którym służy, zatrzymujemy ją.",
+   "origin": "Rozmowa 9.10",
+   "sources": [
+    [
+     "Runda 3",
+     "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/issues/7#issuecomment-6070316892"
+    ]
+   ]
+  },
+  {
+   "id": "kapital",
+   "title": "Kapitał zdolności",
+   "text": "Po pracy agenta możesz sam zrobić coś, o co wcześniej musiałeś prosić.",
+   "origin": "Rozmowa o Feniksie",
+   "sources": [
+    [
+     "Odpowiedź Claude",
+     "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/issues/7#issuecomment-6069900699"
+    ]
+   ]
+  }
+ ],
+ "dna": [
+  {
+   "title": "Twoje doświadczenie wygrywa z PASS-em maszyny",
+   "quotes": [
+    [
+     "Companion",
+     "newer explicit Owner feedback / Owner-observed behavior > older Owner interpretation > participant-visible runtime evidence > controlled machine evidence > internal state / documentation / roadmap",
+     "https://github.com/Jozzpoly/Companion-Brain-Lab/blob/02ab485a634a9a4e2ad1974a263b99b0cbbc1b3c/docs/CURRENT.md#L8-L14"
+    ],
+    [
+     "FrameMatter",
+     "C7 Owner Spark Gate: MATERIAL EXPERIENTIAL FAIL.",
+     "https://github.com/Jozzpoly/FrameMatter-Lab/blob/3dbd232f034a665a19a8f82426cf26aa4243bcec/docs/convergence/CURRENT.md#L11"
+    ],
+    [
+     "Combat",
+     "No new research specimen has been accepted by the Owner.",
+     "https://github.com/Jozzpoly/Combat-Lab/blob/2d86dc1822c5de9037920aa882c48e8525325aba/docs/RESEARCH_STATE.md#L6"
+    ]
+   ]
+  },
+  {
+   "title": "Żywy Git i CI są ważniejsze niż dokument",
+   "quotes": [
+    [
+     "FrameMatter",
+     "If live repository/CI evidence contradicts this file, live evidence wins.",
+     "https://github.com/Jozzpoly/FrameMatter-Lab/blob/3dbd232f034a665a19a8f82426cf26aa4243bcec/docs/convergence/CURRENT.md#L7"
+    ],
+    [
+     "Box3D CC",
+     "Before any future write, re-fetch live main, exact SHA and relevant CI/Pages.",
+     "https://github.com/Jozzpoly/Box3d-Character-Controler/blob/e7a98beaca4c010e056c31db97b33c05b4610e38/docs/PROJECT_STATE.md#L5"
+    ]
+   ]
+  },
+  {
+   "title": "Eksperymenty to dowody, nie architektura",
+   "quotes": [
+    [
+     "Jozzue",
+     "Research repository for the next generation of Jozz Vehicle. Experiments are evidence, not architecture.",
+     "https://github.com/Jozzpoly/Jozzue_Vehicles_Sandbox/blob/a5462817a732721396d30f1932a6d570354ca9f0/README.md#L3"
+    ],
+    [
+     "ReflexBrain",
+     "Persistent Playground v1 is Owner evidence … Its architecture is not privileged.",
+     "https://github.com/Jozzpoly/ReflexBrain-Lab/blob/87d94c84288982dd6c150494b24504097ec4474f/README.md#L26"
+    ],
+    [
+     "ANVIL",
+     "Research vocabulary … is not a frozen ontology.",
+     "https://github.com/Jozzpoly/PROJECT-ANVIL-Machine-Matter-Physical-Fabric-Laboratory/blob/a87f33f6adcefddf9356d09301299591cb362568/README.md#L11"
+    ]
+   ]
+  },
+  {
+   "title": "Dawcy dają ograniczone własności, nie całe architektury",
+   "quotes": [
+    [
+     "Combat",
+     "Character Controller and Companion provide bounded donor properties only; neither architecture is imported wholesale.",
+     "https://github.com/Jozzpoly/Combat-Lab/blob/2d86dc1822c5de9037920aa882c48e8525325aba/docs/RESEARCH_STATE.md#L156"
+    ],
+    [
+     "Box3D CC",
+     "Preserve it as a gameplay/evidence donor, not the current architecture.",
+     "https://github.com/Jozzpoly/Box3d-Character-Controler/blob/e7a98beaca4c010e056c31db97b33c05b4610e38/docs/PROJECT_STATE.md#L83-L128"
+    ]
+   ]
+  },
+  {
+   "title": "Historia zostaje jako dowód, nie jako władza",
+   "quotes": [
+    [
+     "Companion",
+     "Historical plans, deleted branch names, closed PRs and old handoffs remain evidence, but they do not outrank this file.",
+     "https://github.com/Jozzpoly/Companion-Brain-Lab/blob/02ab485a634a9a4e2ad1974a263b99b0cbbc1b3c/docs/CURRENT.md#L8"
+    ],
+    [
+     "ReflexBrain",
+     "PR #5 is preserved as the 2026-10-05 hypothesis specimen. It is not current implementation authority.",
+     "https://github.com/Jozzpoly/ReflexBrain-Lab/blob/87d94c84288982dd6c150494b24504097ec4474f/docs/PRE_O0_CAMPAIGN_CURRENT_STATE_2026-10-06.md#L13"
+    ],
+    [
+     "Combat",
+     "archive/forensic-pre-cleanroom-2026-10-06 — forensic reachability only.",
+     "https://github.com/Jozzpoly/Combat-Lab/blob/2d86dc1822c5de9037920aa882c48e8525325aba/docs/RESEARCH_STATE.md#L21"
+    ]
+   ]
+  },
+  {
+   "title": "Nie zabieraj sobie wglądu w przyczyny",
+   "quotes": [
+    [
+     "Companion",
+     "Participant-first interpretation is a sequencing technique, not permission to remove Owner observability.",
+     "https://github.com/Jozzpoly/Companion-Brain-Lab/blob/02ab485a634a9a4e2ad1974a263b99b0cbbc1b3c/docs/CURRENT.md#L169"
+    ],
+    [
+     "Combat",
+     "… weak Owner-facing causal access were presented after weeks of work as though l…",
+     "https://github.com/Jozzpoly/Combat-Lab/blob/2d86dc1822c5de9037920aa882c48e8525325aba/docs/FAILURE_SCAR_2026-10-06.md#L15"
+    ]
+   ]
+  }
+ ],
+ "lessons": [
+  {
+   "id": "E17",
+   "title": "Najpierw intencja, potem skończone wykonanie",
+   "from": "Box3d-Character-Controler",
+   "to": [
+    "Combat-Lab"
+   ],
+   "positive": "Jedna zdolność („chwyć i spróbuj”) dała całą rodzinę czasowników: podnieś, przeciągnij, rzuć, podważ, ułóż.",
+   "negative": "Oscylacje, przestrzały, słaba precyzja; chwyt poza środkiem kręci obiektem.",
+   "source": "https://github.com/Jozzpoly/Box3d-Character-Controler/blob/e7a98beaca4c010e056c31db97b33c05b4610e38/docs/PROJECT_STATE.md#L83-L128",
+   "effect": "Combat zmierzył chwyt na Rapierze i odkrył, że domyślne hamowanie prawie ukrywało reakcję ciała. W efekcie hamowanie zwykłe i hamowanie przy chwycie stały się osobnymi ustawieniami.",
+   "effect_links": [
+    [
+     "kod Combat, L269–271",
+     "https://github.com/Jozzpoly/Combat-Lab/blob/b2a3984cdd26cabae71ed3a4afbb25ce1e3aa092/src/pressure-probe.js#L269-L271"
+    ],
+    [
+     "workpiece",
+     "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/issues/7#issuecomment-6070058142"
+    ]
+   ],
+   "route": "Natywnie. Combat znał E17 z własnego BODY_WORLD (7.10), a negatywną połowę doczytał u dawcy. Drzwi w Medium powstały minutę przed użyciem, więc były zapisem, nie odkryciem.",
+   "route_links": [
+    [
+     "BODY_WORLD L59",
+     "https://github.com/Jozzpoly/Combat-Lab/blob/2d86dc1822c5de9037920aa882c48e8525325aba/docs/BODY_WORLD_SUBSTRATE_AND_SPECIMEN_2026-10-07.md#L59"
+    ],
+    [
+     "C15",
+     "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/issues/7#issuecomment-6070168610"
+    ]
+   ]
+  },
+  {
+   "id": "Stage-B",
+   "title": "Nie zabieraj Ownerowi warsztatu przyczyn",
+   "from": "Companion-Brain-Lab",
+   "to": [
+    "Combat-Lab"
+   ],
+   "positive": "Mechanizm Stage B działa wąsko: zmienia tożsamość akcji, a świat zapisuje fakty o skutkach.",
+   "negative": "Ocena Ownera: regres. Czerwone i zielone kółka, brak sterowania i ukryty warsztat debugowania.",
+   "source": "https://github.com/Jozzpoly/Companion-Brain-Lab/blob/02ab485a634a9a4e2ad1974a263b99b0cbbc1b3c/docs/CURRENT.md#L132-L184",
+   "effect": "Combat utrzymuje łańcuch obserwacji (intencja → impuls → przemieszczenie → kontakt) widoczny dla Ciebie.",
+   "effect_links": [
+    [
+     "workpiece",
+     "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/issues/7#issuecomment-6070058142"
+    ]
+   ],
+   "route": "Natywnie w ogólnym sensie: Combat wymieniał Companion jako dawcę. Konkretną lekcję zapisano w Medium o 22:07, już po pierwszych commitach obserwacji.",
+   "route_links": [
+    [
+     "RESEARCH_STATE L156",
+     "https://github.com/Jozzpoly/Combat-Lab/blob/2d86dc1822c5de9037920aa882c48e8525325aba/docs/RESEARCH_STATE.md#L156"
+    ],
+    [
+     "C15",
+     "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/issues/7#issuecomment-6070168610"
+    ]
+   ]
+  },
+  {
+   "id": "B01c",
+   "title": "Geometria to nie zdolność aktora",
+   "from": "ReflexBrain-Lab",
+   "to": [
+    "Combat-Lab"
+   ],
+   "positive": "Ruchoma przeszkoda w drzwiach to fakt świata. To, co ciało potrafi z nią zrobić, to osobna prawda.",
+   "negative": "Fałszywe było twierdzenie, że geometryczne „zablokowane” oznacza „aktor nie przejdzie”. Aktor przeszedł oba warianty.",
+   "source": "https://github.com/Jozzpoly/ReflexBrain-Lab/blob/87d94c84288982dd6c150494b24504097ec4474f/docs/PRE_O0_CAMPAIGN_CURRENT_STATE_2026-10-06.md#L800-L845",
+   "effect": "Mieszkaniec w Combat wraca po dotyku, a nie po wyroczni świata. Wyłączenie lokalnego dotyku usuwa odwrót bez zmiany kolizji.",
+   "effect_links": [
+    [
+     "gałąź eksperymentu",
+     "https://github.com/Jozzpoly/Combat-Lab/tree/f960c5e1af2a0851cfd0fa0df326689a127a621c"
+    ],
+    [
+     "odpowiedź Combat",
+     "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/issues/7#issuecomment-6070286029"
+    ]
+   ],
+   "route": "Nieznana. W kodzie ani dokumentach Combatu nie ma cytatu, a drzwi w Medium są późniejsze niż pierwszy commit odbiorcy.",
+   "route_links": [
+    [
+     "runda 3",
+     "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/issues/7#issuecomment-6070316892"
+    ]
+   ]
+  }
+ ],
+ "methods": [
+  {
+   "title": "Cztery klasy szumu w gałęziach",
+   "text": "Aliasy (kilka nazw na jednym commicie), świadkowie CI (pusty commit tylko dla uruchomienia CI), zastąpione dowody pośrednie i prawdziwe rozgałęzienia. Tylko ostatnich nie wolno spłaszczać.",
+   "origin": "Twoja analiza z GPT (JURE), na razie nieruszana"
+  },
+  {
+   "title": "Każdy ref ma dwie wartości",
+   "text": "Pierwsza to osiągalność commita, druga to znaczenie nazwy. PR-y często przechowują to znaczenie lepiej niż sama nazwa gałęzi.",
+   "origin": "tamże"
+  }
+ ],
+ "cases": [
+  {
+   "id": "C1",
+   "title": "Drzwi frontowe nieaktualne, a żywy autorytet siedzi na gałęzi",
+   "kind": "front",
+   "url": "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/pull/10"
+  },
+  {
+   "id": "C2",
+   "title": "Run #34 jest na gałęzi, a kanon kończy się na #33",
+   "kind": "front",
+   "url": "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/blob/main/docs/RESEARCH_STATE.md"
+  },
+  {
+   "id": "C3",
+   "title": "„Dwa aktywne pasy” kontra „MP-1 uśpione”: data nie widzi sprzeczności",
+   "kind": "czas",
+   "url": "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/pull/15"
+  },
+  {
+   "id": "C4",
+   "title": "Combat: README mówi „brak frontu”, choć front wybrano",
+   "kind": "czas",
+   "url": "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/issues/7#issuecomment-6069338127"
+  },
+  {
+   "id": "C5",
+   "title": "Zielone CI przy naukowym FAIL",
+   "kind": "dowód",
+   "url": "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/pull/12"
+  },
+  {
+   "id": "C6",
+   "title": "Najnowsza gałąź myli drogę (LLM Live NPC, Medium)",
+   "kind": "front",
+   "url": "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/issues/7#issuecomment-6069787741"
+  },
+  {
+   "id": "C7",
+   "title": "Świat widać, ale płótno nie jest celem akcji dla agenta",
+   "kind": "ciała",
+   "url": "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/pull/13"
+  },
+  {
+   "id": "C8",
+   "title": "JURE: cztery refy checkpoint na jednym SHA 7b385e8",
+   "kind": "gałęzie",
+   "url": "https://github.com/Jozzpoly/Jozz-Universal-Rig-Editor/branches"
+  },
+  {
+   "id": "C9",
+   "title": "Drzwi Feniksa przypięte do epizodu i czytane jak teraźniejszość",
+   "kind": "czas",
+   "url": "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/issues/7#issuecomment-6068870252"
+  },
+  {
+   "id": "C10",
+   "title": "Pokrycie to nie brak: Kataster widział 24 z 26 repo",
+   "kind": "pokrycie",
+   "url": "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/issues/7#issuecomment-6069939840"
+  },
+  {
+   "id": "C11",
+   "title": "Ta sama treść, inna relacja: nadpisane deklaracje",
+   "kind": "pochodzenie",
+   "url": "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/pull/14"
+  },
+  {
+   "id": "C12",
+   "title": "Każde ciało ma inne uprawnienia, nawet przy tych samych linkach",
+   "kind": "ciała",
+   "url": "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/issues/7#issuecomment-6069939840"
+  },
+  {
+   "id": "C13",
+   "title": "Ograniczona pozytywna praca między projektami",
+   "kind": "pochodzenie",
+   "url": "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/issues/7#issuecomment-6069338127"
+  },
+  {
+   "id": "C14",
+   "title": "Dwa czasy wejścia: historyczny świat kontra żywe drzwi",
+   "kind": "czas",
+   "url": "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/issues/7#issuecomment-6070022039"
+  },
+  {
+   "id": "C15",
+   "title": "Dawcy w Combacie: efekt prawdziwy, droga natywna",
+   "kind": "pochodzenie",
+   "url": "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/issues/7#issuecomment-6070168610"
+  },
+  {
+   "id": "C16",
+   "title": "Zrzut Biblioteki liczył 26 z 26, a od 10:40 było już 27. repo: lista pochodziła z 01:00",
+   "kind": "pokrycie",
+   "url": "https://github.com/Jozzpoly/Cognitive-Ecology-Lab/commit/7ea11e0fd7976b0bc378e6386ece172cde241349"
+  }
+ ],
+ "ledger": [
+  {
+   "t": "2026-10-08T20:47:35Z",
+   "who": "GPT ↔ Codex",
+   "what": "Codzienne tarcie w Medium i jeden mały przepływ Owner ↔ agent",
+   "url": "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/issues/7#issuecomment-6068758020"
+  },
+  {
+   "t": "2026-10-08T20:59:57Z",
+   "who": "Codex",
+   "what": "PR #15 scalony: jedno źródło stanu, historia przeniesiona do archiwum",
+   "url": "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/pull/15"
+  },
+  {
+   "t": "2026-10-08T21:24:36Z",
+   "who": "Combat",
+   "what": "Combat Lab → Medium: odzyskanie źródeł między projektami",
+   "url": "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/issues/7#issuecomment-6069338127"
+  },
+  {
+   "t": "2026-10-08T21:55:12Z",
+   "who": "GPT",
+   "what": "Korekta Katastru: najnowsza gałąź myli, 24 z 26, nadużyte „do usunięcia”",
+   "url": "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/issues/7#issuecomment-6069787741"
+  },
+  {
+   "t": "2026-10-08T22:02:39Z",
+   "who": "Claude",
+   "what": "Co przyjmuję i gdzie się spieram: korpus przypadków, metoda bez budowania",
+   "url": "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/issues/7#issuecomment-6069900699"
+  },
+  {
+   "t": "2026-10-08T22:05:01Z",
+   "who": "GPT",
+   "what": "Druga runda: nie generator E0, liczy się tworzenie nowych możliwości",
+   "url": "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/issues/7#issuecomment-6069939840"
+  },
+  {
+   "t": "2026-10-08T22:07:23Z",
+   "who": "Agent_Slack",
+   "what": "Wspólna tożsamość nadawcy i ryzyko edycji cudzych wiadomości",
+   "url": "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/issues/7#issuecomment-6069975574"
+  },
+  {
+   "t": "2026-10-08T22:10:08Z",
+   "who": "GPT",
+   "what": "C14: historyczny świat kontra żywe drzwi",
+   "url": "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/issues/7#issuecomment-6070022039"
+  },
+  {
+   "t": "2026-10-08T22:12:16Z",
+   "who": "Combat",
+   "what": "Dawcy E17 i Companion zmienili prawdziwy eksperyment",
+   "url": "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/issues/7#issuecomment-6070058142"
+  },
+  {
+   "t": "2026-10-08T22:18:54Z",
+   "who": "GPT",
+   "what": "C15: chronologia commitów i brak dowodu wkładu Medium",
+   "url": "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/issues/7#issuecomment-6070168610"
+  },
+  {
+   "t": "2026-10-08T22:26:23Z",
+   "who": "Combat",
+   "what": "Przyjęcie C15 i nowy dawca: ReflexBrain B01c",
+   "url": "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/issues/7#issuecomment-6070286029"
+  },
+  {
+   "t": "2026-10-08T22:28:12Z",
+   "who": "Claude",
+   "what": "Runda 3: zapis i późniejszy odczyt, Memento, propozycja zbieżności",
+   "url": "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/issues/7#issuecomment-6070316892"
+  },
+  {
+   "t": "2026-10-08T22:32:03Z",
+   "who": "GPT",
+   "what": "Cztery poprawki: QP jako punkt startu, trzy pytania, sens jako hipoteza, liczenie potwierdzeń",
+   "url": "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/issues/7#issuecomment-6070375988"
+  },
+  {
+   "t": "2026-10-08T22:33:33Z",
+   "who": "Claude",
+   "what": "Zamknięcie fazy projektowej i decyzje dla Ciebie",
+   "url": "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/issues/7#issuecomment-6070395574"
+  },
+  {
+   "t": "2026-10-08T22:34:02Z",
+   "who": "Agent_Slack",
+   "what": "Reguła zaufania: nieodwracalne decyzje tylko bezpośrednio od Ciebie",
+   "url": "https://github.com/Jozzpoly/Shared-Work-Medium-Lab/issues/7#issuecomment-6070401909"
+  },
+  {
+   "t": "2026-10-09T15:13:00Z",
+   "who": "Claude",
+   "what": "Sprawdzenie na żywo po pierwszej publikacji: na koncie jest 27. repo (Cognitive Ecology Lab), którego zrzut nie znał. Zrzut odświeżony, przypadek zapisany jako C16.",
+   "url": "https://github.com/Jozzpoly/Cognitive-Ecology-Lab"
+  },
+  {
+   "t": "2026-10-09T19:53:10Z",
+   "who": "Cognitive Ecology",
+   "what": "Werdykt Ownera FAIL zapisany w samym repo: laboratorium zakończone, strona wycofana z Pages, prośba o usunięcie repozytorium. Usunąć może tylko Owner.",
+   "url": "https://github.com/Jozzpoly/Cognitive-Ecology-Lab/commit/37eee3e2659d5d9940b00aec7c05fca55769febb"
+  },
+  {
+   "t": "2026-10-10T01:30:00Z",
+   "who": "Claude",
+   "what": "Biblioteka v2: Kataster wewnątrz, ustalenia liczone regułami przy każdym zrzucie, stan cytowany z samych repo, zmiany od poprzedniego zrzutu. Twoje decyzje to jedyna pisana warstwa. Generator: jedna komenda, gotowy do przeniesienia na Cloudflare.",
+   "url": null
+  }
+ ],
+ "open": [
+  "Feniks nie ma jeszcze repo na GitHubie. Jego dokumentacja Studio i biblioteka donorów leżą lokalnie, poza zasięgiem tej Biblioteki: widzi ona tylko GitHub.",
+  "Mapy JURE z Twojej rozmowy z GPT nie ruszamy na razie.",
+  "Wspólne konto we wszystkich kanałach: dowodem jest diff i odczyt źródła, nie podpis wiadomości.",
+  "Wkład Medium w odkrycie nie jest jeszcze wykazany. Do sprawdzenia: późniejszy czytelnik i ramię bez biblioteki."
+ ],
+ "account": {
+  "login": "Jozzpoly",
+  "created": "2022-02-21T01:52:35Z",
+  "source": "api.github.com/users/Jozzpoly, odczyt 14.10.2026"
+ }
+}
