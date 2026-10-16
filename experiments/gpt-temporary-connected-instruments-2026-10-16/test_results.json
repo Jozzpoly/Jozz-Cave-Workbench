@@ -1,0 +1,11 @@
+{
+  "registered_in_shell": true,
+  "two_frames_ACK_initial": true,
+  "two_frames_follow_selection": true,
+  "missing_ACK_is_uncertain_no_retry": true,
+  "other_window_independent": true,
+  "false_ACK_rejected": true,
+  "dangerous_URL_rejected": true,
+  "dispose_unsubscribes": true,
+  "page_errors": []
+}
