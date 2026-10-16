@@ -1,0 +1,33 @@
+name: GPT TEMP — v4.1 versus real legacy binary (NO DEPLOY)
+on:
+  push:
+    branches:
+      - experiment/gpt-temporary-cloudflare-v41-2026-10-16
+    paths:
+      - 'research/gpt-v41-legacy/**'
+      - '.github/workflows/gpt-temp-v41-old-binary.yml'
+permissions:
+  contents: read
+jobs:
+  old-build-compatibility:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - name: Reproduce shared file-origin legacy writeback on synthetic future data
+        run: node research/gpt-v41-legacy/real-old-binary.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gpt-v41-legacy-old-binary-cross-version-evidence
+          retention-days: 5
+          if-no-files-found: warn
+          path: shots/gpt-v41-legacy/result.json
