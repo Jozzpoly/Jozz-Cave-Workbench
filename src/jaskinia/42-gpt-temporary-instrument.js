@@ -76,6 +76,14 @@
       frame.contentWindow.postMessage({ protocol: PROTOCOL, channel, nonce, kind, ...payload }, '*');
     }
     function choose(name) {
+      // This experiment is permitted to announce PUBLIC project names only.
+      // A full private Jaskinia contains nonpublic projects: never leak their identity
+      // to a remotely supplied iframe, even when its user has enabled linking.
+      if (typeof R === 'undefined' || !R[name] || R[name].private !== false) {
+        addHistory('Zatrzymano wybór prywatny lub nieznany');
+        display('NIE WYSŁANO: projekt prywatny lub o nieznanej widoczności.');
+        return;
+      }
       if (!state.ready) { display('NIE WYKONANO: instrument nie potwierdził gotowości.'); return; }
       if (state.pending) { // Previous action may have happened. Never pretend to cancel it.
         clearTimeout(state.pending.timer);
