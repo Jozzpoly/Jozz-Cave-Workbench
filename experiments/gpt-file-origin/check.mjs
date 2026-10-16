@@ -6,9 +6,10 @@ import path from 'node:path';
 const file=pathToFileURL(path.resolve('dist/jaskinia.html')).href;
 const browser=await chromium.launch({headless:true});
 const cases=[];
+fs.mkdirSync('shots',{recursive:true});
 const put=(device,s)=>{cases.push({device,...s});console.log('FILE_ORIGIN',JSON.stringify({device,...s}));};
 for(const device of [{name:'desktop',viewport:{width:1500,height:900},isMobile:false,hasTouch:false},{name:'touch_emulation',viewport:{width:390,height:844},isMobile:true,hasTouch:true}]){
-  const context=await browser.newContext({...device,deviceScaleFactor:1});
+  const context=await browser.newContext({viewport:device.viewport,isMobile:device.isMobile,hasTouch:device.hasTouch,deviceScaleFactor:1});
   const page=await context.newPage();
   const pageErrors=[];
   page.on('pageerror',e=>pageErrors.push(e.message));
