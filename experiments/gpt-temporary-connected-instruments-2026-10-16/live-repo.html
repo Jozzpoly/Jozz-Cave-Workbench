@@ -39,6 +39,7 @@ async function select(project,seq){
  // An ACK is NOT a claim that the REST read succeeded: merely applied selection.
  tell({kind:'ack',seq,project,applied:true});
  const controller=new AbortController();active=controller;
+ const deadline=setTimeout(()=>controller.abort(),10000);
  const endpoint='https://api.github.com/repos/Jozzpoly/'+encodeURIComponent(project)+'/commits?per_page=1';
  try{
    const res=await fetch(endpoint,{credentials:'omit',cache:'no-store',signal:controller.signal,headers:{'Accept':'application/vnd.github+json'}});
@@ -58,7 +59,7 @@ async function select(project,seq){
    if(current!==serial||err.name==='AbortError')return;
    text('status','NIEZNANE: '+err.message+' — odczyt niepotwierdzony');
    el('status').className='v bad';text('when',new Date().toISOString()+' · próba pobrania '+endpoint);
- }finally{if(current===serial)active=null}
+ }finally{clearTimeout(deadline);if(current===serial)active=null}
 }
 window.addEventListener('message',e=>{
  if(e.source!==parent||!e.data||e.data.protocol!==P)return;
