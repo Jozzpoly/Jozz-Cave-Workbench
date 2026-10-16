@@ -113,7 +113,7 @@ function notesMenu(anchor, c) {
   const all = Object.entries(store.notes).filter(([, n]) => n.text.trim() || false).sort((a, b) => (b[1].upd || 0) - (a[1].upd || 0));
   openMenu(anchor, [
     { head: t('Notatka w tym oknie') },
-    ...all.slice(0, 14).map(([id, n]) => ({ label: noteTitle(n.text) || t('bez tytułu'), desc: (used.has(id) ? '' : t('bez okna · ')) + dshort(new Date(n.upd || 0)), checked: id === cur,
+    ...all.slice(0, 14).map(([id, n]) => ({ label: noteTitle(n.text) || t('bez tytułu'), logSafe: t('notatka bez treści'), desc: (used.has(id) ? '' : t('bez okna · ')) + dshort(new Date(n.upd || 0)), checked: id === cur,
       act: () => { if (id !== cur) c.commit(t('inna notatka w oknie'), () => { c.win.st.note = id; }); } })),
     { sep: true },
     { label: t('Nowa, pusta notatka'), icon: 'plus', act: () => c.commit(t('nowa notatka'), () => { c.win.st.note = noteNew(); }) },
