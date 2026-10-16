@@ -55,6 +55,10 @@ else:
     out = (tpl.replace("/*N*/", str(n)).replace("/*FONTS*/", fonts).replace("/*CSS*/", css).replace("/*DATA*/", payload)
            .replace("/*APP*/", f'const BIB_HOST = "{A.host}";\n' + app.replace("</script", "<\\/script")))
     name = "biblioteka.html" if A.host == "artifact" else "biblioteka-web.html"
+if A.host == "artifact" and A.app == "jaskinia":
+    # A downloaded artifact is a standalone file:// document; without an early charset
+    # Chromium may decode UTF-8 source as legacy 8-bit text and break the inline script.
+    out = '<meta charset="utf-8">\n' + out
 if A.host == "web":
     # self-hosted: a complete document (the claude.ai artifact host adds this wrapper itself)
     import re
