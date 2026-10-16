@@ -8,7 +8,7 @@
   const css = `.gpti{display:flex;flex-direction:column;gap:9px;padding:12px;height:100%;box-sizing:border-box;font:13px system-ui,sans-serif;color:var(--fg,inherit)}
 .gpti .gpti-row{display:flex;flex-wrap:wrap;align-items:center;gap:7px}.gpti label{font-weight:650}
 .gpti input{flex:1;min-width:160px;max-width:100%;padding:6px 8px;border-radius:5px;background:var(--bg,transparent);color:inherit;border:1px solid #7777}
-.gpti button{padding:7px 10px;border:1px solid #7777;border-radius:5px;background:var(--surface,#343a43);color:inherit;cursor:pointer}
+.gpti button{padding:7px 10px;border:1px solid color-mix(in srgb,currentColor 35%,transparent);border-radius:5px;background:color-mix(in srgb,currentColor 9%,transparent);color:inherit;cursor:pointer}.gpti button:hover{background:color-mix(in srgb,currentColor 16%,transparent)}
 .gpti button[aria-pressed="true"]{outline:2px solid #6bbdb3}.gpti .gpti-info{opacity:.8;font-size:12px;line-height:1.45}
 .gpti .gpti-msg{border:1px solid #7776;padding:7px;min-height:34px;white-space:pre-wrap;overflow-wrap:anywhere}
 .gpti iframe{display:block;flex:1;min-height:130px;width:100%;border:1px solid #7777;background:#0b131e;border-radius:5px}
