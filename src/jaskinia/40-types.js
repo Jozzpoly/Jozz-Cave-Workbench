@@ -113,7 +113,7 @@ function notesMenu(anchor, c) {
   const all = Object.entries(store.notes).filter(([, n]) => n.text.trim() || false).sort((a, b) => (b[1].upd || 0) - (a[1].upd || 0));
   openMenu(anchor, [
     { head: t('Notatka w tym oknie') },
-    ...all.slice(0, 14).map(([id, n]) => ({ label: noteTitle(n.text) || t('bez tytułu'), desc: (used.has(id) ? '' : t('bez okna · ')) + dshort(new Date(n.upd || 0)), checked: id === cur,
+    ...all.slice(0, 14).map(([id, n]) => ({ label: noteTitle(n.text) || t('bez tytułu'), log: t('notatka'), desc: (used.has(id) ? '' : t('bez okna · ')) + dshort(new Date(n.upd || 0)), checked: id === cur,
       act: () => { if (id !== cur) c.commit(t('inna notatka w oknie'), () => { c.win.st.note = id; }); } })),
     { sep: true },
     { label: t('Nowa, pusta notatka'), icon: 'plus', act: () => c.commit(t('nowa notatka'), () => { c.win.st.note = noteNew(); }) },
@@ -200,7 +200,7 @@ function renderMap(box, c) {
 }
 
 const TYPES = {
-  wybor: { name: 'Pusty', glyph: 't_wybor', desc: 'Wybierz, co ma tu być.', sized: true, render: (box, c) => box.append(chooser(c)) },
+  wybor: { name: 'Pusty', glyph: 't_wybor', desc: 'Wybierz, co ma tu być.', sized: true, render: (box, c) => box.append(lostNote(c), chooser(c)) },
   mapa: { group: 'all', name: 'Mapa działek', glyph: 't_mapa', sized: true, fill: true, zoomKey: true,
     desc: 'Każde repo to działka w swojej rodzinie. Kolor: jak żywy był projekt w chwili zrzutu.', render: renderMap },
   sciana: { group: 'all', name: 'Ściana projektów', glyph: 't_sciana', fill: true, noZoom: true,
@@ -251,6 +251,12 @@ const TYPES = {
 for (const [k, T] of Object.entries(TYPES)) T.key = k;
 
 /* an empty window: in a big one every kind with a sentence, in a small one a button and the kinds used lately */
+/* a window this Jaskinia cannot draw: written by a newer build (see repairLayout); it keeps its data and comes back there */
+function lostNote(c) {
+  const lost = c.win.lost;
+  if (!lost || !lost.type) return null;
+  return h('p', { class: 'jk-sub warn ch-lost', text: t('Tu było okno „{0}”, którego ta wersja Jaskini ({1}) nie zna. Jego dane czekają: w nowszej Jaskini wróci samo. Wybierz coś innego, a je zastąpisz.', lost.type, VER) });
+}
 function chooser(c) {
   const recent = (Array.isArray(prefs.recent) ? prefs.recent : []).filter(k => TYPES[k] && k !== 'wybor').slice(0, 6);
   const small = c.size.w < 440 || c.size.h < 300;

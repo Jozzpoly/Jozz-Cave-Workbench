@@ -10,6 +10,9 @@ Jozz, a solo game developer and graphic designer, writes in Polish and casually.
 
 - **Nothing disappears silently.** A broken workspace goes to the trash (`broken`) and the rest keeps working. An unreadable store is kept in the rescue box and the last backup is loaded, with a visible banner. Deleting goes to the trash. "Delete forever" exists only inside the trash.
 - **Risky operations make a backup first** (reset, import, load-all, delete forever) and offer "Cofnij" (undo) in a toast.
+- **Deleting for good keeps a way back.** A copy holds layouts, notes and views, not the trash, so `makeBackup(why, forgotten)` puts what leaves the trash for good inside the copy made just before, and restoring that copy puts it back in the trash. If the copy cannot be written, nothing is deleted.
+- **An older Jaskinia never erases what a newer one wrote.** Every Jaskinia downloaded to one computer shares the same `file://` storage, and the public build shares it with the private one. A window type or a pinned project that a build does not know waits in `w.lost` and comes back in a build that knows it.
+- **Note text never enters the log.** A menu item whose label comes from something the owner wrote carries a `log` label (the notes menu logs "notatka"), and a package without notes scrubs every note's title and lines out of the log.
 - **Notes live outside layout undo.** Their text is in `store.notes`; a notes window only holds `st.note` (an id). Ctrl+Z of a layout never rewinds typing.
 - **The wall never rearranges itself.** Arranging happens only on request ("Ułóż…") and is one undo step. Camera position is per window in `store.views` and is not part of undo.
 - **Colours say something true.** Life colours measure time since the last commit at snapshot time, not "now", so an old snapshot does not make living projects look dead. Green means alive, older fades to calm blue and the background, red only marks findings that need a decision.

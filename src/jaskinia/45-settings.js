@@ -197,7 +197,8 @@ const SET_SECTIONS = {
           h('button', { class: 'jk-tb danger', type: 'button', onclick: e => forever(e.currentTarget, it.name || kindLabel(it), () => { forgetTrash(it.id); draw(); }) }, t('Usuń na zawsze'))))))) : null,
       empty ? setCard(null, h('p', { class: 'jk-empty', text: t('Kosz jest pusty.') })) : null,
       !empty ? h('div', { class: 'set-danger' }, h('button', { class: 'btn danger big', type: 'button', onclick: e => askPop(e.currentTarget, { title: t('Opróżnić cały kosz?'), text: t('Wszystko w koszu ({0}) zniknie na zawsze. Zanim to zrobię, zapiszę kopię automatyczną.', items.length + orphans.length), ok: t('Opróżnij kosz na zawsze'), okClass: 'danger big' }, () => {
-        makeBackup('przed usunięciem na zawsze'); store.trash = []; for (const n of orphanNotes()) delete store.notes[n.id]; persist(); draw(); jtoast(t('Kosz jest pusty.'));
+        if (storageOK && !makeBackup('przed usunięciem na zawsze', store.trash)) { jtoast(t('Nie udało się zrobić kopii przed usunięciem, więc nic nie usunąłem. Pamięć przeglądarki jest pełna: wyeksportuj Jaskinię albo usuń stare kopie.')); return; }
+        store.trash = []; for (const n of orphanNotes()) delete store.notes[n.id]; persist(); draw(); jtoast(t('Kosz jest pusty.'));
       }) }, icon('trash', 15), t('Opróżnij kosz…'))) : null);
   },
   dane(c, draw) {

@@ -1761,7 +1761,7 @@ body:has(.jk.phone) .jk-toasts { bottom: calc(78px + env(safe-area-inset-bottom,
 <script>
 const BIB_HOST = "web";
 const BIB_MODE = "jaskinia";
-const JASK_BUILD = {"v": "4", "built": "2026-10-16T12:41Z", "host": "web"};
+const JASK_BUILD = {"v": "4.1", "built": "2026-10-16T15:18Z", "host": "web"};
 (() => {
 'use strict';
 
@@ -4593,7 +4593,7 @@ const EN = {
   'cofnięte: {0}': 'undone: {0}',
   'ponowione: {0}': 'redone: {0}',
   'Wersja Jaskini: {0}, zbudowana {1}': 'Jaskinia version {0}, built {1}',
-  'To mnie uwiera: zapisz uwagę przypiętą do tej chwili (Ctrl+.)': 'This bugs me: save a note pinned to this moment (Ctrl+.)',
+  'To mnie uwiera: zapisz uwagę przypiętą do tej chwili (Ctrl+.)': 'This bugs me: save a remark pinned to this moment (Ctrl+.)',
   'To mnie uwiera': 'This bugs me',
   'sprzed chwili': 'just now',
   'sprzed {0} godz.': '{0} h old',
@@ -4617,8 +4617,8 @@ const EN = {
   'dwa palce': 'two fingers',
   'komunikat: {0}': 'message: {0}',
   'To mnie uwiera…': 'This bugs me…',
-  'uwaga przypięta do tej chwili': 'a note pinned to this moment',
-  'Uwagi i paczka dla Claude\'a…': 'Notes and the package for Claude…',
+  'uwaga przypięta do tej chwili': 'a remark pinned to this moment',
+  'Uwagi i paczka dla Claude\'a…': 'Remarks and the package for Claude…',
   'dziennik, wersja, urządzenie': 'log, version, device',
   'zbudowana {0}': 'built {0}',
   'działa jako: {0}': 'runs as: {0}',
@@ -4636,23 +4636,23 @@ const EN = {
   'projekt {0}': 'project {0}',
   'Co Cię uwiera?': 'What bugs you?',
   'Co Cię uwiera albo cieszy? Jedno zdanie wystarczy.': 'What bugs you, or what do you like? One sentence is enough.',
-  'uwaga': ['note', 'notes'],
-  'uwaga: {0}': 'note: {0}',
-  'Uwaga zapisana ({0}). Paczka dla Claude\'a: Ustawienia → Uwagi i paczka.': 'Note saved ({0}). The package for Claude: Settings → Notes and package.',
-  'Uwagi nie da się zapisać w tej przeglądarce. Skopiuj ją: Ustawienia → Uwagi i paczka.': 'This browser cannot save the note. Copy it: Settings → Notes and package.',
+  'uwaga': ['remark', 'remarks'],
+  'uwaga: {0}': 'remark: {0}',
+  'Uwaga zapisana ({0}). Paczka dla Claude\'a: Ustawienia → Uwagi i paczka.': 'Remark saved ({0}). The package for Claude: Settings → Remarks and package.',
+  'Uwagi nie da się zapisać w tej przeglądarce. Skopiuj ją: Ustawienia → Uwagi i paczka.': 'This browser cannot save the remark. Copy it: Settings → Remarks and package.',
   'Chwila {0}': 'Moment {0}',
   'paczka dla Claude\'a': 'package for Claude',
   'Gotowe: {0}. Wyślij ten plik Claude\'owi (albo GPT) razem z nagraniem.': 'Done: {0}. Send this file to Claude (or GPT) together with the recording.',
   'Paczka do skopiowania': 'Package to copy',
   'Ta przeglądarka nie pozwala tu zapisać pliku. Skopiuj paczkę i wklej ją do rozmowy (albo zapisz jako plik .json).': 'This browser does not allow saving a file here. Copy the package and paste it into the conversation (or save it as a .json file).',
-  'Szybka uwaga przypięta do chwili: zapisuje godzinę co do sekundy, układ, okno, projekt i rozmiar ekranu. Przycisk z chorągiewką u góry albo Ctrl+. (na telefonie: menu pod logo).': 'A quick note pinned to the moment: it keeps the time to the second, the layout, the window, the project and the screen size. The flag button at the top or Ctrl+. (on a phone: the menu under the logo).',
-  'Nowa uwaga': 'New note',
+  'Szybka uwaga przypięta do chwili: zapisuje godzinę co do sekundy, układ, okno, projekt i rozmiar ekranu. Przycisk z chorągiewką u góry albo Ctrl+. (na telefonie: menu pod logo).': 'A quick remark pinned to the moment: it keeps the time to the second, the layout, the window, the project and the screen size. The flag button at the top or Ctrl+. (on a phone: the menu under the logo).',
+  'Nowa uwaga': 'New remark',
   'telefon': 'phone',
-  'Usuń uwagę': 'Delete note',
-  'Uwaga usunięta.': 'Note deleted.',
-  'Jeszcze żadnej uwagi.': 'No notes yet.',
+  'Usuń uwagę': 'Delete remark',
+  'Uwaga usunięta.': 'Remark deleted.',
+  'Jeszcze żadnej uwagi.': 'No remarks yet.',
   'Paczka dla Claude\'a': 'Package for Claude',
-  'Jeden plik z wersją Jaskini, urządzeniem, ustawieniami, układami, Twoimi uwagami i dziennikiem ostatnich ruchów (z godzinami). Z nim nagranie da się dopasować do tego, co działo się w Jaskini, co do sekundy. Plik nie zawiera treści Twoich notatek, chyba że to zaznaczysz.': 'One file with the Jaskinia version, the device, the settings, the layouts, your notes and a log of recent moves (with times). With it, a recording can be matched to what happened in Jaskinia to the second. The file does not include the text of your notes unless you tick it.',
+  'Jeden plik z wersją Jaskini, urządzeniem, ustawieniami, układami, Twoimi uwagami i dziennikiem ostatnich ruchów (z godzinami). Z nim nagranie da się dopasować do tego, co działo się w Jaskini, co do sekundy. Bez zaznaczenia poniżej nie ma w nim treści notatek ani ich tytułów, także w dzienniku. Są za to Twoje uwagi i nazwy, które sam nadałeś (układy, okna, zapisy): przejrzyj go, zanim komuś wyślesz.': 'One file with the Jaskinia version, the device, the settings, the layouts, your remarks and a log of recent moves (with times). With it, a recording can be matched to what happened in Jaskinia to the second. Unless you tick the box below, it has neither the text of your notes nor their titles, not even in the log. It does have your remarks and the names you gave things yourself (layouts, windows, saves): look it over before you send it to anyone.',
   'dołącz treść notatek z okien i ze ściany': 'include the text of notes from windows and the wall',
   'Zrób paczkę (plik)': 'Make the package (file)',
   'paczka dla Claude\'a (tekst)': 'package for Claude (text)',
@@ -4661,14 +4661,17 @@ const EN = {
   'Dziennik': 'Log',
   'Co działo się w Jaskini: zmiany układu, przełączanie, zaznaczanie, menu, komunikaty, błędy. Tylko w tej przeglądarce; {0} ostatnich wpisów.': 'What happened in Jaskinia: layout changes, switching, selecting, menus, messages, errors. In this browser only; the last {0} entries.',
   'Dziennik jest pusty.': 'The log is empty.',
-  'Wyczyścić dziennik ({0} wpisów)? Uwagi zostają.': 'Clear the log ({0} entries)? Notes stay.',
+  'Wyczyścić dziennik ({0} wpisów)? Uwagi zostają.': 'Clear the log ({0} entries)? Remarks stay.',
   'Wyczyść': 'Clear',
   'Wyczyść dziennik': 'Clear the log',
   'błąd: {0}': 'error: {0}',
   'karta w tle': 'tab in the background',
   'powrót do karty': 'back to the tab',
   'rozmiar okna przeglądarki: {0}': 'browser window size: {0}',
-  'Uwagi i paczka': 'Notes and package',
+  'Uwagi i paczka': 'Remarks and package',
+  'Tu było okno „{0}”, którego ta wersja Jaskini ({1}) nie zna. Jego dane czekają: w nowszej Jaskini wróci samo. Wybierz coś innego, a je zastąpisz.': 'There was a “{0}” window here, which this version of Jaskinia ({1}) does not know. Its data is waiting: in a newer Jaskinia it comes back by itself. Choose something else and you replace it.',
+  'Nie udało się zrobić kopii przed usunięciem, więc nic nie usunąłem. Pamięć przeglądarki jest pełna: wyeksportuj Jaskinię albo usuń stare kopie.': 'The copy before deleting could not be made, so nothing was deleted. The browser storage is full: export Jaskinia or delete old copies.',
+  'Usunięte na zawsze wróciło do kosza: {0}.': 'What was deleted for good is back in the trash: {0}.',
 };
 
 /* ---------- the layout model (pure; no DOM) ----------
@@ -4877,10 +4880,20 @@ function validLayout(L, known) {
   for (const id of [...ids, ...L.floats.map(f => f.id)]) {
     const w = L.wins[id];
     if (!w || typeof w !== 'object') return false;
-    if (!known[w.type]) w.type = 'wybor';
+    /* Every Jaskinia downloaded to one computer shares the same file:// storage, so an older or a public build may open
+       layouts written by a newer one. A window type or a pinned project it does not know is kept aside, not erased,
+       and comes back in a Jaskinia that knows it. */
+    if (w.lost && typeof w.lost === 'object') {
+      if (w.lost.type && w.type === 'wybor' && known[w.lost.type]) w.type = w.lost.type;
+      if (w.lost.type && w.type !== 'wybor') delete w.lost.type;   // back, or Jozz put something else here
+      if (w.lost.pin && !w.pin && R[w.lost.pin]) w.pin = w.lost.pin;
+      if (w.lost.pin && w.pin) delete w.lost.pin;                  // back, or Jozz pinned it elsewhere
+      if (!w.lost.type && !w.lost.pin) delete w.lost;
+    } else delete w.lost;
+    if (!known[w.type]) { w.lost = { ...(w.lost && typeof w.lost === 'object' ? w.lost : {}), type: String(w.type) }; w.type = 'wybor'; }
     w.z = clamp(+w.z || 1, 0.5, 2.5);
     w.st = w.st && typeof w.st === 'object' ? w.st : {};
-    if (w.pin && !R[w.pin]) w.pin = null;
+    if (w.pin && !R[w.pin]) { w.lost = { ...(w.lost && typeof w.lost === 'object' ? w.lost : {}), pin: String(w.pin) }; w.pin = null; }
   }
   for (const k of Object.keys(L.wins)) if (!ids.includes(k) && !L.floats.some(f => f.id === k)) delete L.wins[k];
   if (L.max && !L.wins[L.max]) L.max = null;
@@ -5089,14 +5102,24 @@ function writeBackups(list) {
   return false;
 }
 function trimBackups(n) { const l = readBackups(); writeBackups(l.slice(0, Math.max(0, l.length - n))); }
-function makeBackup(why) {
+/* `forgotten`: what is about to leave the trash for good. A copy holds the layouts, notes and views, not the trash, so
+   the things deleted for good ride along in it; restoring that copy puts them back in the trash (GPT's review of v3
+   found that the promise "it stays in the copy made now" was not true for layouts and saved states).
+   Returns null when the copy could not be written: the caller must not delete then. */
+function makeBackup(why, forgotten) {
   if (!storageOK || !store) return null;
   const data = snapshotAll(), list = readBackups(), s0 = sig({ s: data.spaces, n: data.notes });
-  if (list[0] && list[0].sig === s0) { if (why !== 'auto') { list[0].why = why; list[0].at = Date.now(); writeBackups(list); } return list[0]; }
+  const keep = arr(forgotten).filter(Boolean).map(x => clone(x));
+  if (list[0] && list[0].sig === s0) {
+    if (why === 'auto' && !keep.length) return list[0];
+    if (why !== 'auto') { list[0].why = why; list[0].at = Date.now(); }
+    if (keep.length) list[0].data.forgotten = [...arr(list[0].data.forgotten), ...keep];
+    return writeBackups(list) ? list[0] : null;
+  }
+  if (keep.length) data.forgotten = keep;
   const b = { id: uid('b'), at: Date.now(), why, sig: s0, n: data.spaces.length, data };
   list.unshift(b);
-  writeBackups(list.slice(0, BAK_MAX));
-  return b;
+  return writeBackups(list.slice(0, BAK_MAX)) ? b : null;
 }
 function maybeAutoBackup() { const b = readBackups()[0]; if (!b || Date.now() - b.at > BAK_EVERY) makeBackup('auto'); }
 
@@ -6450,7 +6473,7 @@ function notesMenu(anchor, c) {
   const all = Object.entries(store.notes).filter(([, n]) => n.text.trim() || false).sort((a, b) => (b[1].upd || 0) - (a[1].upd || 0));
   openMenu(anchor, [
     { head: t('Notatka w tym oknie') },
-    ...all.slice(0, 14).map(([id, n]) => ({ label: noteTitle(n.text) || t('bez tytułu'), desc: (used.has(id) ? '' : t('bez okna · ')) + dshort(new Date(n.upd || 0)), checked: id === cur,
+    ...all.slice(0, 14).map(([id, n]) => ({ label: noteTitle(n.text) || t('bez tytułu'), log: t('notatka'), desc: (used.has(id) ? '' : t('bez okna · ')) + dshort(new Date(n.upd || 0)), checked: id === cur,
       act: () => { if (id !== cur) c.commit(t('inna notatka w oknie'), () => { c.win.st.note = id; }); } })),
     { sep: true },
     { label: t('Nowa, pusta notatka'), icon: 'plus', act: () => c.commit(t('nowa notatka'), () => { c.win.st.note = noteNew(); }) },
@@ -6537,7 +6560,7 @@ function renderMap(box, c) {
 }
 
 const TYPES = {
-  wybor: { name: 'Pusty', glyph: 't_wybor', desc: 'Wybierz, co ma tu być.', sized: true, render: (box, c) => box.append(chooser(c)) },
+  wybor: { name: 'Pusty', glyph: 't_wybor', desc: 'Wybierz, co ma tu być.', sized: true, render: (box, c) => box.append(lostNote(c), chooser(c)) },
   mapa: { group: 'all', name: 'Mapa działek', glyph: 't_mapa', sized: true, fill: true, zoomKey: true,
     desc: 'Każde repo to działka w swojej rodzinie. Kolor: jak żywy był projekt w chwili zrzutu.', render: renderMap },
   sciana: { group: 'all', name: 'Ściana projektów', glyph: 't_sciana', fill: true, noZoom: true,
@@ -6588,6 +6611,12 @@ const TYPES = {
 for (const [k, T] of Object.entries(TYPES)) T.key = k;
 
 /* an empty window: in a big one every kind with a sentence, in a small one a button and the kinds used lately */
+/* a window this Jaskinia cannot draw: written by a newer build (see repairLayout); it keeps its data and comes back there */
+function lostNote(c) {
+  const lost = c.win.lost;
+  if (!lost || !lost.type) return null;
+  return h('p', { class: 'jk-sub warn ch-lost', text: t('Tu było okno „{0}”, którego ta wersja Jaskini ({1}) nie zna. Jego dane czekają: w nowszej Jaskini wróci samo. Wybierz coś innego, a je zastąpisz.', lost.type, VER) });
+}
 function chooser(c) {
   const recent = (Array.isArray(prefs.recent) ? prefs.recent : []).filter(k => TYPES[k] && k !== 'wybor').slice(0, 6);
   const small = c.size.w < 440 || c.size.h < 300;
@@ -6803,7 +6832,8 @@ const SET_SECTIONS = {
           h('button', { class: 'jk-tb danger', type: 'button', onclick: e => forever(e.currentTarget, it.name || kindLabel(it), () => { forgetTrash(it.id); draw(); }) }, t('Usuń na zawsze'))))))) : null,
       empty ? setCard(null, h('p', { class: 'jk-empty', text: t('Kosz jest pusty.') })) : null,
       !empty ? h('div', { class: 'set-danger' }, h('button', { class: 'btn danger big', type: 'button', onclick: e => askPop(e.currentTarget, { title: t('Opróżnić cały kosz?'), text: t('Wszystko w koszu ({0}) zniknie na zawsze. Zanim to zrobię, zapiszę kopię automatyczną.', items.length + orphans.length), ok: t('Opróżnij kosz na zawsze'), okClass: 'danger big' }, () => {
-        makeBackup('przed usunięciem na zawsze'); store.trash = []; for (const n of orphanNotes()) delete store.notes[n.id]; persist(); draw(); jtoast(t('Kosz jest pusty.'));
+        if (storageOK && !makeBackup('przed usunięciem na zawsze', store.trash)) { jtoast(t('Nie udało się zrobić kopii przed usunięciem, więc nic nie usunąłem. Pamięć przeglądarki jest pełna: wyeksportuj Jaskinię albo usuń stare kopie.')); return; }
+        store.trash = []; for (const n of orphanNotes()) delete store.notes[n.id]; persist(); draw(); jtoast(t('Kosz jest pusty.'));
       }) }, icon('trash', 15), t('Opróżnij kosz…'))) : null);
   },
   dane(c, draw) {
@@ -7294,7 +7324,7 @@ function setType(id, type) {
   commit(t('zmiana okna na {0}', t(TYPES[type].name)), () => {
     const w = L.wins[id];
     if (w.type === type) return false;
-    w.type = type; w.st = {};
+    w.type = type; w.st = {}; delete w.lost; // Jozz chose something else for this window
     if (type === 'notatki') w.st.note = noteNew();
     if (!TYPES[type].follows) w.pin = null;
   });
@@ -7698,7 +7728,7 @@ function closeMenus() { if (openPop) openPop.close(); }
 function openMenu(anchor, items, at, cls = '', opts = {}) {
   const el = h('div', { class: 'jk-menu ' + cls, role: 'menu' });
   const head0 = items.find(it => it && it.head);
-  logEv(t('menu: {0}', head0 ? head0.head : (items.find(it => it && it.label)?.label || '…')));
+  logEv(t('menu: {0}', head0 ? head0.head : (() => { const it = items.find(x => x && x.label); return it ? it.log || it.label : '…'; })()));
   const btns = [];
   let close = null;
   for (const it of items) {
@@ -7708,7 +7738,7 @@ function openMenu(anchor, items, at, cls = '', opts = {}) {
     if (it.note) { el.append(h('p', { class: 'mi-note', text: it.note })); continue; }
     const b = h('button', { class: 'mi' + (it.checked ? ' on' : '') + (it.danger ? ' danger' : '') + (it.sub ? ' has-sub' : ''), type: 'button', disabled: !!it.disabled,
       role: it.checked != null ? 'menuitemradio' : 'menuitem', 'aria-checked': it.checked != null ? String(!!it.checked) : null,
-      onclick: () => { if (it.sub) { it.sub(b); return; } logEv(t('wybrane: {0}', it.label)); close(); it.act?.(); } },
+      onclick: () => { if (it.sub) { it.sub(b); return; } logEv(t('wybrane: {0}', it.log || it.label)); close(); it.act?.(); } },
       h('span', { class: 'mi-i' }, it.icon ? icon(it.icon, 15) : it.checked ? icon('check', 15) : null),
       h('span', { class: 'mi-l' }, h('span', { text: it.label }), it.desc ? h('small', { text: it.desc }) : null),
       it.hint ? h('kbd', { class: 'mi-h', text: it.hint }) : it.sub ? icon('arrowR', 13, 'mi-sub') : null);
@@ -7944,8 +7974,10 @@ function restoreBackup(id, quiet) {
   store.spaces = arr(d.spaces); store.cur = d.cur; store.sel = d.sel;
   for (const [k, n] of Object.entries(obj(d.notes))) if (!store.notes[k] || (n.upd || 0) > (store.notes[k].upd || 0)) store.notes[k] = n;
   Object.assign(store.views, obj(d.views));
+  let back = 0; // what was deleted for good after this copy goes back to the trash, not straight into the layouts
+  for (const it of arr(d.forgotten)) if (it && it.id && !store.trash.some(x => x.id === it.id)) { store.trash.unshift(it); back++; }
   rebuildAll();
-  if (!quiet) jtoast(t('Przywrócona kopia z {0}.', dshort(new Date(b.at))), before ? { label: t('Cofnij'), act: () => restoreBackup(before.id, true) } : null);
+  if (!quiet) jtoast(t('Przywrócona kopia z {0}.', dshort(new Date(b.at))) + (back ? ' ' + t('Usunięte na zawsze wróciło do kosza: {0}.', back) : ''), before ? { label: t('Cofnij'), act: () => restoreBackup(before.id, true) } : null);
 }
 function saveCurrent(name) {
   const it = saveSpaceState(space, name);
@@ -8197,7 +8229,7 @@ function restoreTrash(trId) {
 function forgetTrash(trId) {
   const i = store.trash.findIndex(x => x.id === trId);
   if (i < 0) return;
-  makeBackup('przed usunięciem na zawsze');
+  if (storageOK && !makeBackup('przed usunięciem na zawsze', [store.trash[i]])) { jtoast(t('Nie udało się zrobić kopii przed usunięciem, więc nic nie usunąłem. Pamięć przeglądarki jest pełna: wyeksportuj Jaskinię albo usuń stare kopie.')); return; }
   const [it] = store.trash.splice(i, 1);
   if (it.kind === 'wallnote' && it.data?.note?.id && !notesReferenced().has(it.data.note.id)) delete store.notes[it.data.note.id];
   persist();
@@ -8343,7 +8375,7 @@ function boot() {
   maybeAutoBackup();
   showNotices();
   firstHint();
-  window.__JASK = { get L() { return L; }, get store() { return store; }, get phone() { return phone; }, RT, WALLS, apply, select, commit, undo, redo, setSpace, layoutRects, leafIds, rects: () => rects, prefs, openSettings, readBackups, persistNow, get log() { return jlog; }, get uwagi() { return uwagi; }, packageData, packageText };
+  window.__JASK = { get L() { return L; }, get store() { return store; }, get phone() { return phone; }, RT, WALLS, apply, select, commit, undo, redo, setSpace, layoutRects, leafIds, rects: () => rects, prefs, openSettings, readBackups, persistNow, get log() { return jlog; }, get uwagi() { return uwagi; }, packageData, packageText, deleteSpace, restoreTrash, forgetTrash, restoreBackup };
 }
 
 /* ---------- cheap feedback: a log of what happened, a note pinned to the moment, a package for Claude ----------
@@ -8355,6 +8387,28 @@ function boot() {
    Nothing leaves the device by itself: the package is a file (or text) Jozz hands over when he wants. */
 const KEY_LOG = 'jaskinia:dziennik', KEY_UW = 'jaskinia:uwagi', LOG_MAX = 600;
 let jlog = (() => { try { return arr(JSON.parse(lsGet(KEY_LOG) || '[]')).filter(e => e && e.t && e.a); } catch { return []; } })();
+/* Note text stays out of the log. The menu of notes logs "notatka", not the note's title (a menu item's `log` label).
+   v4 still logged the title there (GPT's review of PR #1 found it), so those lines are cleaned once, when the log is
+   read; and a package without notes also scrubs every note's lines out of the log, in case another path let one in. */
+const NOTE_MENU = ['Notatka w tym oknie', 'Note in this window'];
+(function cleanOldLog() {
+  let menu = '', changed = false;
+  for (const e of jlog) {
+    const m = /^menu: (.*)$/.exec(e.a);
+    if (m) { menu = m[1]; continue; }
+    const c = /^(wybrane|chosen): /.exec(e.a);
+    if (c && NOTE_MENU.includes(menu) && e.a !== c[0] + t('notatka')) { e.a = c[0] + t('notatka'); changed = true; }
+  }
+  if (changed) lsSet(KEY_LOG, JSON.stringify(jlog));
+})();
+function noteNeedles() {
+  const s = new Set();
+  const add = (x, min) => { x = String(x || '').trim(); if (x.length < min) return; s.add(x); if (x.endsWith('…')) s.add(x.slice(0, -1)); };
+  for (const n of Object.values(store.notes)) { add(noteTitle(n.text), 4); for (const line of String(n.text || '').split('\n')) add(line, 12); }
+  for (const k of store.trash) if (k.kind === 'wallnote') add(k.name, 4);
+  return [...s].sort((a, b) => b.length - a.length);
+}
+const scrubNotes = (a, needles) => needles.reduce((x, n) => x.includes(n) ? x.split(n).join('[' + t('notatka') + ']') : x, a);
 let uwagi = (() => { try { return arr(JSON.parse(lsGet(KEY_UW) || '[]')).filter(u => u && u.t && typeof u.text === 'string'); } catch { return []; } })();
 let logT = 0, lastLogged = '';
 function logEv(what, extra) {
@@ -8425,7 +8479,7 @@ function uwagaPop(anchor) {
 /* ---------- the package ---------- */
 function packageData(withNotes) {
   const C = D.estate.coverage;
-  const notesInfo = Object.values(store.notes);
+  const notesInfo = Object.values(store.notes), needles = withNotes ? [] : noteNeedles();
   return {
     app: 'jaskinia-paczka', v: 1,
     zrobiona: isoLocal(Date.now()), zrobiona_utc: new Date().toISOString(),
@@ -8441,7 +8495,7 @@ function packageData(withNotes) {
     uklady: store.spaces.map(sp => ({ nazwa: spaceName(sp), preset: sp.preset, cel: sp.purpose || '', okna: allIdsOf(sp.L).length, uklad: sp.L })),
     widoki: store.views,
     uwagi: uwagi.map(u => ({ ...u, czas: isoLocal(u.t) })),
-    dziennik: jlog.map(e => ({ ...e, czas: isoLocal(e.t) })),
+    dziennik: jlog.map(e => ({ ...e, a: scrubNotes(e.a, needles), czas: isoLocal(e.t) })),
     notatki: withNotes ? store.notes : { liczba: notesInfo.length, znakow: notesInfo.reduce((a, n) => a + (n.text || '').length, 0), tresc: 'pominięta (Ustawienia → Uwagi i paczka → dołącz treść notatek)' },
     licznik: { zapisy: store.saved.length, kosz: store.trash.length, kopie: readBackups().length },
   };
@@ -8500,7 +8554,7 @@ SET_SECTIONS.uwagi = (c, draw) => {
           })))))
         : h('p', { class: 'set-note', text: t('Jeszcze żadnej uwagi.') })),
     setCard(t('Paczka dla Claude\'a'),
-      h('p', { class: 'set-note', text: t('Jeden plik z wersją Jaskini, urządzeniem, ustawieniami, układami, Twoimi uwagami i dziennikiem ostatnich ruchów (z godzinami). Z nim nagranie da się dopasować do tego, co działo się w Jaskini, co do sekundy. Plik nie zawiera treści Twoich notatek, chyba że to zaznaczysz.') }),
+      h('p', { class: 'set-note', text: t('Jeden plik z wersją Jaskini, urządzeniem, ustawieniami, układami, Twoimi uwagami i dziennikiem ostatnich ruchów (z godzinami). Z nim nagranie da się dopasować do tego, co działo się w Jaskini, co do sekundy. Bez zaznaczenia poniżej nie ma w nim treści notatek ani ich tytułów, także w dzienniku. Są za to Twoje uwagi i nazwy, które sam nadałeś (układy, okna, zapisy): przejrzyj go, zanim komuś wyślesz.') }),
       h('label', { class: 'set-check', for: 'uw-notes' }, withNotes, h('span', { text: t('dołącz treść notatek z okien i ze ściany') })),
       h('div', { class: 'set-acts' },
         h('button', { class: 'btn', type: 'button', onclick: () => offerPackage(out, withNotes.checked) }, icon('download', 14), t('Zrób paczkę (plik)')),

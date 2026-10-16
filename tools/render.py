@@ -55,6 +55,11 @@ else:
     out = (tpl.replace("/*N*/", str(n)).replace("/*FONTS*/", fonts).replace("/*CSS*/", css).replace("/*DATA*/", payload)
            .replace("/*APP*/", f'const BIB_HOST = "{A.host}";\n' + app.replace("</script", "<\\/script")))
     name = "biblioteka.html" if A.host == "artifact" else "biblioteka-web.html"
+if A.host == "artifact":
+    # Opened straight from a disk, the fragment has no HTTP header to name its encoding, and Chromium may then read the
+    # UTF-8 as an 8-bit code page and break the script (GPT's real file:// check on PR #1). Inside claude.ai the page's
+    # own head already says utf-8, so this line changes nothing there.
+    out = '<meta charset="utf-8">\n' + out
 if A.host == "web":
     # self-hosted: a complete document (the claude.ai artifact host adds this wrapper itself)
     import re

@@ -366,7 +366,7 @@ function setType(id, type) {
   commit(t('zmiana okna na {0}', t(TYPES[type].name)), () => {
     const w = L.wins[id];
     if (w.type === type) return false;
-    w.type = type; w.st = {};
+    w.type = type; w.st = {}; delete w.lost; // Jozz chose something else for this window
     if (type === 'notatki') w.st.note = noteNew();
     if (!TYPES[type].follows) w.pin = null;
   });
@@ -770,7 +770,7 @@ function closeMenus() { if (openPop) openPop.close(); }
 function openMenu(anchor, items, at, cls = '', opts = {}) {
   const el = h('div', { class: 'jk-menu ' + cls, role: 'menu' });
   const head0 = items.find(it => it && it.head);
-  logEv(t('menu: {0}', head0 ? head0.head : (items.find(it => it && it.label)?.label || '…')));
+  logEv(t('menu: {0}', head0 ? head0.head : (() => { const it = items.find(x => x && x.label); return it ? it.log || it.label : '…'; })()));
   const btns = [];
   let close = null;
   for (const it of items) {
@@ -780,7 +780,7 @@ function openMenu(anchor, items, at, cls = '', opts = {}) {
     if (it.note) { el.append(h('p', { class: 'mi-note', text: it.note })); continue; }
     const b = h('button', { class: 'mi' + (it.checked ? ' on' : '') + (it.danger ? ' danger' : '') + (it.sub ? ' has-sub' : ''), type: 'button', disabled: !!it.disabled,
       role: it.checked != null ? 'menuitemradio' : 'menuitem', 'aria-checked': it.checked != null ? String(!!it.checked) : null,
-      onclick: () => { if (it.sub) { it.sub(b); return; } logEv(t('wybrane: {0}', it.label)); close(); it.act?.(); } },
+      onclick: () => { if (it.sub) { it.sub(b); return; } logEv(t('wybrane: {0}', it.log || it.label)); close(); it.act?.(); } },
       h('span', { class: 'mi-i' }, it.icon ? icon(it.icon, 15) : it.checked ? icon('check', 15) : null),
       h('span', { class: 'mi-l' }, h('span', { text: it.label }), it.desc ? h('small', { text: it.desc }) : null),
       it.hint ? h('kbd', { class: 'mi-h', text: it.hint }) : it.sub ? icon('arrowR', 13, 'mi-sub') : null);
@@ -1016,8 +1016,10 @@ function restoreBackup(id, quiet) {
   store.spaces = arr(d.spaces); store.cur = d.cur; store.sel = d.sel;
   for (const [k, n] of Object.entries(obj(d.notes))) if (!store.notes[k] || (n.upd || 0) > (store.notes[k].upd || 0)) store.notes[k] = n;
   Object.assign(store.views, obj(d.views));
+  let back = 0; // what was deleted for good after this copy goes back to the trash, not straight into the layouts
+  for (const it of arr(d.forgotten)) if (it && it.id && !store.trash.some(x => x.id === it.id)) { store.trash.unshift(it); back++; }
   rebuildAll();
-  if (!quiet) jtoast(t('Przywrócona kopia z {0}.', dshort(new Date(b.at))), before ? { label: t('Cofnij'), act: () => restoreBackup(before.id, true) } : null);
+  if (!quiet) jtoast(t('Przywrócona kopia z {0}.', dshort(new Date(b.at))) + (back ? ' ' + t('Usunięte na zawsze wróciło do kosza: {0}.', back) : ''), before ? { label: t('Cofnij'), act: () => restoreBackup(before.id, true) } : null);
 }
 function saveCurrent(name) {
   const it = saveSpaceState(space, name);
@@ -1269,7 +1271,7 @@ function restoreTrash(trId) {
 function forgetTrash(trId) {
   const i = store.trash.findIndex(x => x.id === trId);
   if (i < 0) return;
-  makeBackup('przed usunięciem na zawsze');
+  if (storageOK && !makeBackup('przed usunięciem na zawsze', [store.trash[i]])) { jtoast(t('Nie udało się zrobić kopii przed usunięciem, więc nic nie usunąłem. Pamięć przeglądarki jest pełna: wyeksportuj Jaskinię albo usuń stare kopie.')); return; }
   const [it] = store.trash.splice(i, 1);
   if (it.kind === 'wallnote' && it.data?.note?.id && !notesReferenced().has(it.data.note.id)) delete store.notes[it.data.note.id];
   persist();
@@ -1415,5 +1417,5 @@ function boot() {
   maybeAutoBackup();
   showNotices();
   firstHint();
-  window.__JASK = { get L() { return L; }, get store() { return store; }, get phone() { return phone; }, RT, WALLS, apply, select, commit, undo, redo, setSpace, layoutRects, leafIds, rects: () => rects, prefs, openSettings, readBackups, persistNow, get log() { return jlog; }, get uwagi() { return uwagi; }, packageData, packageText };
+  window.__JASK = { get L() { return L; }, get store() { return store; }, get phone() { return phone; }, RT, WALLS, apply, select, commit, undo, redo, setSpace, layoutRects, leafIds, rects: () => rects, prefs, openSettings, readBackups, persistNow, get log() { return jlog; }, get uwagi() { return uwagi; }, packageData, packageText, deleteSpace, restoreTrash, forgetTrash, restoreBackup };
 }

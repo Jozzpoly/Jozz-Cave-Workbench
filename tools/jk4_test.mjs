@@ -4,6 +4,8 @@ import { chromium, devices } from 'playwright';
 import { serve } from './serve.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+import os from 'node:os';
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const shots = process.argv[2] || path.join(root, 'shots/jk4t');
 fs.mkdirSync(shots, { recursive: true });
@@ -16,10 +18,12 @@ const browser = await chromium.launch();
 let pass = 0, fail = 0;
 const ok = (cond, name, extra = '') => { if (cond) { pass++; console.log('PASS', name, extra); } else { fail++; console.log('FAIL', name, extra); } };
 const errs = [];
-async function open({ phone = false, size = { width: 1916, height: 908 }, place = null, prefs = null } = {}) {
+async function open({ phone = false, size = { width: 1916, height: 908 }, place = null, prefs = null, init = null, hint = true } = {}) {
   const ctx = await browser.newContext(phone ? { ...devices['Pixel 7'], colorScheme: 'dark' } : { viewport: size, deviceScaleFactor: 1, colorScheme: 'dark' });
-  await ctx.addInitScript(() => { try { localStorage.setItem('jaskinia:hint', '1'); } catch { /* fine */ } });
+  // a localStorage write injected at document start can hand a reloaded page an empty storage (see the file:// checks); checks that reload skip it
+  if (hint) await ctx.addInitScript(() => { try { localStorage.setItem('jaskinia:hint', '1'); } catch { /* fine */ } });
   if (place) await ctx.addInitScript(p => { window.__JASK_PLACE = p; }, place);
+  if (init) await ctx.addInitScript(init[0], init[1]);
   if (prefs) await ctx.addInitScript(p => { try { if (!sessionStorage.getItem('p')) { localStorage.setItem('jaskinia:prefs', JSON.stringify(p)); sessionStorage.setItem('p', '1'); } } catch { /* fine */ } }, prefs);
   const page = await ctx.newPage();
   page.on('console', m => { if (m.type() === 'error') errs.push(m.text()); });
@@ -209,6 +213,118 @@ const overlaps = (a, b) => Math.max(0, Math.min(a.right, b.right) - Math.max(a.l
   ok(await page.locator('.jk-menu .mi:has-text("To mnie uwiera")').count() === 1, 'phone: "To mnie uwiera" is in the main menu', '');
   await page.goBack(); await wait(300);
   await ctx.close();
+}
+
+/* ================= v4.1: the package keeps note text out (GPT's review of PR #1) ================= */
+{
+  // v4 logged a note's title when it was chosen from the notes menu, so a package "without notes" still carried it.
+  // The check searches the whole package, JSON and text, not only the notes field.
+  const S = { title: 'SENTINEL_TITLE_kx81 prywatny tytuł', body: 'SENTINEL_BODY_qz42 tej linijki nikt nie powinien zobaczyć', old: 'SENTINEL_OLD_mm7 tytuł z v4' };
+  const seed = [s => { try { if (!sessionStorage.getItem('seeded')) { const n = Date.now(); localStorage.setItem('jaskinia:dziennik', JSON.stringify([
+    { t: n - 9000, a: 'menu: Notatka w tym oknie' }, { t: n - 8000, a: 'wybrane: ' + s }, { t: n - 7000, a: 'menu: Ułóż kartki' }, { t: n - 6000, a: 'wybrane: Według rodzin' }]));
+    sessionStorage.setItem('seeded', '1'); } } catch { /* fine */ } }, S.old];
+  const { ctx, page, J, wait } = await open({ init: seed });
+  const raw0 = await J(() => __JASK.log.map(e => e.a));
+  ok(!raw0.some(a => a.includes('SENTINEL_OLD')) && raw0.includes('wybrane: notatka'), 'package: a note title logged by v4 is cleaned when the log is read', raw0.slice(0, 4).join(' | '));
+  ok(raw0.includes('wybrane: Według rodzin'), 'package: other choices stay readable in the log', '');
+  // two notes; the window shows the second; the sentinel note is chosen from the window's notes menu
+  await J(S => { const J = window.__JASK, id = J.leafIds(J.L.tree)[0];
+    J.store.notes.sentA = { text: S.title + '\n' + S.body, upd: Date.now() }; J.store.notes.sentB = { text: 'zwykła notatka', upd: Date.now() - 1000 };
+    J.commit('test: notatka', L => { L.wins[id].type = 'notatki'; L.wins[id].st = { note: 'sentB' }; }); }, S);
+  await wait(400);
+  await page.locator('.win[data-type="notatki"] .note-pick').first().click(); await wait(250);
+  await page.locator('.jk-menu .mi', { hasText: 'SENTINEL_TITLE_kx81' }).first().click(); await wait(300);
+  const shown = await J(() => { const id = Object.keys(__JASK.L.wins).find(k => __JASK.L.wins[k].type === 'notatki'); return __JASK.L.wins[id].st.note; });
+  ok(shown === 'sentA', 'package: the note picked from the menu is shown', shown);
+  await wait(900); // the log is saved 0.7 s after the last line
+  const stored = await J(() => localStorage.getItem('jaskinia:dziennik') || '');
+  ok(!/SENTINEL/.test(stored) && stored.includes('wybrane: notatka'), 'package: choosing a note logs "notatka", not its title, also in the saved log', '');
+  // a remark made while the notes window is in focus names the window, not the note
+  await page.locator('.win[data-type="notatki"] .whead').first().click(); await wait(150);
+  await page.keyboard.press('Control+.'); await wait(300);
+  await page.locator('.jk-uwaga textarea').fill('uwaga testowa przy notatkach'); await page.keyboard.press('Control+Enter'); await wait(300);
+  const uw = await J(() => __JASK.uwagi[__JASK.uwagi.length - 1]);
+  ok(uw && uw.text === 'uwaga testowa przy notatkach' && !/SENTINEL/.test(JSON.stringify(uw)), 'package: a remark carries the window, not the note', uw && uw.okno);
+  // a path that does not exist yet: a line that carries a note's title and a line of its body
+  await J(S => { __JASK.log.push({ t: Date.now(), a: 'komunikat: coś z ' + S.title }, { t: Date.now(), a: 'błąd: ' + S.body }); }, S);
+  const pk = await J(() => ({ json: JSON.stringify(__JASK.packageData(false)), text: __JASK.packageText(), withNotes: JSON.stringify(__JASK.packageData(true)) }));
+  const leak = x => (x.match(/SENTINEL_[A-Z]+_[a-z0-9]+/g) || []).join(',');
+  ok(!leak(pk.json), 'package (file): no note title or body anywhere without the tick', leak(pk.json));
+  ok(!leak(pk.text), 'package (text): no note title or body anywhere', leak(pk.text));
+  ok(pk.json.includes('wybrane: Według rodzin') && pk.json.includes('[notatka]'), 'package: the log keeps its other lines; a note becomes [notatka]', '');
+  ok(pk.withNotes.includes('SENTINEL_BODY_qz42'), 'package: with the tick, the notes are in', '');
+  await ctx.close();
+}
+
+/* ================= v4.1: "deleted for good" keeps a way back (GPT's review of v3: the copy did not hold it) ================= */
+{
+  const { ctx, page, J, wait } = await open({ hint: false });
+  await J(() => { try { localStorage.setItem('jaskinia:hint', '1'); } catch { /* fine */ } });
+  const r = await J(() => {
+    const J = __JASK, sp = J.store.spaces[J.store.spaces.length - 1];
+    J.deleteSpace(sp.id);
+    const tr = J.store.trash.find(x => x.kind === 'space' && x.data && x.data.sp && x.data.sp.id === sp.id);
+    J.forgetTrash(tr.id);
+    const gone = !J.store.trash.some(x => x.id === tr.id);
+    const b = J.readBackups()[0];
+    const held = !!(b && b.data.forgotten && b.data.forgotten.some(x => x.id === tr.id));
+    J.restoreBackup(b.id, true);
+    const back = J.store.trash.some(x => x.id === tr.id);
+    if (back) J.restoreTrash(tr.id);
+    return { gone, held, back, again: J.store.spaces.some(x => x.id === sp.id) };
+  });
+  ok(r.gone && r.held, 'trash: a layout deleted for good rides along in the copy made just before', JSON.stringify(r));
+  ok(r.back && r.again, 'trash: restoring that copy puts it back in the trash, and from there into the layouts', '');
+  // the whole trash at once, through the real button
+  await J(() => { const J = __JASK; J.deleteSpace(J.store.spaces[J.store.spaces.length - 1].id); });
+  await J(() => __JASK.openSettings('kosz')); await wait(400);
+  await page.locator('.set-danger .btn.danger').click(); await wait(200);
+  await page.locator('.jk-confirm .btn.danger').click(); await wait(300);
+  const emptied = await J(() => ({ trash: __JASK.store.trash.length, held: (__JASK.readBackups()[0].data.forgotten || []).length }));
+  ok(emptied.trash === 0 && emptied.held >= 1, 'trash: "Opróżnij kosz" keeps what it deletes in the copy', JSON.stringify(emptied));
+  await page.keyboard.press('Escape');
+
+  /* an older Jaskinia, or the public one, opening layouts written by a newer one (every downloaded file on one computer
+     shares the same file:// storage): what it cannot draw waits, and comes back */
+  const sid = await J(() => { const J = __JASK, sp = J.store.spaces[0], id = J.leafIds(sp.L.tree)[0];
+    Object.assign(sp.L.wins[id], { type: 'przyrzad_z_przyszlosci', pin: 'Repo-Z-Przyszlosci', st: { url: 'https://example.org/lab' } }); J.store.cur = sp.id; J.persistNow(); return sp.id; });
+  await page.reload(); await wait(1000);
+  const kept = await J(sid => { const J = __JASK, sp = J.store.spaces.find(x => x.id === sid), w = sp.L.wins[J.leafIds(sp.L.tree)[0]]; return { type: w.type, lost: w.lost || null, url: w.st.url || null }; }, sid);
+  ok(kept.type === 'wybor' && kept.lost?.type === 'przyrzad_z_przyszlosci' && kept.lost?.pin === 'Repo-Z-Przyszlosci' && kept.url, 'older build: an unknown window type and project wait aside', JSON.stringify(kept));
+  ok(await page.locator('.ch-lost').count() > 0, 'older build: the empty window says what was there', '');
+  // a Jaskinia that knows them again (simulated with a type and a project this build knows)
+  await J(sid => { const J = __JASK, sp = J.store.spaces.find(x => x.id === sid), w = sp.L.wins[J.leafIds(sp.L.tree)[0]]; w.lost = { type: 'karta', pin: 'Mini_Feniks' }; J.persistNow(); }, sid);
+  await page.reload(); await wait(1000);
+  const backAgain = await J(sid => { const J = __JASK, sp = J.store.spaces.find(x => x.id === sid), w = sp.L.wins[J.leafIds(sp.L.tree)[0]]; return { type: w.type, pin: w.pin, lost: w.lost || null }; }, sid);
+  ok(backAgain.type === 'karta' && backAgain.pin === 'Mini_Feniks' && !backAgain.lost, 'newer build: the window and its project come back by themselves', JSON.stringify(backAgain));
+  await ctx.close();
+}
+
+/* ================= v4.1: a real file from the disk (GPT: file://, not the HTTP stand-in for "plik") =================
+   In a real browser profile, like the owner's, and without the suite's usual init script: a localStorage write that
+   Playwright injects at the start of a reloaded file:// document makes Chromium hand that document an empty storage
+   (lost on 2 to 3 reloads in 8, in throwaway and real profiles alike). Without it, 48 reloads of 48 kept the state. */
+for (const name of ['jaskinia.html', 'jaskinia-web.html']) {
+  const f = path.join(root, 'dist', name);
+  if (!fs.existsSync(f)) { ok(false, `file://: ${name} is built`, 'npm run jaskinia'); continue; }
+  const prof = fs.mkdtempSync(path.join(os.tmpdir(), 'jk4-profile-'));
+  const ctx = await chromium.launchPersistentContext(prof, { viewport: { width: 1400, height: 880 }, colorScheme: 'dark' });
+  const page = ctx.pages()[0] || await ctx.newPage(), e2 = [];
+  page.on('pageerror', e => e2.push(e.message));
+  await page.goto(pathToFileURL(f).href);
+  const up = () => page.waitForFunction(() => !!(window.__JASK && window.__JASK.store), null, { timeout: 10000 }).then(() => true, () => false);
+  const booted = await up();
+  ok(booted && !e2.length, `file://: ${name} starts straight from the disk`, (await page.evaluate(() => document.characterSet)) + ' ' + e2.slice(0, 2).join(' | '));
+  if (booted) {
+    const where = await page.evaluate(() => { const k = __JASK.packageData(false).jaskinia; return k.dziala_jako + ' ' + k.protokol; });
+    ok(where === 'plik file:', `file://: ${name} knows it runs as a file`, where);
+    await page.evaluate(() => { __JASK.store.spaces[0].purpose = 'sprawdzenie po przeładowaniu'; __JASK.persistNow(); });
+    await page.reload(); await up();
+    const kept = await page.evaluate(() => __JASK.store.spaces[0].purpose);
+    ok(kept === 'sprawdzenie po przeładowaniu', `file://: ${name} keeps its state across a reload`, String(kept));
+  }
+  await ctx.close();
+  fs.rmSync(prof, { recursive: true, force: true });
 }
 
 console.log(errs.length ? 'ERRORS:\n' + errs.join('\n') : '');

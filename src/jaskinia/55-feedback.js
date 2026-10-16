@@ -7,6 +7,28 @@
    Nothing leaves the device by itself: the package is a file (or text) Jozz hands over when he wants. */
 const KEY_LOG = 'jaskinia:dziennik', KEY_UW = 'jaskinia:uwagi', LOG_MAX = 600;
 let jlog = (() => { try { return arr(JSON.parse(lsGet(KEY_LOG) || '[]')).filter(e => e && e.t && e.a); } catch { return []; } })();
+/* Note text stays out of the log. The menu of notes logs "notatka", not the note's title (a menu item's `log` label).
+   v4 still logged the title there (GPT's review of PR #1 found it), so those lines are cleaned once, when the log is
+   read; and a package without notes also scrubs every note's lines out of the log, in case another path let one in. */
+const NOTE_MENU = ['Notatka w tym oknie', 'Note in this window'];
+(function cleanOldLog() {
+  let menu = '', changed = false;
+  for (const e of jlog) {
+    const m = /^menu: (.*)$/.exec(e.a);
+    if (m) { menu = m[1]; continue; }
+    const c = /^(wybrane|chosen): /.exec(e.a);
+    if (c && NOTE_MENU.includes(menu) && e.a !== c[0] + t('notatka')) { e.a = c[0] + t('notatka'); changed = true; }
+  }
+  if (changed) lsSet(KEY_LOG, JSON.stringify(jlog));
+})();
+function noteNeedles() {
+  const s = new Set();
+  const add = (x, min) => { x = String(x || '').trim(); if (x.length < min) return; s.add(x); if (x.endsWith('…')) s.add(x.slice(0, -1)); };
+  for (const n of Object.values(store.notes)) { add(noteTitle(n.text), 4); for (const line of String(n.text || '').split('\n')) add(line, 12); }
+  for (const k of store.trash) if (k.kind === 'wallnote') add(k.name, 4);
+  return [...s].sort((a, b) => b.length - a.length);
+}
+const scrubNotes = (a, needles) => needles.reduce((x, n) => x.includes(n) ? x.split(n).join('[' + t('notatka') + ']') : x, a);
 let uwagi = (() => { try { return arr(JSON.parse(lsGet(KEY_UW) || '[]')).filter(u => u && u.t && typeof u.text === 'string'); } catch { return []; } })();
 let logT = 0, lastLogged = '';
 function logEv(what, extra) {
@@ -77,7 +99,7 @@ function uwagaPop(anchor) {
 /* ---------- the package ---------- */
 function packageData(withNotes) {
   const C = D.estate.coverage;
-  const notesInfo = Object.values(store.notes);
+  const notesInfo = Object.values(store.notes), needles = withNotes ? [] : noteNeedles();
   return {
     app: 'jaskinia-paczka', v: 1,
     zrobiona: isoLocal(Date.now()), zrobiona_utc: new Date().toISOString(),
@@ -93,7 +115,7 @@ function packageData(withNotes) {
     uklady: store.spaces.map(sp => ({ nazwa: spaceName(sp), preset: sp.preset, cel: sp.purpose || '', okna: allIdsOf(sp.L).length, uklad: sp.L })),
     widoki: store.views,
     uwagi: uwagi.map(u => ({ ...u, czas: isoLocal(u.t) })),
-    dziennik: jlog.map(e => ({ ...e, czas: isoLocal(e.t) })),
+    dziennik: jlog.map(e => ({ ...e, a: scrubNotes(e.a, needles), czas: isoLocal(e.t) })),
     notatki: withNotes ? store.notes : { liczba: notesInfo.length, znakow: notesInfo.reduce((a, n) => a + (n.text || '').length, 0), tresc: 'pominięta (Ustawienia → Uwagi i paczka → dołącz treść notatek)' },
     licznik: { zapisy: store.saved.length, kosz: store.trash.length, kopie: readBackups().length },
   };
@@ -152,7 +174,7 @@ SET_SECTIONS.uwagi = (c, draw) => {
           })))))
         : h('p', { class: 'set-note', text: t('Jeszcze żadnej uwagi.') })),
     setCard(t('Paczka dla Claude\'a'),
-      h('p', { class: 'set-note', text: t('Jeden plik z wersją Jaskini, urządzeniem, ustawieniami, układami, Twoimi uwagami i dziennikiem ostatnich ruchów (z godzinami). Z nim nagranie da się dopasować do tego, co działo się w Jaskini, co do sekundy. Plik nie zawiera treści Twoich notatek, chyba że to zaznaczysz.') }),
+      h('p', { class: 'set-note', text: t('Jeden plik z wersją Jaskini, urządzeniem, ustawieniami, układami, Twoimi uwagami i dziennikiem ostatnich ruchów (z godzinami). Z nim nagranie da się dopasować do tego, co działo się w Jaskini, co do sekundy. Bez zaznaczenia poniżej nie ma w nim treści notatek ani ich tytułów, także w dzienniku. Są za to Twoje uwagi i nazwy, które sam nadałeś (układy, okna, zapisy): przejrzyj go, zanim komuś wyślesz.') }),
       h('label', { class: 'set-check', for: 'uw-notes' }, withNotes, h('span', { text: t('dołącz treść notatek z okien i ze ściany') })),
       h('div', { class: 'set-acts' },
         h('button', { class: 'btn', type: 'button', onclick: () => offerPackage(out, withNotes.checked) }, icon('download', 14), t('Zrób paczkę (plik)')),
