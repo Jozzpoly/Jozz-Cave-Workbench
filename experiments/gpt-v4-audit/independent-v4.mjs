@@ -39,6 +39,7 @@ try {
   const p=window.__JASK.packageData(false);
   return {
    noteBodyOmitted: typeof p.notatki.tresc==='string'&&p.notatki.tresc.startsWith('pominięta'),
+   rawLocalJournalHasExcerpt:window.__JASK.log.some(e=>e.a.includes(secret)),
    journalHasNoteExcerpt:p.dziennik.some(e=>e.a.includes(secret)),
    packageHasExcerpt:JSON.stringify(p).includes(secret),
    textModeHasExcerpt:window.__JASK.packageText().includes(secret),
@@ -46,7 +47,8 @@ try {
   }
  },sentinel);
  check('Note body is omitted by export=false',leak.noteBodyOmitted);
- check('Local journal retains legacy note title (fixture)',leak.journalHasNoteExcerpt,leak);
+ check('Raw local journal contains synthetic legacy title (fixture)',leak.rawLocalJournalHasExcerpt,leak);
+ check('Sanitized exported journal removes legacy title',!leak.journalHasNoteExcerpt,leak);
  check('Sanitized JSON package excludes note title, even from older logs',!leak.packageHasExcerpt,leak);
  check('Sanitized text package excludes note title',!leak.textModeHasExcerpt,leak);
  check('No pageerror during privacy test',errors.length===0,{errors});
