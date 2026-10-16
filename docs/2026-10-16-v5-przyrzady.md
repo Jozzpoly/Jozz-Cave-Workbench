@@ -12,8 +12,9 @@ is in a private write-up for the owner and GPT ("C2"). The protocol for labs is 
   - a lab it has run before (remembered by the name the lab gives itself),
   - any address he pastes.
   A "Gra" window is an instrument too.
-- **Keep it running.** A change of theme, density or window zoom, maximize, floating, another layout, a narrow
-  browser window or selecting another project no longer restarts the lab.
+- **Keep it loaded.** A change of theme, density or window zoom, maximize, floating, another layout, a narrow
+  browser window or selecting another project no longer reloads the lab. Loaded is not always running: see
+  [the evening review](2026-10-16-szwy.md).
   - v4.1 restarted a game in a window when the theme changed, and v4 restarted it whenever the window became narrow.
   - "Samo" (the default) now decides window or tab by the device, a phone-sized touch screen, not by the window's
     width.
@@ -41,9 +42,13 @@ is in a private write-up for the owner and GPT ("C2"). The protocol for labs is 
 
 - **The contract runs from the lab to Jaskinia.** GPT's experiment D13 pushed the selected project into the lab. A game
   does not care what is selected in the cadastre; the owner cares what happens in the game.
-- **Labs keep their own origin.** No `sandbox` that would cut them off from their own saves (MiniFeniks keeps its world
-  in its browser storage). Trust comes from Jaskinia accepting messages only from frames it opened and treating them as
-  text.
+- **No `sandbox`.** A sandbox would cut labs off from their own saves (MiniFeniks keeps its world in its browser
+  storage). Jaskinia accepts messages only from frames it opened and treats them as text.
+  - **Withdrawn on the evening of 16 October:** the claim that this keeps labs "on their own origin".
+    - On GitHub Pages, Jaskinia and the games share one origin, so a game can read Jaskinia's storage (GPT's M2).
+    - Two copies of one game share a save.
+    - On another site, a framed lab gets a separate save.
+  - See [the evening review](2026-10-16-szwy.md).
 - **Nothing is shared but words and numbers.** No common data model, no common undo, no common storage. Each lab keeps
   its runtime and its agent; Jaskinia keeps the workspace. This is the "one workshop, many instruments" line from C2.
 - **Small first.** Ten message kinds at most, optional on both sides. The first real labs that adopt the contract
@@ -51,6 +56,8 @@ is in a private write-up for the owner and GPT ("C2"). The protocol for labs is 
 
 ## Not yet
 
+- Two "Gra" windows follow one selection, and "Zagraj" reuses the first game window instead of opening a second game
+  beside it. The owner hit this in his first test on Pages (GPT's M1).
 - A lab opened in a separate tab, which is the phone's default for games, does not talk to Jaskinia yet.
 - No real lab speaks the contract yet. MiniFeniks (its "Ślad gry" already collects feedback) and JV Web (telemetry for
   driving) are the natural first candidates; their agents decide.
@@ -58,7 +65,7 @@ is in a private write-up for the owner and GPT ("C2"). The protocol for labs is 
 
 ## Checks
 
-`tools/jk5_test.mjs`, 42 checks:
+`tools/jk5_test.mjs`, 43 checks:
 
 - the demo lab in both window types, on a desktop and on a phone, through every change listed above;
 - the messages and their limits (sizes, finite numbers, text only), and that forged messages are refused;

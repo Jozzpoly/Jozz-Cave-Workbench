@@ -14,7 +14,7 @@ contract is small, optional and one-way safe: a lab that adds it still runs exac
 
 ## What Jaskinia promises a running instrument
 
-Jaskinia never restarts it on its own. The page keeps running through all of these:
+Jaskinia never reloads it on its own. The page stays loaded through all of these:
 
 - a theme, light/dark, life colours, density, window zoom or the games setting;
 - maximize and back, float out and dock back, other layouts and back;
@@ -27,6 +27,18 @@ interface language (that rebuilds all of Jaskinia).
 
 When its window is hidden (another layout, behind a maximized window, another window on a phone, or a hidden browser
 tab), the instrument hears `visible: false` and may rest. It hears `visible: true` when it is back.
+
+**Loaded is not always running.** Measured in Chromium ([2026-10-16-szwy.md](../2026-10-16-szwy.md); run
+`node tools/probes/hosting.mjs`):
+
+- When the instrument comes from another origin than Jaskinia, the browser stops its `requestAnimationFrame` while its
+  window sits in another layout. Jaskinia hides such windows with `display:none`. Timers keep running. On GitHub Pages
+  today Jaskinia and the owner's games share one origin, so they keep animating. In a downloaded Jaskinia they do not.
+  Jaskinia will park hidden windows so they keep painting; until then, a world that must not pause should not depend
+  on `requestAnimationFrame` alone.
+- Maximizing, floating, docking, other layouts of different proportions and the phone layout change the size of the
+  page's viewport, and the page hears `resize`. A lab that sizes its world by its viewport changes its world. Hiding
+  and showing do not resize anything.
 
 ## Adding it to a lab
 
@@ -73,8 +85,16 @@ Unknown types and fields are ignored, so the contract can grow without breaking 
 - The owner's remark goes to a lab only if the lab asked for remarks, and the note says so before it is saved.
 - Labs keep their own storage, undo, runtime and data. Jaskinia stores none of it, except what the package captures at
   the moment it is made.
-- This is not a sandbox for untrusted sites: the frame runs with the page's own origin, so the owner's labs keep their
-  saves. Run addresses you trust.
+- This is not a sandbox, and it is not isolation either. Which storage a framed lab sees depends on where Jaskinia
+  runs ([2026-10-16-szwy.md](../2026-10-16-szwy.md)):
+  - On GitHub Pages, Jaskinia and the owner's games share one origin (`https://jozzpoly.github.io`). A framed page
+    can read Jaskinia's own storage, notes included. Two copies of one game share one save.
+  - A Jaskinia on another site (and a downloaded one) gives a framed lab a separate, partitioned save, not the one
+    the lab has when opened on its own.
+  - Isolation and the same save together need Jaskinia and the labs on subdomains of one site.
+  - Run addresses you trust, and keep nothing private in Jaskinia at a shared origin.
+- The drop-in does not yet check who frames the lab. Any page that frames it hears its state and can send it remarks.
+  Lab authors: do not adopt it until it accepts only the parents the lab lists.
 
 ## Where it works
 

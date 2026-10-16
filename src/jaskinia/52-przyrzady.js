@@ -1,7 +1,9 @@
 /* ---------- przyrządy: the owner's labs and games running in a window ----------
-   A window of type "przyrzad" (or "gra") holds a running page in an iframe, and Jaskinia never restarts it on its own:
-   a theme, density or language change, a layout change, another layout and back, or a narrow window leave it running
-   (types with `live: true`; see wantKey and HOOK.refresh in 50-shell.js).
+   A window of type "przyrzad" (or "gra") holds a running page in an iframe, and Jaskinia never reloads it on its own:
+   a theme or density change, a layout change, another layout and back, or a narrow window leave it loaded
+   (types with `live: true`; see wantKey and HOOK.refresh in 50-shell.js). A language change still relaunches all of
+   Jaskinia. Loaded is not always running: a page from another origin stops animating while its window is hidden with
+   display:none (another layout), and size changes reach the page (docs/2026-10-16-szwy.md).
 
    A lab may talk to Jaskinia through a small, optional contract (docs/przyrzad/KONTRAKT.md):
      lab → Jaskinia   {jaskinia:1, type:'hello', name, version, wants:['remark']}   who it is
