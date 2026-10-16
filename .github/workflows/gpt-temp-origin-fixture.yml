@@ -1,0 +1,32 @@
+name: GPT TEMP — embedded lab origin research (NO DEPLOY)
+on:
+  push:
+    branches:
+      - experiment/gpt-temporary-cloudflare-v41-2026-10-16
+    paths:
+      - '.github/workflows/gpt-temp-origin-fixture.yml'
+      - 'experiments/gpt-cloudflare-v41/cross-origin-fixture.mjs'
+permissions:
+  contents: read
+jobs:
+  cross-site:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - name: Observe synthetic lab localStorage and sandbox on distinct sites
+        run: node experiments/gpt-cloudflare-v41/cross-origin-fixture.mjs
+      - name: Save origin evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gpt-real-browser-origin-observations
+          retention-days: 5
+          if-no-files-found: warn
+          path: shots/gpt-stage-v41/cross-origin-observation.json
