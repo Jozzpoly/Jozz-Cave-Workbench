@@ -42,6 +42,15 @@ with sync_playwright() as p:
   page.wait_for_timeout(80)
   assert 'Odrzucono przestarzały' in ' '.join(page.evaluate('window.__JASK_GPT_TEMP.list()')[1]['history'])
   results['false_ACK_rejected']=True
+  # Private records in the actual full Jaskinia must NEVER be relayed to unknown iframes.
+  before=page.evaluate('window.__JASK_GPT_TEMP.list()')
+  page.locator('#select-private').click()
+  page.wait_for_timeout(100)
+  after=page.evaluate('window.__JASK_GPT_TEMP.list()')
+  assert all(s['currentProject'] != 'VeryPrivateProject' for s in after)
+  assert all(s['lastAck'] == old['lastAck'] for s,old in zip(after,before))
+  assert all('Zatrzymano wybór prywatny' in ' '.join(s['history']) for s in after)
+  results['private_project_not_disclosed']=True
   # Injection protocol should refuse non-HTTP URLs.
   panes.nth(1).get_by_role('textbox',name='Adres instrumentu').fill('javascript:alert(1)')
   panes.nth(1).get_by_role('button',name='Załaduj instrument').click()
