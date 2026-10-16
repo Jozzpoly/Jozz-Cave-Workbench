@@ -17,7 +17,7 @@ const test = async (name, fn) => {
   try { const value = await fn(); assert.ok(value, name); checks.push(name); console.log('PASS', name); }
   catch(e) { failures.push(name+': '+e.message); console.log('FAIL', name, e.message); }
 };
-const evaluate = fn => page.evaluate(fn);
+const evaluate = (fn, arg) => page.evaluate(fn, arg);
 const probe = () => evaluate(() => window.__JASK_GPT_TEMP.list().sort((a,b)=>a.id.localeCompare(b.id)));
 const acked = async (name,n=2) => {
   await page.waitForFunction(({name,n}) => {
@@ -86,6 +86,6 @@ try {
   await test('no runtime console/page errors',()=>errors.length===0);
 } finally {
   console.log('SUMMARY',JSON.stringify({pass:checks.length,fail:failures.length,failures,errors}));
-  await page.close(); await browser.close(); await new Promise(r=>server.close(r));
+  await page.close(); await browser.close(); server.close();
 }
 if(failures.length||errors.length)process.exit(1);
