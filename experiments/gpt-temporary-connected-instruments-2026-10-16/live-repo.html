@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GitHub live source observer — GPT temporary</title>
+<style>
+:root{color-scheme:dark}body{margin:0;padding:12px;background:#112330;color:#eef8f8;font:14px/1.5 system-ui}
+h2{margin:0;font-size:17px}.sub{color:#b9d0d6;font-size:12px;margin:4px 0 14px}.source{border:1px solid #54727c;border-radius:9px;padding:12px;background:#162d3a}
+.k{font:11px ui-monospace,monospace;color:#b5cbd0;letter-spacing:.05em;text-transform:uppercase}
+.v{margin:4px 0 10px;font:14px ui-monospace,monospace;overflow-wrap:anywhere}a{color:#a8e9e8}.bad{color:#ffc6b0}.good{color:#a8e9c3}
+details{margin-top:13px}summary{cursor:pointer}pre{white-space:pre-wrap;overflow-wrap:anywhere;font:12px ui-monospace}
+</style></head><body>
+<h2>Obserwator źródła · GitHub</h2>
+<p class="sub">Odizolowany instrument GPT. Jedno publiczne repo wybrane w Jaskini → jawny GET GitHub REST → dokładny SHA i czas obserwacji. Bez tokenu, bez zapisów. Domyślna gałąź ≠ koniecznie aktywny front badań.</p>
+<section class="source">
+<div class="k">Wybrane repo</div><div id="name" class="v">—</div>
+<div class="k">Odczyt</div><div id="status" class="v">Oczekiwanie na połączenie</div>
+<div class="k">Ostatni commit gałęzi domyślnej</div><div id="sha" class="v">NIEZNANY</div>
+<div class="k">Weryfikowalne źródło</div><div class="v"><a id="link" hidden rel="noopener noreferrer" target="_blank">Otwórz dokładną rewizję</a><span id="absent">Niedostępne przed udanym odczytem.</span></div>
+<div class="k">Czas obserwacji i zakres</div><div id="when" class="v">Nie odczytano</div>
+</section>
+<details><summary>Granice wyniku</summary>
+<p>Ten widok nie indeksuje innych gałęzi ani aktywnych PR, nie odróżnia aktywnej pracy agenta od historycznego default branch. Nie przesyła prywatnych danych. API może odpowiedzieć 403 / 429 lub nie być dostępne w iframe. ACK oznacza jedynie przyjęcie wyboru; dowód odczytu jest oddzielny.</p></details>
+<script>
+(()=>{
+'use strict';
+const P='jaskinia-instrument/1';
+let handshake=null, serial=0, active=null;
+const el=id=>document.getElementById(id);
+function tell(obj){if(handshake)parent.postMessage({protocol:P,channel:handshake.channel,nonce:handshake.nonce,...obj},'*')}
+function text(id,value){el(id).textContent=value}
+function clear(){text('sha','NIEZNANY');text('when','Nie odczytano');el('link').hidden=true;el('absent').hidden=false}
+async function select(project,seq){
+ ++serial; const current=serial;
+ active?.abort();active=null;clear();
+ text('name',project);
+ if(typeof project!=='string'||!/^[A-Za-z0-9_.-]{1,100}$/.test(project)){
+   text('status','ODRZUCONO: nieprawidłowa nazwa repo');return;
+ }
+ text('status','Żądanie GET rozpoczęte (jeszcze nie ma wyniku)');
+ // An ACK is NOT a claim that the REST read succeeded: merely applied selection.
+ tell({kind:'ack',seq,project,applied:true});
+ const controller=new AbortController();active=controller;
+ const endpoint='https://api.github.com/repos/Jozzpoly/'+encodeURIComponent(project)+'/commits?per_page=1';
+ try{
+   const res=await fetch(endpoint,{credentials:'omit',cache:'no-store',signal:controller.signal,headers:{'Accept':'application/vnd.github+json'}});
+   if(current!==serial)return;
+   if(!res.ok)throw Error('HTTP '+res.status);
+   const rows=await res.json(), first=Array.isArray(rows)?rows[0]:null;
+   const sha=first?.sha, url=first?.html_url;
+   if(!/^[a-f0-9]{40}$/.test(sha)||typeof url!=='string'||!url.startsWith('https://github.com/Jozzpoly/'))throw Error('Nieoczekiwany format odpowiedzi');
+   const at=new Date().toISOString();
+   text('status','GET HTTP 200 · obserwacja powiodła się');
+   el('status').className='v good'; text('sha',sha);
+   el('link').href=url;el('link').hidden=false;el('absent').hidden=true;
+   text('when',at+' · ostatni commit DEFAULT BRANCH · źródło: '+endpoint);
+   // Receiver-produced evidence claim; parent MUST label as unverified.
+   tell({kind:'observation',project,seq,source: 'github-rest',sha,observedAt:at,commitUrl:url});
+ }catch(err){
+   if(current!==serial||err.name==='AbortError')return;
+   text('status','NIEZNANE: '+err.message+' — odczyt niepotwierdzony');
+   el('status').className='v bad';text('when',new Date().toISOString()+' · próba pobrania '+endpoint);
+ }finally{if(current===serial)active=null}
+}
+window.addEventListener('message',e=>{
+ if(e.source!==parent||!e.data||e.data.protocol!==P)return;
+ const m=e.data;
+ if(m.kind==='hello'&&typeof m.channel==='string'&&typeof m.nonce==='string'){
+   handshake={channel:m.channel,nonce:m.nonce};tell({kind:'ready'});text('status','Połączono; czekam na publiczny wybór.');return;
+ }
+ if(!handshake||m.channel!==handshake.channel||m.nonce!==handshake.nonce)return;
+ if(m.kind==='set-project'&&Number.isSafeInteger(m.seq)&&typeof m.project==='string')void select(m.project,m.seq);
+});
+})();
+</script></body></html>
