@@ -129,6 +129,36 @@ try {
   await test('reload preserves layout but does NOT auto-connect external instruments',async()=>
     (await evaluate(()=>Object.values(window.__JASK.L.wins).filter(w=>w.type==='gpt_instrument_temp').length))===1 &&
     (await probe()).every(x=>!x.linked&&!x.ready));
+  await test('real mobile: touch-sized Jaskinia instrument, restore and ACK',async()=>{
+    const mobileContext=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true});
+    const mob=await mobileContext.newPage();
+    mob.on('pageerror', e=>errors.push('mobile pageerror: '+e.message));
+    try {
+      await mob.goto(server.base+'/dist/jaskinia-web.html',{waitUntil:'domcontentloaded',timeout:30000});
+      await mob.waitForFunction(()=>!!window.__JASK?.store,{timeout:15000});
+      if(!await mob.evaluate(()=>window.__JASK.phone))return false;
+      await mob.evaluate(()=>{
+        const id=window.__JASK.leafIds(window.__JASK.L.tree)[0];
+        window.__JASK.commit('GPT TEMP mobile instrument',L=>{
+          L.wins[id].type='gpt_instrument_temp';L.wins[id].st={};
+        });
+      });
+      const box=mob.locator('.win[data-type="gpt_instrument_temp"]');
+      await box.getByRole('button',{name:'Załaduj instrument'}).click({timeout:5000});
+      await mob.waitForFunction(()=>window.__JASK_GPT_TEMP.list().some(x=>x.ready),{timeout:8000});
+      await box.getByRole('button',{name:'Połącz z wyborem projektu'}).click({timeout:5000});
+      const publics=await mob.evaluate(()=>window.__BIB.D.repos.filter(r=>r.private===false).slice(0,2).map(r=>r.name));
+      await mob.evaluate(n=>window.__JASK.select(n),publics[0]);
+      await mob.waitForFunction(n=>window.__JASK_GPT_TEMP.list().some(x=>x.lastAck?.project===n),publics[0],{timeout:7000});
+      await mob.screenshot({path:path.join(root,'shots','gpt-temp-real-mobile.png'),fullPage:true});
+      await mob.evaluate(()=>window.__JASK.setSpace('granie'));
+      await mob.evaluate(n=>window.__JASK.select(n),publics[1]);
+      await mob.evaluate(()=>window.__JASK.setSpace('przeglad'));
+      await mob.waitForFunction(n=>window.__JASK_GPT_TEMP.list().some(x=>x.lastAck?.project===n),publics[1],{timeout:7000});
+      const actual=await box.frameLocator('iframe').locator('#project').textContent();
+      return actual===publics[1];
+    } finally {await mobileContext.close();}
+  });
   await test('no runtime console/page errors',()=>errors.length===0);
 } finally {
   console.log('SUMMARY',JSON.stringify({pass:checks.length,fail:failures.length,failures,errors}));
