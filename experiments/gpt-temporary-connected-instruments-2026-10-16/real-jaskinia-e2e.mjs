@@ -1,5 +1,6 @@
 /* GPT TEMPORARY: full Jaskinia source-generated E2E, isolated branch only. */
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
@@ -60,6 +61,13 @@ try {
   await test('both independently ACK same new project',async()=>{
     const s=await probe();return s.every(x=>x.lastAck?.project===names[1]);
   });
+  await test('recipient UI visibly applied actual project (not just self-reported ACK)',async()=>{
+    const texts=[];
+    for(let i=0;i<2;i++) texts.push(await instrumentWindows.nth(i).frameLocator('iframe').locator('#project').textContent());
+    return texts.every(t=>t===names[1]);
+  });
+  const shotdir=path.join(root,'shots'); fs.mkdirSync(shotdir,{recursive:true});
+  await page.screenshot({path:path.join(shotdir,'gpt-temp-real-jaskinia.png'),fullPage:true});
   await test('genuine sandboxed frames lack same-origin',async()=>evaluate(()=>{
     const f=document.querySelector('.win[data-type="gpt_instrument_temp"] iframe');
     try{return f.contentWindow.document===undefined;}catch{return true;}
@@ -84,6 +92,43 @@ try {
   await test('instrument catches up when returning to workspace',async()=>{
     try{await acked(names[1]);return true;}catch{return false;}
   });
+  await instrumentWindows.first().frameLocator('iframe').getByRole('button',{name:'Pomiń następny ACK: OFF'}).click();
+  await evaluate(n=>window.__JASK.select(n),names[2]);
+  await acked(names[2],1);
+  await page.waitForTimeout(2000);
+  await test('one missing ACK yields uncertainty while independent peer succeeds',async()=>{
+    const q=await probe();
+    return q.filter(x=>x.lastAck?.project===names[2]).length===1 &&
+      q.filter(x=>x.history.some(h=>h.includes('timeout'))).length===1 &&
+      q.every(x=>x.pending===null);
+  });
+  await test('lost ACK does not imply recipient failed to act',async()=>{
+    return (await instrumentWindows.first().frameLocator('iframe').locator('#project').textContent())===names[2];
+  });
+  await instrumentWindows.first().frameLocator('iframe').getByRole('button',{name:'Wyślij fałszywy/stary ACK'}).click();
+  await test('stale/forged ACK rejected on actual Jaskinia',async()=>{
+    await page.waitForTimeout(150);
+    return (await probe()).some(x=>x.history.some(h=>h.includes('Odrzucono przestarzały')));
+  });
+  await instrumentWindows.first().getByRole('button',{name:'Rozłącz wybór projektu'}).click();
+  await evaluate(n=>window.__JASK.select(n),names[0]);
+  await acked(names[0],1);
+  await test('unlink suppresses selection relay to that instrument',async()=>{
+    const q=await probe();
+    return q.filter(x=>x.linked).length===1 &&
+      q.filter(x=>x.lastAck?.project===names[0]).length===1 &&
+      (await instrumentWindows.first().frameLocator('iframe').locator('#project').textContent())===names[2];
+  });
+  await evaluate(()=>window.__JASK.commit('GPT TEMP dispose instrument',L=>{
+    const id=Object.keys(L.wins).find(id=>L.wins[id].type==='gpt_instrument_temp');
+    L.wins[id].type='wybor';L.wins[id].st={};
+  }));
+  await test('disposing one instrument removes only its subscription',async()=>(await probe()).length===1);
+  await page.reload({waitUntil:'domcontentloaded'});
+  await page.waitForFunction(()=>!!window.__JASK?.store);
+  await test('reload preserves layout but does NOT auto-connect external instruments',async()=>
+    (await evaluate(()=>Object.values(window.__JASK.L.wins).filter(w=>w.type==='gpt_instrument_temp').length))===1 &&
+    (await probe()).every(x=>!x.linked&&!x.ready));
   await test('no runtime console/page errors',()=>errors.length===0);
 } finally {
   console.log('SUMMARY',JSON.stringify({pass:checks.length,fail:failures.length,failures,errors}));
