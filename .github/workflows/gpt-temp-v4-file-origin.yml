@@ -19,7 +19,9 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - name: Generate the actual downloaded artifact
         run: python3 -I tools/render.py --app jaskinia --host artifact
-      - name: Real file:// navigation and reload on desktop/touch emulation
+      - name: Generate comparison self-hosted web build
+        run: python3 -I tools/render.py --app jaskinia --host web
+      - name: Diagnose inline script and real file:// versus HTTP
         run: node experiments/gpt-file-origin/check.mjs
       - name: Upload observations
         if: always()
