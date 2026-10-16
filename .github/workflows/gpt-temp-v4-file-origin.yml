@@ -1,0 +1,30 @@
+name: GPT TEMP — v4 genuine file-origin test
+on:
+  push:
+    branches:
+      - experiment/gpt-temporary-v4-real-file-origin-2026-10-16
+permissions:
+  contents: read
+jobs:
+  downloaded-file:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - name: Generate the actual downloaded artifact
+        run: python3 -I tools/render.py --app jaskinia --host artifact
+      - name: Real file:// navigation and reload on desktop/touch emulation
+        run: node experiments/gpt-file-origin/check.mjs
+      - name: Upload observations
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gpt-v4-genuine-file-origin-evidence
+          retention-days: 5
+          path: shots/gpt-file-origin-*
