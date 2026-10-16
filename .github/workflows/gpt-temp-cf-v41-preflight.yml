@@ -3,6 +3,10 @@ on:
   push:
     branches:
       - experiment/gpt-temporary-cloudflare-v41-2026-10-16
+    paths:
+      - '.github/workflows/gpt-temp-cf-v41-preflight.yml'
+      - 'experiments/gpt-cloudflare-v41/prepare.py'
+      - 'experiments/gpt-cloudflare-v41/smoke.mjs'
 permissions:
   contents: read
 concurrency:
