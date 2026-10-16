@@ -55,10 +55,11 @@ function renderGame(box, c) {
     return;
   }
   if (gamesInWindow()) {
-    // a downloaded file or Jozz's own server may frame the game; if a site refuses frames, the link below still works
-    box.append(h('div', { class: 'jk-game' }, h('iframe', { src: r.pages, title: `${r.short}: gra`, allowfullscreen: '', referrerpolicy: 'no-referrer',
-      allow: 'fullscreen; xr-spatial-tracking; gamepad; autoplay; clipboard-write; accelerometer; gyroscope; magnetometer; screen-wake-lock' }),
-      h('div', { class: 'jk-game-bar' }, h('span', { text: t('Gra nie rusza w oknie?') }), h('a', { class: 'jk-game-ext', href: r.pages, target: '_blank', rel: 'noopener' }, icon('ext', 13), t('Otwórz w nowej karcie')))));
+    // a downloaded file or Jozz's own server may frame the game; if a site refuses frames, the link in the bar still works.
+    // The game is an instrument (52-przyrzady.js): nothing in Jaskinia restarts it, and if it speaks the contract it says what is happening.
+    const frame = liveFrame(r.pages, `${r.short}: gra`);
+    const e = attachLive(c, frame, r.pages, r.short);
+    box.append(h('div', { class: 'jk-game' }, frame, liveBar(c, e)));
     return;
   }
   const ch = (B.CH?.moved || []).find(m => m.repo === r.name);
@@ -224,7 +225,7 @@ const TYPES = {
     render(box) { box.append(pad(B.changesStrip() || h('p', { class: 'jk-empty', text: t('Nie ma poprzedniego zrzutu do porównania.') }))); } },
   karta: { group: 'one', follows: true, name: 'Karta projektu', glyph: 't_karta', desc: 'Wszystko o jednym projekcie: po co jest, liczby, stan, wejścia, gałęzie, PR.',
     render(box, c) { box.append(c.repo ? B.repoView(c.repo) : noRepo()); } },
-  gra: { group: 'one', follows: true, name: 'Gra', glyph: 't_gra', fill: true, noZoom: true, desc: 'Zagraj w zaznaczony projekt.', render: renderGame },
+  gra: { group: 'one', follows: true, live: true, liveKey: () => [gamesInWindow()], name: 'Gra', glyph: 't_gra', fill: true, noZoom: true, desc: 'Zagraj w zaznaczony projekt.', render: renderGame },
   galezie: { group: 'one', follows: true, sized: true, name: 'Gałęzie', glyph: 't_galezie', desc: 'Las gałęzi zaznaczonego projektu albo ich tabela.',
     render(box, c) {
       const r = c.repo;

@@ -40,6 +40,7 @@ python3 -I tools/render.py --app jaskinia --host web
 node tools/jk_test.mjs                             # 52 checks: windows, splits, floats, gestures, persistence
 node tools/jk2_test.mjs                            # 76 checks: store v2, notes, trash, backups, import, wall, stats periods, phone
 node tools/jk4_test.mjs                            # 61 checks: the recordings of 15–16 Oct, the feedback loop, the three places it runs, a real file:// start, the package without note text, the trash's way back, older builds
+node tools/jk5_test.mjs                            # 42 checks: labs and games running in windows (instruments), the contract, the Sygnały window, the phone
 node tools/jk2_chaos.mjs 400 7                     # destruction run: hundreds of random actions on desktop and phone, invariants, reload = same state
 ```
 

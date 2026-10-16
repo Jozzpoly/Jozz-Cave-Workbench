@@ -46,7 +46,13 @@ if A.app == "jaskinia":
     epoch = os.environ.get("SOURCE_DATE_EPOCH")
     built = (datetime.datetime.fromtimestamp(int(epoch), datetime.timezone.utc) if epoch else datetime.datetime.now(datetime.timezone.utc)).strftime("%Y-%m-%dT%H:%MZ")
     build = json.dumps({"v": ver, "built": built, "host": A.host})
-    script = (f'const BIB_HOST = "{A.host}";\nconst BIB_MODE = "jaskinia";\nconst JASK_BUILD = {build};\n' + app + "\n(() => {\n'use strict';\n" + shell + "\n})();\n")
+    # the demo lab that speaks the instrument contract (docs/przyrzad), carried inside, so the owner can try it offline
+    demo_dir = P("docs", "przyrzad")
+    demo = open(os.path.join(demo_dir, "demo.html"), encoding="utf-8").read().replace(
+        '<script src="jaskinia-przyrzad.js"></script>',
+        "<script>\n" + open(os.path.join(demo_dir, "jaskinia-przyrzad.js"), encoding="utf-8").read().replace("</script", "<\\/script") + "\n</script>")
+    lab_demo = "const LAB_DEMO = " + json.dumps(demo, ensure_ascii=False) + ";\n"
+    script = (f'const BIB_HOST = "{A.host}";\nconst BIB_MODE = "jaskinia";\nconst JASK_BUILD = {build};\n' + lab_demo + app + "\n(() => {\n'use strict';\n" + shell + "\n})();\n")
     out = (tpl.replace("/*N*/", str(n)).replace("/*FONTS*/", fonts).replace("/*CSS*/", css).replace("/*JCSS*/", jcss)
            .replace("/*DATA*/", payload).replace("/*APP*/", script.replace("</script", "<\\/script")))
     name = "jaskinia.html" if A.host == "artifact" else "jaskinia-web.html"
