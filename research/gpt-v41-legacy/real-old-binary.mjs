@@ -28,6 +28,19 @@ const load=async html=>{
 let sentinelWin='';
 try {
  await load(current);
+ // Separate downloaded filenames are a different question from a same-path overwrite.
+ // Observe actual Chromium storage behavior without assuming it is browser-portable.
+ const otherFile=path.join(tmp,'Jaskinia-other-download.html');
+ writeFileSync(otherFile,current,'utf8');
+ const marker='GPT_DIFFERENT_FILE_NAME_MARKER';
+ await tab.evaluate(v=>localStorage.setItem('gpt:crossfile',v),marker);
+ const second=await browser.newPage();
+ await second.goto(pathToFileURL(otherFile).href,{waitUntil:'domcontentloaded',timeout:20000});
+ await second.waitForFunction(()=>!!window.__JASK?.store,{timeout:8000});
+ const shared=await second.evaluate(v=>localStorage.getItem('gpt:crossfile')===v,marker);
+ record.push({name:'distinct downloaded filenames share localStorage in this Chromium profile?',observation:true,shared});
+ console.log('OBSERVED_CROSS_FILE_STORAGE',JSON.stringify({shared}));
+ await second.close();
  let initial=await tab.evaluate(()=>{
    const J=window.__JASK,sp=J.store.spaces[0],id=J.leafIds(sp.L.tree)[0];
    const w=sp.L.wins[id];w.type='gpt_future_type';w.pin='gpt_future_private_project';delete w.lost;
