@@ -53,6 +53,7 @@ try {
   for(let i=0;i<2;i++)await instrumentWindows.nth(i).getByRole('button',{name:'Połącz z wyborem projektu'}).click();
   const names=await evaluate(()=>window.__BIB.D.repos.filter(r=>r.private===false).slice(0,3).map(r=>r.name));
   assert(names.length>=3,'enough public projects');
+  await evaluate(n=>window.__JASK.select(n),names[0]);
   await acked(names[0]);
   await evaluate(n=>window.__JASK.select(n),names[1]);
   await acked(names[1]);
