@@ -28,7 +28,7 @@ for (const mode of ['desk', 'phone']) {
   const types = await page.evaluate(() => ['mapa', 'sciana', 'kataster', 'spis', 'zagraj', 'ustalenia', 'zmiany', 'karta', 'gra', 'galezie', 'rytm', 'stan', 'dane', 'statystyki', 'wykres', 'ranking', 'rok', 'zegar', 'puls', 'historia', 'notatki', 'wiedza', 'ustawienia', 'wybor']);
   const log = [];
   for (let i = 0; i < STEPS; i++) {
-    const act = pick(['split', 'split', 'close', 'type', 'type', 'float', 'dock', 'max', 'zoom', 'undo', 'undo', 'redo', 'tab', 'newtab', 'deltab', 'rename', 'select', 'wall', 'note', 'save', 'restoreTrash', 'resetspace', 'lang']);
+    const act = pick(['split', 'split', 'close', 'type', 'type', 'float', 'dock', 'max', 'zoom', 'undo', 'undo', 'redo', 'tab', 'newtab', 'deltab', 'rename', 'select', 'wall', 'note', 'save', 'restoreTrash', 'resetspace', 'lang', 'back', 'menu']);
     const r = rnd(), r2 = rnd();
     log.push(act);
     try {
@@ -57,6 +57,8 @@ for (const mode of ['desk', 'phone']) {
           case 'restoreTrash': { const b = document.querySelector('.jk-toast-b'); if (b) b.click(); } break;
           case 'resetspace': if (J.store.spaces[0].preset) { const tab = document.querySelector(`.jk-tab[data-sp="${J.store.cur}"]`); } break;
           case 'lang': break;
+          case 'menu': click(`.win[data-id="${id}"] .b-more`); break;
+          case 'back': if (document.querySelector('.jk-menu.sheet')) history.back(); break; // Back with a sheet open closes the sheet, never the page
         }
       }, [act, r, r2, types]);
     } catch (e) { errs.push('step ' + i + ' ' + act + ': ' + e.message); }

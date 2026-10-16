@@ -204,10 +204,20 @@ function validLayout(L, known) {
   for (const id of [...ids, ...L.floats.map(f => f.id)]) {
     const w = L.wins[id];
     if (!w || typeof w !== 'object') return false;
-    if (!known[w.type]) w.type = 'wybor';
+    /* Every Jaskinia downloaded to one computer shares the same file:// storage, so an older or a public build may open
+       layouts written by a newer one. A window type or a pinned project it does not know is kept aside, not erased,
+       and comes back in a Jaskinia that knows it. */
+    if (w.lost && typeof w.lost === 'object') {
+      if (w.lost.type && w.type === 'wybor' && known[w.lost.type]) w.type = w.lost.type;
+      if (w.lost.type && w.type !== 'wybor') delete w.lost.type;   // back, or Jozz put something else here
+      if (w.lost.pin && !w.pin && R[w.lost.pin]) w.pin = w.lost.pin;
+      if (w.lost.pin && w.pin) delete w.lost.pin;                  // back, or Jozz pinned it elsewhere
+      if (!w.lost.type && !w.lost.pin) delete w.lost;
+    } else delete w.lost;
+    if (!known[w.type]) { w.lost = { ...(w.lost && typeof w.lost === 'object' ? w.lost : {}), type: String(w.type) }; w.type = 'wybor'; }
     w.z = clamp(+w.z || 1, 0.5, 2.5);
     w.st = w.st && typeof w.st === 'object' ? w.st : {};
-    if (w.pin && !R[w.pin]) w.pin = null;
+    if (w.pin && !R[w.pin]) { w.lost = { ...(w.lost && typeof w.lost === 'object' ? w.lost : {}), pin: String(w.pin) }; w.pin = null; }
   }
   for (const k of Object.keys(L.wins)) if (!ids.includes(k) && !L.floats.some(f => f.id === k)) delete L.wins[k];
   if (L.max && !L.wins[L.max]) L.max = null;

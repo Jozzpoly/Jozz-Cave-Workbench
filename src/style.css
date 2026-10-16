@@ -224,7 +224,9 @@ code, .code {
 .seismo { display: block; width: 100%; height: 66px; }
 .seismo-m { position: relative; height: 18px; font-size: 11px; color: var(--ink-3); margin-top: 4px; }
 .seismo-m span { position: absolute; top: 0; padding-left: 3px; border-left: 1px solid var(--rule-2); line-height: 1.2; white-space: nowrap; }
-.seismo-m span.end { transform: translateX(-100%); padding: 0 3px 0 0; border-left: 0; border-right: 1px solid var(--rule-2); }
+.seismo-m span.moved { border-left: 0; }
+.seismo-plot { position: relative; }
+.seismo-after { position: absolute; top: 0; bottom: 0; right: 0; border-left: 1px dashed var(--ink-3); background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--ink-3) 34%, transparent) 0 1.5px, transparent 1.5px 6px); }
 
 /* ---------- generated layer: life, severity, findings, decisions ---------- */
 .life { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 650; color: var(--ink-2); white-space: nowrap; }

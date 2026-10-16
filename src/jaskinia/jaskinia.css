@@ -116,6 +116,23 @@
   --hs5: var(--zs5); --hs4: var(--zs4); --hs3: var(--zs3); --hs2: var(--zs2); --hs1: var(--zs1); --hs0: var(--zs0);
   --heat-text-hot: var(--zk4);
 }
+/* findings waiting for a decision: one language on the map and on the wall, never a colour a life ramp uses.
+   With zieleń (green to blue) they are filled: red for serious, amber for medium. Żar itself runs yellow to red,
+   so there they are rings on the ground colour: the number and the ring carry the colour, not a filled patch. */
+:root, :root[data-life="zielen"] {
+  --fnd-hi: var(--att); --fnd-mid: var(--warn);
+  --fnd-fill-hi: var(--fnd-hi); --fnd-fill-mid: var(--fnd-mid); --fnd-ink-hi: var(--ground); --fnd-ink-mid: var(--ground); --fnd-ring-hi: var(--ground-2); --fnd-ring-mid: var(--ground-2);
+}
+:root[data-life="zar"] {
+  --fnd-fill-hi: var(--ground-2); --fnd-fill-mid: var(--ground-2); --fnd-ink-hi: var(--fnd-hi); --fnd-ink-mid: var(--fnd-mid); --fnd-ring-hi: var(--fnd-hi); --fnd-ring-mid: var(--fnd-mid);
+}
+.jk .pbadge circle { stroke: var(--fnd-ring-mid); stroke-width: 2; }
+.jk .pbadge.b-high circle { fill: var(--fnd-fill-hi); stroke: var(--fnd-ring-hi); }
+.jk .pbadge.b-mid circle { fill: var(--fnd-fill-mid); stroke: var(--fnd-ring-mid); }
+.jk .pbadge.b-high text { fill: var(--fnd-ink-hi); }
+.jk .pbadge.b-mid text { fill: var(--fnd-ink-mid); }
+.jk .kb.s-high { background: var(--fnd-fill-hi); color: var(--fnd-ink-hi); box-shadow: inset 0 0 0 2px var(--fnd-ring-hi); }
+.jk .kb.s-mid { background: var(--fnd-fill-mid); color: var(--fnd-ink-mid); box-shadow: inset 0 0 0 2px var(--fnd-ring-mid); }
 .ramp-s[data-life="zielen"] i:nth-child(1) { background: var(--g5) !important; } .ramp-s[data-life="zielen"] i:nth-child(2) { background: var(--g4) !important; }
 .ramp-s[data-life="zielen"] i:nth-child(3) { background: var(--g3) !important; } .ramp-s[data-life="zielen"] i:nth-child(4) { background: var(--g2) !important; }
 .ramp-s[data-life="zielen"] i:nth-child(5) { background: var(--g1) !important; } .ramp-s[data-life="zielen"] i:nth-child(6) { background: var(--g0) !important; }
@@ -133,6 +150,8 @@ body { height: 100%; overflow: hidden; margin: 0; background: var(--ground); }
 /* chrome, gestures and click targets never select text; content (notes, quotes, numbers) still can */
 .jk-bar, .whead, .jk-div, .jk-dock, .jk-sheet, .jk-menu .mi, .chooser, .jk .parcel, .jk .map text, .spis-b, .st-tbl, .jk .khead, .wall2, .jk-tab, .set-nav, .set-seg, .th-card, .jk-toast { -webkit-user-select: none; user-select: none; }
 .jk svg text { -webkit-user-select: none; user-select: none; }
+/* statistics are a dashboard: a drag over them must not paint a text selection (04_PC 02:05) */
+.jk .st-pl, .jk .st-grid, .jk .st-chartbox, .jk .st-foot, .jk .st-kpis, .win[data-type="wykres"] .wz, .win[data-type="statystyki"] .wz, .win[data-type="ranking"] .wz, .win[data-type="rok"] .wz, .win[data-type="zegar"] .wz, .win[data-type="puls"] .wz { -webkit-user-select: none; user-select: none; }
 .jk .map, .jk .parcel, .wall2, .jk-dock { -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
 .jk.dragging, .jk.dragging * { -webkit-user-select: none !important; user-select: none !important; }
 :root[data-motion="less"] *, :root[data-motion="less"] *::before, :root[data-motion="less"] *::after { transition-duration: 0s !important; animation-duration: 0s !important; }
@@ -147,7 +166,11 @@ body { height: 100%; overflow: hidden; margin: 0; background: var(--ground); }
 .jk-snap { border: 0; background: transparent; display: grid; line-height: 1.1; text-align: left; color: var(--ink-3); font: inherit; padding: 3px 6px; border-radius: 6px; cursor: pointer; white-space: nowrap; }
 .jk-snap small { font-size: 10px; } .jk-snap b { font-size: 11.5px; font-weight: 600; color: var(--ink-2); }
 .jk-snap:hover { background: var(--plate-2); }
+.jk-snap.stale small { color: var(--warn); }
 .jk-snap.old b { color: var(--warn); }
+.jk-brand .jk-ver { font-family: var(--font-code); font-variation-settings: "MONO" 1; font-size: 10.5px; font-weight: 600; color: var(--ink-3); letter-spacing: 0; align-self: flex-start; margin: 1px 0 0 -4px; }
+.jk.phone .jk-brand .jk-ver { margin: 0; align-self: center; }
+.jk-helpbox .hb-ver { color: var(--ink-3); font-size: 12px; }
 .jk-tabs-w { display: flex; align-items: center; gap: 2px; flex: 1; min-width: 0; }
 .jk-tabs { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; min-width: 0; padding-block: 4px; }
 .jk-tabs::-webkit-scrollbar { display: none; }
@@ -184,6 +207,19 @@ body { height: 100%; overflow: hidden; margin: 0; background: var(--ground); }
 .jk-selb b { font-family: var(--font-display); font-weight: 760; font-size: 13.5px; max-width: 20ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .jk-selplay svg { width: 13px; height: 13px; }
 .jk-help-b { display: inline-flex; align-items: center; gap: 6px; border: 0; background: transparent; color: var(--ink-2); font: inherit; font-size: 12.5px; font-weight: 600; padding: 6px 8px; border-radius: 8px; cursor: pointer; white-space: nowrap; }
+.jk-uw-b { display: inline-grid; place-items: center; width: var(--ib); height: var(--ib); border: 0; border-radius: 6px; background: transparent; color: var(--ink-3); cursor: pointer; padding: 0; flex: none; }
+.jk-uw-b:hover { color: var(--hand); background: var(--plate-2); }
+.jk.phone .jk-uw-b { display: none; }
+.jk-uwaga { width: min(440px, calc(100vw - 24px)); }
+.jk-uwaga h3 { margin: 0 0 4px; }
+.jk-uwaga .uw-ctx { margin: 0 0 8px; font-size: 11.5px; color: var(--ink-3); font-family: var(--font-code); font-variation-settings: "MONO" 1; }
+.jk-uwaga textarea { width: 100%; box-sizing: border-box; resize: vertical; }
+.jk-uwaga .uw-hint { margin-left: auto; color: var(--ink-3); font-size: 11px; }
+.set-check { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-2); margin: 4px 0 10px; cursor: pointer; }
+.set-log { list-style: none; margin: 6px 0 10px; padding: 8px 10px; max-height: 260px; overflow: auto; border: 1px solid var(--rule); border-radius: 8px; background: var(--ground-2); font-family: var(--font-code); font-variation-settings: "MONO" 1; font-size: 11.5px; line-height: 1.55; }
+.set-log li { display: flex; gap: 10px; color: var(--ink-2); }
+.set-log time { color: var(--ink-3); flex: none; font-variant-numeric: tabular-nums; }
+.set-log span { min-width: 0; overflow-wrap: anywhere; }
 .jk-help-b:hover { color: var(--ink); background: var(--plate-2); }
 @media (max-width: 1100px) { .jk-help-b span, .jk-selb small { display: none; } }
 @media (max-width: 900px) { .jk-snap { display: none; } }
@@ -342,6 +378,8 @@ body:has(.jk.phone) .jk-toasts { bottom: calc(78px + env(safe-area-inset-bottom,
 .jk-toast-b:hover { background: color-mix(in srgb, var(--hand) 14%, transparent); }
 
 /* ---------- the phone: one window, a dock, a sheet ---------- */
+/* the page never pinch-zooms inside Jaskinia on a phone: two fingers zoom the window's own content (or the wall's view) */
+.jk.phone { touch-action: pan-x pan-y; }
 .jk.phone .jk-tabs-w, .jk.phone .jk-snap, .jk.phone .jk-help-b, .jk.phone .jk-sep, .jk.phone .jk-selplay, .jk.phone .jk-brand b { display: none; }
 .jk.phone .jk-spacebtn { display: inline-flex; }
 .jk.phone .jk-bar { gap: 4px; padding-inline: 4px 8px; padding-top: env(safe-area-inset-top, 0px); }
@@ -457,7 +495,7 @@ body:has(.jk.phone) .jk-toasts { bottom: calc(78px + env(safe-area-inset-bottom,
 .jk-legend .lg-i { display: inline-flex; align-items: center; gap: 5px; }
 .jk-legend i { width: 14px; height: 9px; border-radius: 2px; display: inline-block; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 12%, transparent); }
 .jk-legend i.hatched { background: repeating-linear-gradient(135deg, var(--hatch-strong) 0 2px, transparent 2px 5px), var(--ash); }
-.jk-legend i.att { width: 10px; height: 10px; border-radius: 50%; background: var(--att); box-shadow: none; }
+.jk-legend i.att { width: 10px; height: 10px; border-radius: 50%; background: var(--fnd-fill-hi); box-shadow: inset 0 0 0 2px var(--fnd-ring-hi); }
 .jk-legend .lg-att { margin-left: 6px; }
 .jk-empty { color: var(--ink-3); font-size: 13.5px; padding: 6px 0; max-width: 60ch; }
 .jk-sub { margin-top: 10px; font-size: 12px; color: var(--ink-3); }
@@ -473,8 +511,11 @@ body:has(.jk.phone) .jk-toasts { bottom: calc(78px + env(safe-area-inset-bottom,
 .win[data-type="notatki"] .wz { height: 100%; }
 .jk-notes { flex: 1; width: 100%; min-height: 160px; resize: none; background: transparent; color: var(--ink); border: 0; font-family: var(--font-code); font-variation-settings: "MONO" 1; font-size: 13.5px; line-height: 1.6; outline: none; padding: 4px; box-sizing: border-box; }
 .jk-err { color: var(--bad); padding: 14px; }
-.jk-game { height: 100%; }
-.jk-game iframe { width: 100%; height: 100%; border: 0; display: block; background: var(--ground); }
+.jk-game { height: 100%; display: flex; flex-direction: column; }
+.jk-game iframe { width: 100%; flex: 1; min-height: 0; border: 0; display: block; background: var(--ground); }
+.jk-game-bar { flex: none; display: flex; align-items: center; justify-content: flex-end; gap: 10px; padding: 4px 10px; font-size: 11.5px; color: var(--ink-3); border-top: 1px solid var(--rule); background: var(--plate); }
+.jk-game-ext { display: inline-flex; align-items: center; gap: 5px; color: var(--ink-2); text-decoration: none; font-weight: 600; }
+.jk-game-ext:hover { color: var(--ink); text-decoration: underline; }
 
 /* the outliner */
 .spis-w { display: grid; gap: 6px; align-content: start; }
@@ -641,7 +682,9 @@ body:has(.jk.phone) .jk-toasts { bottom: calc(78px + env(safe-area-inset-bottom,
 .wc-badge { display: grid; place-items: center; border-radius: 50%; padding: 2px; box-shadow: 0 0 0 2.5px var(--life); flex: none; }
 .wc-badge .sig { display: block; }
 .wc-sname { font-size: 11.5px; font-weight: 700; color: var(--ink); max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; line-height: 1.2; flex: none; }
-.wc-sname.two { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: break-word; -webkit-hyphens: auto; hyphens: auto; }
+.wc-sname.lines { white-space: normal; display: grid; justify-items: center; min-width: 0; }
+.wc-sname.lines span { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wc-sname.vert { writing-mode: vertical-rl; transform: rotate(180deg); max-height: 100%; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .wc-in { position: absolute; inset: 0; padding: 10px 12px 10px 15px; display: flex; flex-direction: column; gap: 7px; overflow: hidden; }
 .wc-in.wide { flex-direction: row; align-items: center; gap: 14px; }
 .wc-in.wide .wc-head { max-width: 46%; }
@@ -664,8 +707,11 @@ body:has(.jk.phone) .jk-toasts { bottom: calc(78px + env(safe-area-inset-bottom,
 .wc-play { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 999px; background: linear-gradient(180deg, var(--h4), var(--h3)); color: var(--heat-text-hot); font-weight: 750; font-size: 12px; white-space: nowrap; flex: none; text-decoration: none; cursor: pointer; }
 .wc-play:hover { text-decoration: none; box-shadow: 0 0 16px var(--glow); }
 .wc-play svg { width: 12px; height: 12px; }
-.wc-att { position: absolute; top: -7px; right: -7px; z-index: 3; min-width: 17px; height: 17px; padding: 0 4px; box-sizing: border-box; border-radius: 9px; background: color-mix(in srgb, var(--att) 78%, var(--plate)); color: #fff; font-size: 10.5px; font-weight: 800; display: grid; place-items: center; line-height: 1; box-shadow: 0 0 0 2px var(--ground-2); pointer-events: none; }
-.wc-att.high { background: var(--att); }
+.w2-empty { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 7; display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 999px; border: 1px solid var(--hand); background: var(--plate); color: var(--ink); font: inherit; font-size: 13px; font-weight: 650; cursor: pointer; box-shadow: 0 6px 24px rgba(0, 0, 0, .35); white-space: nowrap; }
+.w2-empty .ic { color: var(--hand); }
+.w2-empty:hover { background: var(--plate-2); }
+.wc-att { position: absolute; top: -7px; right: -7px; z-index: 3; min-width: 17px; height: 17px; padding: 0 4px; box-sizing: border-box; border-radius: 9px; background: var(--fnd-fill-mid); color: var(--fnd-ink-mid); font-size: 10.5px; font-weight: 800; display: grid; place-items: center; line-height: 1; box-shadow: 0 0 0 2px var(--ground-2), inset 0 0 0 2px var(--fnd-ring-mid); pointer-events: none; }
+.wc-att.high { background: var(--fnd-fill-hi); color: var(--fnd-ink-hi); box-shadow: 0 0 0 2px var(--ground-2), inset 0 0 0 2px var(--fnd-ring-hi); }
 .wc-new { position: absolute; top: -9px; left: 12px; z-index: 3; padding: 1px 7px; border-radius: 6px; background: var(--hand); color: var(--ground); font-size: 10.5px; font-weight: 800; letter-spacing: .02em; pointer-events: none; }
 /* notes stuck to the wall */
 .wn { position: absolute; z-index: 3; border-radius: 3px 3px 10px 3px; background: var(--note-bg, var(--note-zolty)); color: var(--note-ink); box-shadow: 0 12px 24px -12px rgba(0, 0, 0, .75); display: flex; flex-direction: column; overflow: hidden; }
@@ -675,7 +721,7 @@ body:has(.jk.phone) .jk-toasts { bottom: calc(78px + env(safe-area-inset-bottom,
 .wn.live { z-index: 6; opacity: .94; }
 .wn-grip { height: 18px; flex: none; cursor: grab; display: flex; justify-content: center; align-items: center; gap: 4px; background: rgba(0, 0, 0, .06); touch-action: none; }
 .wn-grip i { width: 4px; height: 4px; border-radius: 50%; background: rgba(0, 0, 0, .28); }
-.wn-text { flex: 1; width: 100%; box-sizing: border-box; border: 0; resize: none; background: transparent; color: var(--note-ink); font-family: var(--font-text); font-size: calc(13.5px * var(--nz, 1)); line-height: 1.45; padding: 4px 10px 8px; outline: none; -webkit-user-select: text; user-select: text; touch-action: auto; }
+.wn-text { scrollbar-width: thin; flex: 1; width: 100%; box-sizing: border-box; border: 0; resize: none; background: transparent; color: var(--note-ink); font-family: var(--font-text); font-size: calc(13.5px * var(--nz, 1)); line-height: 1.45; padding: 4px 10px 8px; outline: none; -webkit-user-select: text; user-select: text; touch-action: auto; }
 .wn-text::placeholder { color: rgba(42, 36, 18, .45); }
 .wn-mini { margin: 0; padding: 2px 6px; font-size: 10px; font-weight: 700; color: var(--note-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wn.small .wn-grip { height: 100%; }

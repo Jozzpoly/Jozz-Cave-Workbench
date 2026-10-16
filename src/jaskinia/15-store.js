@@ -198,14 +198,24 @@ function writeBackups(list) {
   return false;
 }
 function trimBackups(n) { const l = readBackups(); writeBackups(l.slice(0, Math.max(0, l.length - n))); }
-function makeBackup(why) {
+/* `forgotten`: what is about to leave the trash for good. A copy holds the layouts, notes and views, not the trash, so
+   the things deleted for good ride along in it; restoring that copy puts them back in the trash (GPT's review of v3
+   found that the promise "it stays in the copy made now" was not true for layouts and saved states).
+   Returns null when the copy could not be written: the caller must not delete then. */
+function makeBackup(why, forgotten) {
   if (!storageOK || !store) return null;
   const data = snapshotAll(), list = readBackups(), s0 = sig({ s: data.spaces, n: data.notes });
-  if (list[0] && list[0].sig === s0) { if (why !== 'auto') { list[0].why = why; list[0].at = Date.now(); writeBackups(list); } return list[0]; }
+  const keep = arr(forgotten).filter(Boolean).map(x => clone(x));
+  if (list[0] && list[0].sig === s0) {
+    if (why === 'auto' && !keep.length) return list[0];
+    if (why !== 'auto') { list[0].why = why; list[0].at = Date.now(); }
+    if (keep.length) list[0].data.forgotten = [...arr(list[0].data.forgotten), ...keep];
+    return writeBackups(list) ? list[0] : null;
+  }
+  if (keep.length) data.forgotten = keep;
   const b = { id: uid('b'), at: Date.now(), why, sig: s0, n: data.spaces.length, data };
   list.unshift(b);
-  writeBackups(list.slice(0, BAK_MAX));
-  return b;
+  return writeBackups(list.slice(0, BAK_MAX)) ? b : null;
 }
 function maybeAutoBackup() { const b = readBackups()[0]; if (!b || Date.now() - b.at > BAK_EVERY) makeBackup('auto'); }
 

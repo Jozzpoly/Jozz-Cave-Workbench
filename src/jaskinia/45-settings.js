@@ -28,6 +28,7 @@ function applyLook() {
 /* a preference changed: apply it, keep it, redraw what depends on it */
 function setPref(k, v) {
   if (prefs[k] === v) return;
+  logEv(t('ustawienie: {0} = {1}', k, v));
   prefs[k] = v;
   const p = sanitizePrefs(prefs);
   Object.assign(prefs, p, { recent: prefs.recent });
@@ -37,6 +38,7 @@ function setPref(k, v) {
   if (k === 'cz') { for (const [id, rt] of RT) { const w = L.wins[id]; if (w) rt.zoomer.style.zoom = zEff(w); } B.HOOK.refresh(); }
   if (k === 'density') { apply(); B.HOOK.refresh(); }
   if (k === 'theme' || k === 'scheme' || k === 'life') setTimeout(() => B.HOOK.refresh(), 30);
+  if (k === 'games') B.HOOK.refresh();
 }
 /* rebuild the whole interface (after a language change): the store and the layouts stay as they are */
 function relaunch() {
@@ -114,6 +116,10 @@ const SET_SECTIONS = {
     return h('div', { class: 'set-body' },
       setCard(t('Ściana'), setRow(t('Kółko myszy na ścianie'), t('Przybliża jak w Blenderze i na mapach, albo przesuwa widok jak na touchpadzie. Ctrl+kółko zawsze przybliża.'),
         setSeg(t('Kółko myszy'), prefs.wheel, [['zoom', 'Przybliża'], ['pan', 'Przesuwa']], v => { setPref('wheel', v); draw(); }))),
+      setCard(t('Gry'), B.HOSTED
+        ? setRow(t('Gdzie otwierać gry'), t('„Samo”: na komputerze w oknie obok mapy, na telefonie w nowej karcie, gdzie gra ma cały ekran.'),
+          setSeg(t('Gry'), prefs.games, [['auto', 'Samo'], ['okno', 'W oknie'], ['karta', 'W nowej karcie']], v => { setPref('games', v); draw(); }))
+        : h('p', { class: 'set-note', text: t('W claude.ai gry zawsze otwierają się w nowej karcie: ta strona nie może pokazać innej strony w oknie. W Jaskini pobranej jako plik albo na własnym serwerze możesz grać w oknie.') })),
       setCard(t('Podpowiedzi i ruch'),
         setRow(t('Dymki z podpowiedziami'), t('Dymki nad mapą, wykresem i lasem gałęzi. Na dotyku nie pokazują się nigdy.'), setSeg(t('Dymki'), prefs.tips ? 'on' : 'off', [['on', 'Pokazuj'], ['off', 'Ukryj']], v => { setPref('tips', v === 'on'); draw(); })),
         setRow(t('Animacje'), t('Płynne przejścia kart i stref upuszczania.'), setSeg(t('Animacje'), prefs.motion, [['full', 'Pełne'], ['less', 'Oszczędne']], v => { setPref('motion', v); draw(); }))));
@@ -191,7 +197,8 @@ const SET_SECTIONS = {
           h('button', { class: 'jk-tb danger', type: 'button', onclick: e => forever(e.currentTarget, it.name || kindLabel(it), () => { forgetTrash(it.id); draw(); }) }, t('Usuń na zawsze'))))))) : null,
       empty ? setCard(null, h('p', { class: 'jk-empty', text: t('Kosz jest pusty.') })) : null,
       !empty ? h('div', { class: 'set-danger' }, h('button', { class: 'btn danger big', type: 'button', onclick: e => askPop(e.currentTarget, { title: t('Opróżnić cały kosz?'), text: t('Wszystko w koszu ({0}) zniknie na zawsze. Zanim to zrobię, zapiszę kopię automatyczną.', items.length + orphans.length), ok: t('Opróżnij kosz na zawsze'), okClass: 'danger big' }, () => {
-        makeBackup('przed usunięciem na zawsze'); store.trash = []; for (const n of orphanNotes()) delete store.notes[n.id]; persist(); draw(); jtoast(t('Kosz jest pusty.'));
+        if (storageOK && !makeBackup('przed usunięciem na zawsze', store.trash)) { jtoast(t('Nie udało się zrobić kopii przed usunięciem, więc nic nie usunąłem. Pamięć przeglądarki jest pełna: wyeksportuj Jaskinię albo usuń stare kopie.')); return; }
+        store.trash = []; for (const n of orphanNotes()) delete store.notes[n.id]; persist(); draw(); jtoast(t('Kosz jest pusty.'));
       }) }, icon('trash', 15), t('Opróżnij kosz…'))) : null);
   },
   dane(c, draw) {
@@ -254,7 +261,11 @@ const SET_SECTIONS = {
         h('li', null, h('span', { text: t('razem') }), h('b', { text: `${fmt(T.commits)} commitów · ${T.branches} gałęzi` })),
         h('li', null, h('span', { text: t('zapis Jaskini w tej przeglądarce') }), h('b', { text: storageOK ? `${Math.round(bytes / 1024)} KB` : t('niedostępny') })))),
       setCard(t('Gdzie to wszystko jest'), h('p', { class: 'set-note', text: t('Układy, notatki, zapisy, kopie i kosz są tylko w tej przeglądarce, na tym urządzeniu. Nigdzie ich nie wysyłam. Żeby przenieść Jaskinię, użyj eksportu. Dane o projektach to zrzut z GitHuba wbudowany w stronę: odświeża go Claude (regen).') })),
-      setCard(t('Wersja'), h('p', { class: 'set-note', text: t('Jaskinia v2 · 14 paź 2026 · zbudowana na panelach Biblioteki.') })));
+      setCard(t('Wersja'), h('ul', { class: 'set-facts' },
+        h('li', null, h('span', { text: t('wersja') }), h('b', { text: 'Jaskinia ' + VER })),
+        h('li', null, h('span', { text: t('zbudowana') }), h('b', { text: builtShort() })),
+        h('li', null, h('span', { text: t('działa jako') }), h('b', { text: t(PLACE_NAME[PLACE]) }))),
+        h('p', { class: 'set-note', text: PLACE === 'plik' ? t('To plik na tym urządzeniu: nowa wersja Jaskini to nowy plik. Twój zapis zostaje w przeglądarce, ale jeśli nowa kopia go nie widzi, przenieś go eksportem i importem.') : PLACE === 'claude' ? t('Jaskinia działa w claude.ai: nowa wersja pojawia się pod tym samym linkiem.') : t('Jaskinia działa na Twoim serwerze.') })));
   },
 };
 function zoomSlider(draw) {
