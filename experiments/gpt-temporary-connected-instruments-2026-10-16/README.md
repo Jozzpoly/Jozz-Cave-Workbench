@@ -12,14 +12,14 @@ Can the existing Jaskinia shell host **more than one independent, sandboxed inst
 
 - `src/jaskinia/42-gpt-temporary-instrument.js` gets automatically concatenated after `40-types.js` and before `50-shell.js` by the existing `tools/render.py`; no shell or core files are modified.
 - It registers one new **temporary** window kind: `Instrument GPT — eksperyment` (`TYPES.gpt_instrument_temp`). It uses the real Jaskinia `c.onSel`, `c.selName`, `c.onDispose`, `c.save` contract. `follows:false` is deliberate: switching projects does *not* destroy and re-create the iframe.
-- `adapter.html` is a small separately sandboxed experimental recipient. Load it explicitly from within the new window, then choose **Połącz z wyborem projektu**. Make two such Jaskinia windows and switch the global project using Kataster, Spis or the Map. A real receiving instrument would have to implement the documented message contract; an arbitrary third-party game will not respond.
+- `adapter.html` is a small separately sandboxed experimental recipient. A second actual recipient, `live-repo.html`, performs bounded tokenless GETs of default-branch commit source on GitHub (public repos only), returning exact SHA and observation time or explicit UNKNOWN. Load it explicitly from within the new window, then choose **Połącz z wyborem projektu**. Make two such Jaskinia windows and switch the global project using Kataster, Spis or the Map. A real receiving instrument would have to implement the documented message contract; an arbitrary third-party game will not respond.
 - Strictly scoped `event.source === iframe.contentWindow`, random per-instance channel + nonce, request sequence, explicit readiness, matching ACK and no silent retry on timeout. The iframe sandbox is `allow-scripts` (opaque origin, no `allow-same-origin`); only a project name whose `R[name].private === false` is sent; unknown/private selections are blocked (no private repo metadata), tokens or owner notes.
 - The sandbox means the parent cannot simply treat `event.origin` as a verified origin. A matching iframe ACK is a **statement by the recipient**, not independent proof of a game step or scientific result. Arbitrary remote URLs need threat modeling, capability budgets and more restrictive policy before product use.
 
 ## Build and try in Jaskinia (from repo root)
 
 ```sh
-npm ci
+npm install --no-save --no-package-lock --no-audit --no-fund @fontsource-variable/anybody@5.3.0 @fontsource-variable/recursive@5.3.0 playwright@1.64.1
 python3 -I tools/render.py --app jaskinia --host web
 python3 -m http.server 8000
 ```
@@ -45,7 +45,13 @@ Observed: 9/9 asserted cases passed, no page errors:
 8. window disposal unsubscribes listener;
 9. private/unknown project not relayed to the iframe.
 
-**Not tested:** actual generated Jaskinia in Chromium, Jaskinia layout/resize/phone UX, ordinary `http://localhost` navigation (the execution Chromium blocks it), remote cross-origin iframe with a real app, cloud hosting, browser refresh, MCP Apps, auth, multiplayer, signed receipts, or Owner acceptance. There is no reason to merge until a real receiving-project scenario demands it.
+**Superseded on 16.10 — qualified real-app evidence:** The harness-only 9/9 above was an earlier, narrower stage. The full original public Jaskinia is now regenerated on isolated GitHub Actions and executed in real Chromium desktop and touch-mobile through HTTP. Latest exact CI run [#38891048088](https://github.com/Jozzpoly/Jozz-Cave-Workbench/actions/runs/38891048088) at source/test HEAD `0331973e318ae891c985d67edd64e771319a7190`: **20/20 PASS**, desktop/mobile screenshots plus compiled web HTML attached. Tests include two independent sandbox recipients, real iframe DOM change beyond ACK, missing/false ACK, privacy guard, disconnect and disposal, reload without automatic remote reconnection, workspace leave/return catch-up, mobile, and a separate external observer performing a real public GitHub REST GET. The observer returned HTTP 200 for `Mini_Feniks` with immutable commit `09f0abfdc3230afa8a97271ba581abbc6ed5e082`, consistent with independent GitHub connector lookup. Its parent `observation` report is explicitly `receiver-claimed-only`.
+
+**RED→GREEN source finding:** CI #38888826996 produced 10 PASS/1 FAIL: instruments missed selections made while their workspace was hidden. A per-window `MutationObserver` now detects re-entry and catches up without a global poll or touching Jaskinia's shell. Replayed to 20/20 PASS. Early main branch `package-lock.json` has a stale optional Playwright entry; CI installs an explicit Playwright version on the *isolated* branch without modifying Claude's main.
+
+**Human-facing caution:** Actual mobile screenshot revealed theme contrast FAIL in parent buttons; that was fixed with theme-aware `color-mix` and both desktop/mobile rerun. A still-technical interface, no Owner product acceptance. A sandboxed recipient's ACK/observation can be dishonest; a live GET at one instant does not establish current scientific frontier (default branch ≠ active PR). This remains a temporary donor, not a standard or Medium product.
+
+**Still not qualified:** arbitrary external game or genuine multi-agent execution, authenticated/cloud deployment, cross-device persistence, public/private data beyond the bounded guard, OAuth, signed independent receipts, Owner experience, or measurable Medium-over-GitHub incremental value.
 
 ## Important research crosscheck
 
