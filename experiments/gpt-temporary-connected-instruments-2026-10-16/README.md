@@ -13,7 +13,7 @@ Can the existing Jaskinia shell host **more than one independent, sandboxed inst
 - `src/jaskinia/42-gpt-temporary-instrument.js` gets automatically concatenated after `40-types.js` and before `50-shell.js` by the existing `tools/render.py`; no shell or core files are modified.
 - It registers one new **temporary** window kind: `Instrument GPT — eksperyment` (`TYPES.gpt_instrument_temp`). It uses the real Jaskinia `c.onSel`, `c.selName`, `c.onDispose`, `c.save` contract. `follows:false` is deliberate: switching projects does *not* destroy and re-create the iframe.
 - `adapter.html` is a small separately sandboxed experimental recipient. Load it explicitly from within the new window, then choose **Połącz z wyborem projektu**. Make two such Jaskinia windows and switch the global project using Kataster, Spis or the Map. A real receiving instrument would have to implement the documented message contract; an arbitrary third-party game will not respond.
-- Strictly scoped `event.source === iframe.contentWindow`, random per-instance channel + nonce, request sequence, explicit readiness, matching ACK and no silent retry on timeout. The iframe sandbox is `allow-scripts` (opaque origin, no `allow-same-origin`); only public project **name** is sent, no private repo metadata, tokens or owner notes.
+- Strictly scoped `event.source === iframe.contentWindow`, random per-instance channel + nonce, request sequence, explicit readiness, matching ACK and no silent retry on timeout. The iframe sandbox is `allow-scripts` (opaque origin, no `allow-same-origin`); only a project name whose `R[name].private === false` is sent; unknown/private selections are blocked (no private repo metadata), tokens or owner notes.
 - The sandbox means the parent cannot simply treat `event.origin` as a verified origin. A matching iframe ACK is a **statement by the recipient**, not independent proof of a game step or scientific result. Arbitrary remote URLs need threat modeling, capability budgets and more restrictive policy before product use.
 
 ## Build and try in Jaskinia (from repo root)
@@ -34,7 +34,7 @@ The already committed `dist/jaskinia-web.html` does **not** contain this experim
 
 The Python Playwright harness uses a minimal shell context with the **exact** Jaskinia callbacks this module consumes, `page.set_content` on `about:blank`, and an **actual isolated Chromium sandbox iframe** populated with `srcdoc`. It uses the same adapter HTML and unmodified module JS.
 
-Observed: 8/8 asserted cases passed, no page errors:
+Observed: 9/9 asserted cases passed, no page errors:
 1. window type registered;
 2. two independent iframe handshakes/ACKs;
 3. both follow a new selected project;
@@ -42,7 +42,8 @@ Observed: 8/8 asserted cases passed, no page errors:
 5. failure in one iframe does not block the other;
 6. false/stale ACK rejected;
 7. `javascript:` URL refused;
-8. window disposal unsubscribes listener.
+8. window disposal unsubscribes listener;
+9. private/unknown project not relayed to the iframe.
 
 **Not tested:** actual generated Jaskinia in Chromium, Jaskinia layout/resize/phone UX, ordinary `http://localhost` navigation (the execution Chromium blocks it), remote cross-origin iframe with a real app, cloud hosting, browser refresh, MCP Apps, auth, multiplayer, signed receipts, or Owner acceptance. There is no reason to merge until a real receiving-project scenario demands it.
 
