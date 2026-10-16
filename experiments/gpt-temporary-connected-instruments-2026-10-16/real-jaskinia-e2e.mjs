@@ -159,6 +159,33 @@ try {
       return actual===publics[1];
     } finally {await mobileContext.close();}
   });
+  await test('real source observer: distinguish GitHub GET evidence from mere iframe ACK',async()=>{
+    const win=page.locator('.win[data-type="gpt_instrument_temp"]').first();
+    const src=server.base+'/experiments/gpt-temporary-connected-instruments-2026-10-16/live-repo.html';
+    await win.locator('input[aria-label="Adres instrumentu"]').fill(src);
+    await win.getByRole('button',{name:'Załaduj instrument'}).click();
+    await page.waitForFunction(()=>window.__JASK_GPT_TEMP.list().some(x=>x.ready),{timeout:7000});
+    await win.getByRole('button',{name:'Połącz z wyborem projektu'}).click();
+    await evaluate(n=>window.__JASK.select(n),names[0]);
+    await page.waitForFunction(()=>window.__JASK_GPT_TEMP.list().some(x=>x.lastAck?.project==='Mini_Feniks'||x.lastAck?.project===window.__BIB.D.repos[0].name),{timeout:8000});
+    const inner=win.frameLocator('iframe');
+    await inner.locator('#status').waitFor({timeout:6000});
+    let observed='';
+    for(let i=0;i<70;i++){
+      observed=await inner.locator('#status').textContent();
+      if(observed.includes('GET HTTP 200')||observed.includes('NIEZNANE'))break;
+      await page.waitForTimeout(160);
+    }
+    const actual=await inner.locator('#sha').textContent();
+    const state=(await probe())[0];
+    console.log('LIVE_GITHUB_OBSERVATION',JSON.stringify({project:names[0],status:observed,sha:actual,receiverClaim:state?.observation}));
+    await page.screenshot({path:path.join(root,'shots','gpt-temp-live-source.png'),fullPage:true});
+    if(observed.includes('GET HTTP 200')){
+      return /^[a-f0-9]{40}$/.test(actual)&&
+        (await probe()).some(x=>x.observation?.sha===actual&&x.observation.verification==='receiver-claimed-only');
+    }
+    return observed.includes('NIEZNANE')&&actual==='NIEZNANY'&&(await probe()).every(x=>!x.observation);
+  });
   await test('no runtime console/page errors',()=>errors.length===0);
 } finally {
   console.log('SUMMARY',JSON.stringify({pass:checks.length,fail:failures.length,failures,errors}));
