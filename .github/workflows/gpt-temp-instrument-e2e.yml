@@ -31,3 +31,14 @@ jobs:
         run: python3 -I tools/render.py --app jaskinia --host web
       - name: Exercise real generated Jaskinia + sandboxed instruments
         run: node experiments/gpt-temporary-connected-instruments-2026-10-16/real-jaskinia-e2e.mjs
+      - name: Save exact generated Jaskinia and real-browser screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gpt-temp-real-jaskinia-evidence
+          retention-days: 5
+          if-no-files-found: warn
+          path: |
+            shots/gpt-temp-real-jaskinia.png
+            dist/jaskinia-web.html
+            experiments/gpt-temporary-connected-instruments-2026-10-16/adapter.html
