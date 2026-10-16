@@ -98,6 +98,20 @@ try {
   check(snapshot?.first === 1 && snapshot?.second === 0, 'runtime counters remain instance-local', JSON.stringify(snapshot));
   check(snapshot?.sameOriginSharedStorage === true,
     'limitation exposed: same-origin frames still share localStorage; not independent saved sessions');
+  // The launch may be technically independent yet visually obscure the previous game.
+  // Record this as an OWNER-UX observation, not a false mechanical FAIL/pass.
+  const rects = await page.evaluate(ids => ids.map(id => {
+    const frame = document.querySelector('.win[data-id="' + id + '"]');
+    const r = frame?.getBoundingClientRect();
+    return r && { id, x: r.x, y: r.y, w: r.width, h: r.height };
+  }), state.windows.map(w => w.id));
+  if (rects.every(Boolean)) {
+    const [a, b] = rects, iw = Math.max(0, Math.min(a.x+a.w, b.x+b.w) - Math.max(a.x,b.x));
+    const ih = Math.max(0, Math.min(a.y+a.h, b.y+b.h) - Math.max(a.y,b.y));
+    const overlap = iw * ih / Math.min(a.w*a.h, b.w*b.h);
+    console.log('OWNER-UX OBSERVATION: initial game-window overlap = ' + Math.round(overlap*100)
+      + '% of smaller window; a separate usability decision remains');
+  }
   check(!errors.length, 'no uncaught page errors', errors.slice(0, 4).join('; '));
   console.log('\n' + passed + ' PASS / ' + failed + ' FAIL');
 } finally {
