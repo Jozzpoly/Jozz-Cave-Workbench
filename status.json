@@ -1,0 +1,36 @@
+{
+  "schema": "jaskinia-public-preview-v1",
+  "preview": true,
+  "public": true,
+  "title": "Jaskinia v5 — publiczny podgląd, bez prywatnej warstwy",
+  "source": {
+    "repository": "Jozzpoly/Jozz-Cave-Workbench",
+    "ref": "v5-przyrzady",
+    "commit": "8d7b1141105d1442eb7690bb345193a386485954",
+    "pull_request": 2,
+    "html_blob": "e9ade93e1330be75828eb307a2a03ebb63067c3d"
+  },
+  "data": {
+    "repository_count": 24,
+    "scope": "public-repositories-only",
+    "historical_snapshot": "2026-10-14",
+    "auto_refresh": false
+  },
+  "limitations": [
+    "experimental_only",
+    "owner_feedback_pending",
+    "not_shared_across_devices",
+    "local_browser_state_is_origin_scoped",
+    "no_private_layer",
+    "no_owner_recordings",
+    "do_not_enter_private_notes",
+    "no_external_lab_is_contract_integrated",
+    "untrusted_parent_bridge_pending_security_fix",
+    "old_downloaded_file_storage_compatibility_pending"
+  ],
+  "provenance": {
+    "packaged_by": "ChatGPT GPT-6 (self-declared)",
+    "authored_through": "Jozzpoly connector",
+    "owner_approval_not_implied": true
+  }
+}
