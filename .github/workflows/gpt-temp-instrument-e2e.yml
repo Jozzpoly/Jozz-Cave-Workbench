@@ -41,5 +41,7 @@ jobs:
           path: |
             shots/gpt-temp-real-jaskinia.png
             shots/gpt-temp-real-mobile.png
+            shots/gpt-temp-live-source.png
+            experiments/gpt-temporary-connected-instruments-2026-10-16/live-repo.html
             dist/jaskinia-web.html
             experiments/gpt-temporary-connected-instruments-2026-10-16/adapter.html
