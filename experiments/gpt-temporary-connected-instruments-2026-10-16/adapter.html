@@ -1,0 +1,29 @@
+<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Adapter v1 — test only</title>
+<style>body{font:14px system-ui;background:#111e2a;color:#e9f4f5;padding:14px;margin:0}h2{margin:0 0 6px;font-size:17px}p{color:#b4cfd2}strong{color:#a1edda}button{margin:3px;padding:8px;background:#224652;color:white;border:1px solid #6f999f;border-radius:5px}pre{white-space:pre-wrap;word-break:break-word;border-top:1px solid #486270;padding-top:8px}</style></head><body>
+<h2>Instrument badawczy • GPT</h2><p>Osobny, sandboxowany runtime. Pokazuje faktycznie odebrane komunikaty Jaskini; nie jest symulacją AI ani zewnętrzną grą.</p>
+<div>Wybrany projekt: <strong id="project">BRAK</strong></div>
+<button id="drop">Pomiń następny ACK: OFF</button><button id="lie">Wyślij fałszywy/stary ACK</button>
+<pre id="log">Oczekiwanie na handshake...</pre>
+<script>
+(()=>{
+ const P='jaskinia-instrument/1';let handshake=null, last=null, drop=false;
+ const project=document.getElementById('project'), log=document.getElementById('log');
+ const tell=m=>{if(!handshake)return;parent.postMessage({protocol:P,channel:handshake.channel,nonce:handshake.nonce,...m},'*')};
+ const say=m=>{log.textContent=m+'\n'+log.textContent.slice(0,1300)};
+ document.getElementById('drop').onclick=e=>{drop=!drop;e.target.textContent='Pomiń następny ACK: '+(drop?'ON':'OFF')};
+ document.getElementById('lie').onclick=()=>{tell({kind:'ack',seq:last?.seq||-1,project:'FAKE',applied:true});say('Wysłano niezgodny ACK')};
+ window.addEventListener('message',e=>{
+   if(e.source!==parent||!e.data||e.data.protocol!==P)return;
+   const m=e.data;
+   if(m.kind==='hello'&&typeof m.channel==='string'&&typeof m.nonce==='string'){
+     handshake={channel:m.channel,nonce:m.nonce}; tell({kind:'ready'});say('READY');return;
+   }
+   if(!handshake||m.channel!==handshake.channel||m.nonce!==handshake.nonce)return;
+   if(m.kind==='set-project'&&Number.isSafeInteger(m.seq)&&typeof m.project==='string'&&m.project.length<256){
+     last={seq:m.seq,project:m.project}; project.textContent=m.project; say('Zmieniono projekt #'+m.seq+': '+m.project);
+     if(drop){drop=false;document.getElementById('drop').textContent='Pomiń następny ACK: OFF';say('ACK celowo pominięty');return;}
+     tell({kind:'ack',seq:m.seq,project:m.project,applied:true});
+   }
+ });
+})();
+</script></body></html>
