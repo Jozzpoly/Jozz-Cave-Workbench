@@ -32,6 +32,13 @@ for(const name of ['jaskinia.html','jaskinia-web.html']){
        storageAvailable:(()=>{try{localStorage.setItem('gptfiletmp','1');localStorage.removeItem('gptfiletmp');return true;}catch{return false}})(),
        spaces:__JASK.store.spaces.length
      })));
+     if(transport==='file' && runtime.storageAvailable){
+       const marker='GPT TEMP FILE RELOAD CHECK';
+       await page.evaluate(v=>{__JASK.store.spaces[0].purpose=v;__JASK.persistNow()},marker);
+       await page.reload({waitUntil:'domcontentloaded'});
+       try{await page.waitForFunction(()=>!!window.__JASK?.store,{timeout:5000});}catch{}
+       runtime.storageSurvivesReload=await page.evaluate(v=>window.__JASK?.store?.spaces?.[0]?.purpose===v,marker);
+     }
      await page.screenshot({path:path.resolve('shots','gpt-'+name+'-'+transport+'.png')});
    }
   }catch(e){runtime.navigateError=e.message}
