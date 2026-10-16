@@ -1,12 +1,12 @@
-name: GPT TEMP — independent Opus v4 verification
+name: GPT TEMP — v4 note export redaction candidate
 on:
   push:
     branches:
-      - experiment/gpt-temporary-v4-audit-2026-10-16
+      - experiment/gpt-temporary-v4-redaction-candidate-2026-10-16
 permissions:
   contents: read
 concurrency:
-  group: gpt-temp-v4-verification
+  group: gpt-temp-v4-redaction-candidate
   cancel-in-progress: true
 jobs:
   evidence:
@@ -30,7 +30,7 @@ jobs:
         run: node tools/jk2_test.mjs
       - name: Opus v4 E2E 40
         run: node tools/jk4_test.mjs
-      - name: Full app independent redaction counterexample
+      - name: Full app no-note export regression including legacy journal
         run: node experiments/gpt-v4-audit/independent-v4.mjs
       - name: Preserve synthetic evidence
         if: always()
