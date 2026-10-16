@@ -34,7 +34,11 @@ This is intentionally a minimal intervention in the launch hook, not a redesign 
 - **negative invariant:** same-origin frames still share localStorage; thus this does **NOT** prove three independent save profiles;
 - diagnostic output for initial window overlap (not assigned PASS or FAIL without Owner UX evaluation).
 
-**Execution evidence:** semantic test of the exact new launch function in an isolated JavaScript harness: PASS for A→B→A and new-tab fallback. Source diff matched exactly and was round-trip checked. This is **NOT** full Jaskinia E2E. Full Chromium test, all v5 suites, chaos, desktop/mobile visual review were **not run here**, because the current container cannot fetch the required repo and dependencies. This branch is unqualified until they run.
+**Execution evidence (two layers):**
+1. **Exact handler simulation:** base v5 A→B→A reuses one game; candidate creates three pinned windows; new-tab fallback retains old behavior — PASS.
+2. **Actual v5 production HTML, public GitHub Pages archive** (GitHub run `38940015259`, `index.html` SHA256 `a0a023b214c9359b316fb5d658048c99c4ead92b33202aa6f5c7fe383c2da6a5`): loaded into isolated Chromium via `page.set_content`; the exact hook change was injected in-memory, with Jaskinia's shipped `pokaz:pilki` demo substituted for two public project URLs. **BASELINE reproduces:** two plays → one pinned game, with reboot and global selection change. **CANDIDATE reproduces:** two plays → two independent iframe runtimes, manual test placement side by side without restarts, selecting another project/changing theme without restarts, A→B→A → three separate runtimes, no pageerrors. Screenshots and the reproducible Python script were generated outside this repository. This is real app/DOM evidence, not a hypothetical model.
+
+**Still unqualified:** The in-memory `about:blank` context has opaque origin and **does not reproduce real GitHub Pages/file:// storage or framing policy**. Real games, real origin/session isolation, local save behavior, full Opus regression suites, chaos, true mouse-drag Owner workflow and mobile review remain **untested**. The branch should not be merged or deployed on the strength of this narrow positive evidence alone.
 
 ## Open product decisions and risks
 
