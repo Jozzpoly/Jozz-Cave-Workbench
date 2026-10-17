@@ -6,6 +6,10 @@ on:
       - experiment/gpt-live-comparison-2026-10-17
   workflow_dispatch:
 
+concurrency:
+  group: jaskinia-ab-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -33,3 +37,10 @@ jobs:
           name: jaskinia-ab-screens
           path: shots/jk6
           if-no-files-found: ignore
+      - name: Upload standalone offline-capable experimental Jaskinia
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jaskinia-ab-standalone
+          path: dist/jaskinia-web.html
+          if-no-files-found: error
