@@ -1,0 +1,66 @@
+// Jaskinia experimental A/B browser qualification.
+// Prerequisites: npm ci; npx playwright install chromium; npm run jaskinia
+// Run: node tools/jk6_compare_test.mjs [shots-directory]
+import { chromium } from 'playwright';
+import { serve } from './serve.mjs';
+import fs from 'node:fs';
+import path from 'node:path';
+const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
+const dist = path.join(root, 'dist');
+const shots = process.argv[2] || path.join(root, 'shots/jk6');
+fs.mkdirSync(shots, { recursive: true });
+const body = fs.readFileSync(path.join(dist, 'jaskinia.html'), 'utf8');
+const test = path.join(dist, '_jk6_compare.html');
+fs.writeFileSync(test, '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>[hidden]{display:none!important}body{margin:0}</style></head><body>' + body + '</body></html>');
+const srv = await serve(dist);
+const browser = await chromium.launch();
+let pass=0, fail=0; const errors=[];
+const ok = (v, label, detail='') => { console.log(v?'PASS':'FAIL',label,detail); v?pass++:fail++; };
+try {
+  const ctx = await browser.newContext({viewport:{width:1600,height:980},acceptDownloads:true});
+  await ctx.addInitScript(() => { window.__JASK_PLACE='web'; localStorage.setItem('jaskinia:hint','1'); });
+  const page = await ctx.newPage();
+  page.on('pageerror', e => errors.push(e.message));
+  await page.goto(srv.base+'/_jk6_compare.html');
+  await page.waitForTimeout(500);
+  let ids = await page.evaluate(() => __JASK.leafIds(__JASK.L.tree));
+  while (ids.length < 3) {
+    await page.locator('.win:not([hidden]) .b-sr').first().click();
+    ids = await page.evaluate(() => __JASK.leafIds(__JASK.L.tree));
+  }
+  await page.evaluate(ids => __JASK.commit('A/B test', L => {
+    ids.slice(0,3).forEach((id,i) => {
+      L.wins[id].pin=null;
+      L.wins[id].type=i===2?'porownanie':'przyrzad';
+      L.wins[id].st=i===2?{}:{url:'pokaz:pilki',title:'Piłki '+i};
+    });
+  }),ids);
+  await page.waitForTimeout(2800);
+  const live = await page.evaluate(() => __JASK.live().filter(e => e.url==='pokaz:pilki').map(e => ({id:e.id,energy:e.n.energia||0})));
+  ok(live.length===2 && live.every(x=>x.energy>0),'two independently emitting labs',JSON.stringify(live));
+  const cmp = page.locator('.win[data-type="porownanie"]');
+  ok(await cmp.count()===1,'comparison registered as window');
+  const status = await cmp.locator('.cmp-status').textContent();
+  ok(status.includes('Dwa żywe źródła'),'two data sources joined on a shared clock',status);
+  const ink = await cmp.locator('.cmp-canvas').evaluate(c => { const d=c.getContext('2d').getImageData(0,0,c.width,c.height).data; let n=0; for(let i=3;i<d.length;i+=4) if(d[i])n++; return n; });
+  ok(ink>500,'draws a nonempty canvas graph','pixels='+ink);
+  await page.screenshot({path:path.join(shots,'desktop.png'),fullPage:true});
+  const before = await page.evaluate(ids=>ids.slice(0,2).map(id=>document.querySelector('.win[data-id="'+id+'"] iframe').contentWindow.__boot),ids);
+  const dl = page.waitForEvent('download');
+  await cmp.getByRole('button',{name:'Zapisz próbki CSV'}).click();
+  const download=await dl, csv=fs.readFileSync(await download.path(),'utf8');
+  ok(csv.includes('instrument_id')&&csv.includes('"A"')&&csv.includes('"B"'),'CSV includes two sources and their identities');
+  await cmp.locator('select[aria-label="Instrument B"]').selectOption(ids[0]);
+  await page.waitForTimeout(350);
+  ok((await cmp.locator('.cmp-status').textContent()).includes('Wybierz dwa różne'),'same-source comparison explicitly refused');
+  await cmp.locator('select[aria-label="Instrument B"]').selectOption(ids[1]);
+  await page.waitForTimeout(400);
+  const after = await page.evaluate(ids=>ids.slice(0,2).map(id=>document.querySelector('.win[data-id="'+id+'"] iframe').contentWindow.__boot),ids);
+  ok(JSON.stringify(after)===JSON.stringify(before),'changing comparison never restarts instruments');
+  await ctx.close();
+} finally {
+  await browser.close(); srv.close(); fs.rmSync(test,{force:true});
+}
+ok(!errors.length,'no JS page errors',errors.slice(0,3).join(' | '));
+console.log(pass+' PASS / '+fail+' FAIL');
+process.exit(fail?1:0);
