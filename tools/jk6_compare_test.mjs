@@ -117,6 +117,12 @@ try {
   }));
   ok(phoneState.phone && phoneState.two === 2 && phoneState.cmp,
     'phone tap launches two labs without losing the comparison', JSON.stringify(phoneState));
+  const hidden = await phonePage.evaluate(() => __JASK.live().filter(e => e.url === 'pokaz:pilki').map(e => e.vis));
+  const warning = await phonePage.locator('.win[data-type="porownanie"] .cmp-caveat').allTextContents();
+  ok(hidden.length === 2 && hidden.every(x => x === false),
+    'mobile limitation reproduced: both labs are hidden while comparison is open', JSON.stringify(hidden));
+  ok(warning.some(x => x.includes('ukryte laboratoria mogą pauzować')),
+    'mobile limitations explicitly communicated to the owner');
   await phonePage.screenshot({ path:path.join(shots,'phone-entry.png'), fullPage:true });
   await phoneCtx.close();
 } finally {
