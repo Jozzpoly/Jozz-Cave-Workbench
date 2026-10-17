@@ -882,4 +882,5 @@ const EN = {
   'Wartości surowe. Równa nazwa sygnału nie gwarantuje równej jednostki ani znaczenia. CSV zapisuje próbki z ich rzeczywistymi czasami, nie rekonstruuje stanu świata.': 'Raw values. Matching signal names do not guarantee matching units or meanings. CSV saves actual sample times; it does not reconstruct world state.',
   'Uruchom dwa pokazy Piłki i ułóż próbę': 'Run two Balls demos and arrange the experiment',
   'porównanie: dwa pokazy': 'comparison: two demo worlds',
+  'Na telefonie ukryte laboratoria mogą pauzować. Wykres pokazuje tylko otrzymane próbki; nie oznacza to dwóch nieprzerwanie działających światów.': 'On phones, hidden labs may pause. The plot only shows received samples; it does not imply two worlds are continuously running.',
 };
