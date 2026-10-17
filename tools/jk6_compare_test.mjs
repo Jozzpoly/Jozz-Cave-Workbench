@@ -46,10 +46,17 @@ try {
   ok(ink>500,'draws a nonempty canvas graph','pixels='+ink);
   await page.screenshot({path:path.join(shots,'desktop.png'),fullPage:true});
   const before = await page.evaluate(ids=>ids.slice(0,2).map(id=>document.querySelector('.win[data-id="'+id+'"] iframe').contentWindow.__boot),ids);
+  // Negative physical measurements must not be turned into formula-escaped text.
+  await page.evaluate(id => {
+    const frame = document.querySelector('.win[data-id="' + id + '"] iframe');
+    frame.contentWindow.Jaskinia.signals({ energia: -17.25 });
+  }, ids[0]);
+  await page.waitForTimeout(80);
   const dl = page.waitForEvent('download');
   await cmp.getByRole('button',{name:'Zapisz próbki CSV'}).click();
   const download=await dl, csv=fs.readFileSync(await download.path(),'utf8');
   ok(csv.includes('instrument_id')&&csv.includes('"A"')&&csv.includes('"B"'),'CSV includes two sources and their identities');
+  ok(csv.includes(',-17.25\r\n'),'signed measurement stays numeric in CSV');
   await cmp.locator('select[aria-label="Instrument B"]').selectOption(ids[0]);
   await page.waitForTimeout(350);
   ok((await cmp.locator('.cmp-status').textContent()).includes('Wybierz dwa różne'),'same-source comparison explicitly refused');
