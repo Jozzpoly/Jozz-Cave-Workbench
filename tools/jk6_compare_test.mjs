@@ -41,7 +41,7 @@ try {
   const cmp = page.locator('.win[data-type="porownanie"]');
   ok(await cmp.count()===1,'comparison registered as window');
   const status = await cmp.locator('.cmp-status').textContent();
-  ok(status.includes('Dwa widoczne strumienie'),'two data sources joined on a shared clock',status);
+  ok(status.includes('Dwa bieżące strumienie danych'),'two data sources joined on a shared clock',status);
   const ink = await cmp.locator('.cmp-canvas').evaluate(c => { const d=c.getContext('2d').getImageData(0,0,c.width,c.height).data; let n=0; for(let i=3;i<d.length;i+=4) if(d[i])n++; return n; });
   ok(ink>500,'draws a nonempty canvas graph','pixels='+ink);
   await page.screenshot({path:path.join(shots,'desktop.png'),fullPage:true});
