@@ -173,6 +173,7 @@ function renderCompare(box, c) {
   box.append(h('div', { class: 'cmp-root' },
     h('h2', { text: t('Porównanie na żywo') }),
     h('p', { class: 'jk-sub', text: t('Dwa niezależne laboratoria. Jedna oś czasu. Bez przejmowania ich sterowania ani restartowania.') }),
+    phone ? h('p', { class: 'cmp-caveat', role: 'note', text: t('Na telefonie ukryte laboratoria mogą pauzować. Wykres pokazuje tylko otrzymane próbki; nie oznacza to dwóch nieprzerwanie działających światów.') }) : null,
     sources.length < 2 ? h('button', { class: 'btn hot cmp-start', type: 'button', onclick: () => cmpLaunchDemos(c) }, t('Uruchom dwa pokazy Piłki i ułóż próbę')) : null,
     controls,
     h('div', { class: 'cmp-toolbar' }, range, exportBtn),
