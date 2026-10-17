@@ -202,8 +202,8 @@ function renderCompare(box, c) {
       : same ? t('Wybierz dwa różne przyrządy.')
       : !both ? t('Czekam na liczby z obu przyrządów.')
       : dataA.length && dataB.length
-        ? (freshA && freshB ? t('Dwa żywe źródła · {0} / {1} próbek w oknie', dataA.length, dataB.length)
-          : t('Próbki historyczne · jeden lub oba przyrządy nie nadają bieżących liczb.'))
+        ? (freshA && freshB && a.vis === true && b.vis === true ? t('Dwa widoczne strumienie · {0} / {1} próbek w oknie', dataA.length, dataB.length)
+          : t('Ślad pomiarów · przyrząd ukryty lub bez aktualnych sygnałów; ruch świata nie jest potwierdzony.'))
         : t('Nie ma jeszcze wspólnych obserwacji w wybranym zakresie czasu.');
     const newestA = last(a), newestB = last(b);
     const latest = (e, m, ts, data) => e && m ? (e === a ? 'A — ' : 'B — ') + cmpLabel(e) + ' / ' + m + ': ' +
