@@ -58,6 +58,29 @@ try {
   const after = await page.evaluate(ids=>ids.slice(0,2).map(id=>document.querySelector('.win[data-id="'+id+'"] iframe').contentWindow.__boot),ids);
   ok(JSON.stringify(after)===JSON.stringify(before),'changing comparison never restarts instruments');
   await ctx.close();
+
+  // A new owner enters an empty comparison: one deliberate click creates two real independent demos.
+  const ctx2 = await browser.newContext({ viewport: { width: 1600, height: 980 } });
+  await ctx2.addInitScript(() => { window.__JASK_PLACE = 'web'; localStorage.setItem('jaskinia:hint', '1'); });
+  const page2 = await ctx2.newPage();
+  page2.on('pageerror', e => errors.push(e.message));
+  await page2.goto(srv.base + '/_jk6_compare.html');
+  await page2.waitForTimeout(400);
+  await page2.evaluate(() => {
+    const id = __JASK.leafIds(__JASK.L.tree)[0];
+    __JASK.commit('A/B entry test', L => { L.wins[id].type = 'porownanie'; L.wins[id].st = {}; });
+  });
+  await page2.locator('.cmp-start').click();
+  await page2.waitForTimeout(2100);
+  const started = await page2.evaluate(() => ({
+    labs: __JASK.live().filter(e => e.url === 'pokaz:pilki').length,
+    windows: Object.values(__JASK.L.wins).filter(w => w.type === 'przyrzad').length,
+    compare: Object.values(__JASK.L.wins).find(w => w.type === 'porownanie')?.st,
+  }));
+  ok(started.labs === 2 && started.windows >= 2 && started.compare?.cmpA !== started.compare?.cmpB,
+    'one click creates and connects two independently running demos', JSON.stringify(started));
+  await page2.screenshot({ path: path.join(shots, 'one-click-entry.png'), fullPage: true });
+  await ctx2.close();
 } finally {
   await browser.close(); srv.close(); fs.rmSync(test,{force:true});
 }
