@@ -22,7 +22,7 @@ const PLACE = B.RUNS_LOCAL ? 'plik' : B.HOSTED ? 'web' : 'claude';
 const PLACE_NAME = { plik: 'plik na tym urządzeniu', web: 'własny serwer', claude: 'claude.ai' };
 
 /* ---------- preferences: how Jaskinia looks and behaves on this device ---------- */
-const PREFS_KEY = 'jaskinia:prefs';
+const PREFS_KEY = 'jaskinia:ab-exp:prefs';
 const PREF_CHOICES = {
   theme: ['jaskinia', 'kataster', 'neon', 'piwnica'],
   scheme: ['auto', 'ciemna', 'jasna'],
