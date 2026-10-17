@@ -886,4 +886,5 @@ const EN = {
   'Próbki historyczne · jeden lub oba przyrządy nie nadają bieżących liczb.': 'Historical samples · one or both instruments are not currently transmitting.',
   'Dwa widoczne strumienie · {0} / {1} próbek w oknie': 'Two visible streams · {0} / {1} samples in range',
   'Ślad pomiarów · przyrząd ukryty lub bez aktualnych sygnałów; ruch świata nie jest potwierdzony.': 'Measurement trace · a lab is hidden or stale; world motion is not confirmed.',
+  'Dwa bieżące strumienie danych · {0} / {1} próbek w oknie': 'Two current data streams · {0} / {1} samples in range',
 };
