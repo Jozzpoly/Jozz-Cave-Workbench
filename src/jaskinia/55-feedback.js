@@ -5,7 +5,7 @@
    "Paczka dla Claude'a" puts them together with the version, the place, the device and the layouts. A screen recording
    can then be matched to the log second by second, and one round of feedback costs minutes instead of a night.
    Nothing leaves the device by itself: the package is a file (or text) Jozz hands over when he wants. */
-const KEY_LOG = 'jaskinia:dziennik', KEY_UW = 'jaskinia:uwagi', LOG_MAX = 600;
+const KEY_LOG = 'jaskinia:ab-exp:dziennik', KEY_UW = 'jaskinia:ab-exp:uwagi', LOG_MAX = 600;
 let jlog = (() => { try { return arr(JSON.parse(lsGet(KEY_LOG) || '[]')).filter(e => e && e.t && e.a); } catch { return []; } })();
 /* Note text stays out of the log. The menu of notes logs "notatka", not the note's title (a menu item's `log` label).
    v4 still logged the title there (GPT's review of PR #1 found it), so those lines are cleaned once, when the log is
