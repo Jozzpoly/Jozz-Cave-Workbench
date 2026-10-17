@@ -4,6 +4,10 @@
 const CMP_RANGES = [[10, '10 s'], [60, '1 min'], [300, '5 min']];
 const CMP_COLORS = ['--link', '--warn'];
 
+function cmpLabel(e) {
+  const said = liveName(e);
+  return e.title && e.title !== said ? e.title + ' · ' + said : said;
+}
 function cmpMetricOptions(e) { return e ? [...e.sigs.keys()].sort((a, b) => a.localeCompare(b, 'pl')) : []; }
 function cmpSeries(e, metric, cutoff) {
   const s = e && e.sigs.get(metric);
@@ -119,7 +123,7 @@ function renderCompare(box, c) {
   const selectId = (field, label, allowed) => {
     const sel = h('select', { class: 'jk-in cmp-select', 'aria-label': t(label) });
     sel.append(h('option', { value: '', text: t('Wybierz przyrząd') }));
-    for (const e of allowed) sel.append(h('option', { value: e.id, text: liveName(e) + ' · ' + e.id }));
+    for (const e of allowed) sel.append(h('option', { value: e.id, text: cmpLabel(e) + ' · ' + e.id }));
     sel.value = st[field] || '';
     sel.addEventListener('change', () => c.commit(t('porównanie: wybór'), () => { st[field] = sel.value; st[field === 'cmpA' ? 'cmpMa' : 'cmpMb'] = ''; }));
     return sel;
@@ -198,7 +202,7 @@ function renderCompare(box, c) {
         ? t('Dwa żywe źródła · {0} / {1} próbek w oknie', dataA.length, dataB.length)
         : t('Nie ma jeszcze wspólnych obserwacji w wybranym zakresie czasu.');
     const newestA = last(a), newestB = last(b);
-    const latest = (e, m, ts, data) => e && m ? liveName(e) + ' / ' + m + ': ' +
+    const latest = (e, m, ts, data) => e && m ? (e === a ? 'A — ' : 'B — ') + cmpLabel(e) + ' / ' + m + ': ' +
       (data.length ? fmtNum(data[data.length - 1][1]) : '—') +
       (ts && now - ts > 2500 ? ' (' + t('próbki nie są świeże') + ')' : '') : '—';
     caption.textContent = latest(a, st.cmpMa, newestA, dataA) + '     ·     ' + latest(b, st.cmpMb, newestB, dataB);
