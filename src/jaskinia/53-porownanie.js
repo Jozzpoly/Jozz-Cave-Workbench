@@ -105,6 +105,7 @@ function renderCompare(box, c) {
   // Initial choice is convenient, but never silently rebind a missing saved instrument.
   if (st.cmpA === undefined && sources[0]) st.cmpA = sources[0].id;
   if (st.cmpB === undefined && sources[1]) st.cmpB = sources[1].id;
+  if (sources.length && (st.cmpA || st.cmpB)) c.save();
   const a = ids.has(st.cmpA) ? LIVE.get(st.cmpA) : null;
   const b = ids.has(st.cmpB) ? LIVE.get(st.cmpB) : null;
   const same = !!a && a === b;
@@ -158,8 +159,7 @@ function renderCompare(box, c) {
     if (!alive) return;
     const key = sourcesKey();
     if (key !== signature) {
-      if (signature) { c.rerender(); return; }
-      signature = key;
+      c.rerender(); return;
     }
     const both = !!a && !!b && !same && availableA.includes(st.cmpMa) && availableB.includes(st.cmpMb);
     const now = Date.now();
