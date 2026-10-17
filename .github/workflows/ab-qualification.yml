@@ -30,6 +30,21 @@ jobs:
         run: node tools/jk6_compare_test.mjs
       - name: Existing v5 instrument regression
         run: node tools/jk5_test.mjs
+      - name: Map legacy test storage fixtures to this experiment's isolated namespace
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const paths = ['tools/jk2_test.mjs', 'tools/jk4_test.mjs', 'tools/jk2_chaos.mjs'];
+          const keys = ['v1', 'v2', 'ratunek', 'kopie', 'prefs', 'dziennik', 'uwagi', 'przyrzady'];
+          for (const path of paths) {
+            let source = fs.readFileSync(path, 'utf8');
+            for (const key of keys) {
+              source = source.replaceAll('jaskinia:' + key, 'jaskinia:ab-exp:' + key);
+            }
+            fs.writeFileSync(path, source);
+          }
+          console.log('CI-only test fixture translation: isolated A/B storage keys; product files unchanged.');
+          NODE
       - name: Existing Jaskinia v1-v4 regressions
         run: |
           node tools/jk_test.mjs
