@@ -195,12 +195,15 @@ function renderCompare(box, c) {
     const last = e => { const s0 = e && e.sigs.get(e === a ? st.cmpMa : st.cmpMb); return s0 && s0.t.length ? s0.t[s0.t.length - 1] : 0; };
     const dataA = both ? cmpSeries(a, st.cmpMa, now - span * 1000) : [];
     const dataB = both ? cmpSeries(b, st.cmpMb, now - span * 1000) : [];
+    const freshA = dataA.length && now - dataA[dataA.length - 1][0] < 2500;
+    const freshB = dataB.length && now - dataB[dataB.length - 1][0] < 2500;
     status.textContent = !sources.length ? t('Uruchom dwa okna „Przyrząd”, np. dwa razy pokaz Piłki.')
       : !a || !b ? t('Wybierz dwa dostępne przyrządy w bieżącym układzie.')
       : same ? t('Wybierz dwa różne przyrządy.')
       : !both ? t('Czekam na liczby z obu przyrządów.')
       : dataA.length && dataB.length
-        ? t('Dwa żywe źródła · {0} / {1} próbek w oknie', dataA.length, dataB.length)
+        ? (freshA && freshB ? t('Dwa żywe źródła · {0} / {1} próbek w oknie', dataA.length, dataB.length)
+          : t('Próbki historyczne · jeden lub oba przyrządy nie nadają bieżących liczb.'))
         : t('Nie ma jeszcze wspólnych obserwacji w wybranym zakresie czasu.');
     const newestA = last(a), newestB = last(b);
     const latest = (e, m, ts, data) => e && m ? (e === a ? 'A — ' : 'B — ') + cmpLabel(e) + ' / ' + m + ': ' +
