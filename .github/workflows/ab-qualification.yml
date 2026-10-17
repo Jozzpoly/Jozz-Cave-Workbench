@@ -30,6 +30,13 @@ jobs:
         run: node tools/jk6_compare_test.mjs
       - name: Existing v5 instrument regression
         run: node tools/jk5_test.mjs
+      - name: Existing Jaskinia v1-v4 regressions
+        run: |
+          node tools/jk_test.mjs
+          node tools/jk2_test.mjs
+          node tools/jk4_test.mjs
+      - name: Existing layout chaos, bounded seed
+        run: node tools/jk2_chaos.mjs 250 7
       - name: Upload screenshots for visual review
         if: always()
         uses: actions/upload-artifact@v4
