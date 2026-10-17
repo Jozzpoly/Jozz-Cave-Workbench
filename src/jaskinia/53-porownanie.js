@@ -91,6 +91,28 @@ function cmpDraw(canvas, a, b, ma, mb, span, el) {
     g.stroke();
   });
 }
+
+/* Deliberate one-click on-ramp, not a new runtime: both demos are independent v5 instruments. */
+function cmpLaunchDemos(c) {
+  const A = openWinOfType('przyrzad', { fresh: true, st: { url: DEMO_URL, title: 'Piłki A' }, w: .42, h: .46 });
+  const B = openWinOfType('przyrzad', { fresh: true, st: { url: DEMO_URL, title: 'Piłki B' }, w: .42, h: .46 });
+  // Place the two new lab windows next to each other, and the floating comparison below them.
+  // Other windows and their run state are untouched. Nothing is linked or controlled.
+  c.commit(t('porównanie: dwa pokazy'), () => {
+    if (!phone) {
+      const fA = L.floats.find(x => x.id === A), fB = L.floats.find(x => x.id === B);
+      const fC = L.floats.find(x => x.id === c.id);
+      if (fA) Object.assign(fA, { x: .025, y: .05, w: .43, h: .45 });
+      if (fB) Object.assign(fB, { x: .545, y: .05, w: .43, h: .45 });
+      if (fC) Object.assign(fC, { x: .14, y: .53, w: .72, h: .43 });
+    }
+    c.win.st.cmpA = A; c.win.st.cmpB = B;
+    c.win.st.cmpMa = 'energia'; c.win.st.cmpMb = 'energia';
+  });
+  focusWin(c.id);
+  if (phone) phoneSwitch(c.id);
+}
+
 function renderCompare(box, c) {
   const st = c.win.st, sources = liveHere();
   const selectId = (field, label, allowed) => {
@@ -146,6 +168,7 @@ function renderCompare(box, c) {
   box.append(h('div', { class: 'cmp-root' },
     h('h2', { text: t('Porównanie na żywo') }),
     h('p', { class: 'jk-sub', text: t('Dwa niezależne laboratoria. Jedna oś czasu. Bez przejmowania ich sterowania ani restartowania.') }),
+    sources.length < 2 ? h('button', { class: 'btn hot cmp-start', type: 'button', onclick: () => cmpLaunchDemos(c) }, t('Uruchom dwa pokazy Piłki i ułóż próbę')) : null,
     controls,
     h('div', { class: 'cmp-toolbar' }, range, exportBtn),
     status,
