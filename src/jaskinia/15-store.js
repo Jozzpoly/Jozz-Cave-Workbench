@@ -5,13 +5,14 @@
    jaskinia:v1       the first version's data: read once, migrated, never deleted
    Rules: loading repairs what it can and puts what it cannot into the trash; nothing is replaced silently;
    notes live outside the layouts, so undoing a layout change never rewinds what was written. */
-const KEY = 'jaskinia:v2', KEY_V1 = 'jaskinia:v1', KEY_BAK = 'jaskinia:kopie', KEY_RESCUE = 'jaskinia:ratunek';
+// Isolated R&D storage: never overwrite the Owner's normal v5 layouts/notes/backups.
+const KEY = 'jaskinia:ab-exp:v2', KEY_V1 = 'jaskinia:ab-exp:v1', KEY_BAK = 'jaskinia:ab-exp:kopie', KEY_RESCUE = 'jaskinia:ab-exp:ratunek';
 const BAK_MAX = 10, BAK_EVERY = 8 * 3600e3, TRASH_MAX = 200;
 let store = null;
 const notices = []; // what went wrong (or was done) while loading; told once, plainly
 const lsGet = k => { try { return localStorage.getItem(k); } catch { return null; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, v); return true; } catch (e) { return e || false; } };
-const storageOK = (() => { try { const k = 'jaskinia:próba'; localStorage.setItem(k, '1'); localStorage.removeItem(k); return true; } catch { return false; } })();
+const storageOK = (() => { try { const k = 'jaskinia:ab-exp:próba'; localStorage.setItem(k, '1'); localStorage.removeItem(k); return true; } catch { return false; } })();
 const arr = x => Array.isArray(x) ? x : [];
 const obj = x => x && typeof x === 'object' && !Array.isArray(x) ? x : {};
 
