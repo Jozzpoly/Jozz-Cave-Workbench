@@ -18,7 +18,7 @@ let pass=0, fail=0; const errors=[];
 const ok = (v, label, detail='') => { console.log(v?'PASS':'FAIL',label,detail); v?pass++:fail++; };
 try {
   const ctx = await browser.newContext({viewport:{width:1600,height:980},acceptDownloads:true});
-  await ctx.addInitScript(() => { window.__JASK_PLACE='web'; localStorage.setItem('jaskinia:hint','1'); });
+  await ctx.addInitScript(() => { window.__JASK_PLACE='web'; localStorage.setItem('jaskinia:hint','1'); localStorage.setItem('jaskinia:v2','OWNER_SENTINEL'); localStorage.setItem('jaskinia:kopie','BACKUP_SENTINEL'); localStorage.setItem('jaskinia:uwagi','NOTES_SENTINEL'); });
   const page = await ctx.newPage();
   page.on('pageerror', e => errors.push(e.message));
   await page.goto(srv.base+'/_jk6_compare.html');
@@ -64,6 +64,15 @@ try {
   await page.waitForTimeout(400);
   const after = await page.evaluate(ids=>ids.slice(0,2).map(id=>document.querySelector('.win[data-id="'+id+'"] iframe').contentWindow.__boot),ids);
   ok(JSON.stringify(after)===JSON.stringify(before),'changing comparison never restarts instruments');
+  const isolated = await page.evaluate(() => ({
+    legacy: localStorage.getItem('jaskinia:v2'),
+    backup: localStorage.getItem('jaskinia:kopie'),
+    notes: localStorage.getItem('jaskinia:uwagi'),
+    experimental: localStorage.getItem('jaskinia:ab-exp:v2'),
+  }));
+  ok(isolated.legacy === 'OWNER_SENTINEL' && isolated.backup === 'BACKUP_SENTINEL'
+     && isolated.notes === 'NOTES_SENTINEL' && !!isolated.experimental,
+     'A/B experiment preserves ordinary Jaskinia layouts, backups and notes');
   await ctx.close();
 
   // A new owner enters an empty comparison: one deliberate click creates two real independent demos.
