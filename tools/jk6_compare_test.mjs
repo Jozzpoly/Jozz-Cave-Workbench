@@ -1,7 +1,7 @@
 // Jaskinia experimental A/B browser qualification.
 // Prerequisites: npm ci; npx playwright install chromium; npm run jaskinia
 // Run: node tools/jk6_compare_test.mjs [shots-directory]
-import { chromium } from 'playwright';
+import { chromium, devices } from 'playwright';
 import { serve } from './serve.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -97,6 +97,28 @@ try {
     'one click creates and connects two independently running demos', JSON.stringify(started));
   await page2.screenshot({ path: path.join(shots, 'one-click-entry.png'), fullPage: true });
   await ctx2.close();
+
+  const phoneCtx = await browser.newContext({ ...devices['Pixel 7'], colorScheme: 'dark' });
+  await phoneCtx.addInitScript(() => { window.__JASK_PLACE='web'; localStorage.setItem('jaskinia:hint','1'); });
+  const phonePage = await phoneCtx.newPage();
+  phonePage.on('pageerror', e => errors.push(e.message));
+  await phonePage.goto(srv.base + '/_jk6_compare.html');
+  await phonePage.waitForTimeout(500);
+  await phonePage.evaluate(() => {
+    const id = __JASK.leafIds(__JASK.L.tree)[0];
+    __JASK.commit('A/B mobile entry', L => { L.wins[id].type='porownanie'; L.wins[id].st={}; });
+  });
+  await phonePage.locator('.cmp-start').tap();
+  await phonePage.waitForTimeout(1000);
+  const phoneState = await phonePage.evaluate(() => ({
+    phone: __JASK.phone,
+    two: Object.values(__JASK.L.wins).filter(w => w.type === 'przyrzad').length,
+    cmp: Object.values(__JASK.L.wins).some(w => w.type === 'porownanie'),
+  }));
+  ok(phoneState.phone && phoneState.two === 2 && phoneState.cmp,
+    'phone tap launches two labs without losing the comparison', JSON.stringify(phoneState));
+  await phonePage.screenshot({ path:path.join(shots,'phone-entry.png'), fullPage:true });
+  await phoneCtx.close();
 } finally {
   await browser.close(); srv.close(); fs.rmSync(test,{force:true});
 }
