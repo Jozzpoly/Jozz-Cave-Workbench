@@ -1,0 +1,35 @@
+name: Jaskinia A-B experimental qualification
+
+on:
+  push:
+    branches:
+      - experiment/gpt-live-comparison-2026-10-17
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run jaskinia
+      - name: A/B two-world real Chromium qualification
+        run: node tools/jk6_compare_test.mjs
+      - name: Existing v5 instrument regression
+        run: node tools/jk5_test.mjs
+      - name: Upload screenshots for visual review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jaskinia-ab-screens
+          path: shots/jk6
+          if-no-files-found: ignore
