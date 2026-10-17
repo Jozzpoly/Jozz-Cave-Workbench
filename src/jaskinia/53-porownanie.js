@@ -27,7 +27,8 @@ function cmpExport(a, b, ma, mb, span) {
     for (const [time, val] of cmpSeries(e, metric, cutoff))
       rows.push([side, new Date(now).toISOString(), e.id, liveName(e), e.url, metric, new Date(time).toISOString(), val]);
   }
-  const csv = '\uFEFF' + rows.map(row => row.map(cmpCsvCell).join(',')).join('\r\n') + '\r\n';
+  // A finite negative sample must remain numeric (-3.2), not be escaped as spreadsheet text.
+  const csv = '\uFEFF' + rows.map(row => row.map((value, i) => i === 7 && typeof value === 'number' && Number.isFinite(value) ? String(value) : cmpCsvCell(value)).join(',')).join('\r\n') + '\r\n';
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
