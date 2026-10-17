@@ -880,4 +880,6 @@ const EN = {
   'próbki nie są świeże': 'samples are stale',
   'UWAGA: różne sygnały, bez wspólnej skali fizycznej.': 'CAUTION: different signals, no established common physical scale.',
   'Wartości surowe. Równa nazwa sygnału nie gwarantuje równej jednostki ani znaczenia. CSV zapisuje próbki z ich rzeczywistymi czasami, nie rekonstruuje stanu świata.': 'Raw values. Matching signal names do not guarantee matching units or meanings. CSV saves actual sample times; it does not reconstruct world state.',
+  'Uruchom dwa pokazy Piłki i ułóż próbę': 'Run two Balls demos and arrange the experiment',
+  'porównanie: dwa pokazy': 'comparison: two demo worlds',
 };
