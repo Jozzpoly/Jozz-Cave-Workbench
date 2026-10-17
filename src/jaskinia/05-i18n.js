@@ -883,4 +883,5 @@ const EN = {
   'Uruchom dwa pokazy Piłki i ułóż próbę': 'Run two Balls demos and arrange the experiment',
   'porównanie: dwa pokazy': 'comparison: two demo worlds',
   'Na telefonie ukryte laboratoria mogą pauzować. Wykres pokazuje tylko otrzymane próbki; nie oznacza to dwóch nieprzerwanie działających światów.': 'On phones, hidden labs may pause. The plot only shows received samples; it does not imply two worlds are continuously running.',
+  'Próbki historyczne · jeden lub oba przyrządy nie nadają bieżących liczb.': 'Historical samples · one or both instruments are not currently transmitting.',
 };
