@@ -884,4 +884,6 @@ const EN = {
   'porównanie: dwa pokazy': 'comparison: two demo worlds',
   'Na telefonie ukryte laboratoria mogą pauzować. Wykres pokazuje tylko otrzymane próbki; nie oznacza to dwóch nieprzerwanie działających światów.': 'On phones, hidden labs may pause. The plot only shows received samples; it does not imply two worlds are continuously running.',
   'Próbki historyczne · jeden lub oba przyrządy nie nadają bieżących liczb.': 'Historical samples · one or both instruments are not currently transmitting.',
+  'Dwa widoczne strumienie · {0} / {1} próbek w oknie': 'Two visible streams · {0} / {1} samples in range',
+  'Ślad pomiarów · przyrząd ukryty lub bez aktualnych sygnałów; ruch świata nie jest potwierdzony.': 'Measurement trace · a lab is hidden or stale; world motion is not confirmed.',
 };
