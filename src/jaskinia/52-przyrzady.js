@@ -17,7 +17,7 @@
 const LIVE = new Map();           // window id → the running page in that window
 const liveSubs = new Set();       // signal windows and status bars that redraw when an instrument says something
 const LIVE_SPAN = 10 * 60e3, LIVE_PTS = 6000, LIVE_SIGS = 24, LIVE_EVS = 300, LIVE_DATA = 8192;
-const KEY_LIVE_RECENT = 'jaskinia:przyrzady';
+const KEY_LIVE_RECENT = 'jaskinia:ab-exp:przyrzady';
 const lstr = (v, n) => typeof v === 'string' ? v.replace(/\s+/g, ' ').trim().slice(0, n) : '';
 function smallData(v) {
   if (v === undefined || v === null) return null;
