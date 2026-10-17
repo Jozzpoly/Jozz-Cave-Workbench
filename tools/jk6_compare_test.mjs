@@ -123,6 +123,9 @@ try {
     'mobile limitation reproduced: both labs are hidden while comparison is open', JSON.stringify(hidden));
   ok(warning.some(x => x.includes('ukryte laboratoria mogą pauzować')),
     'mobile limitations explicitly communicated to the owner');
+  await phonePage.waitForTimeout(2800);
+  ok((await phonePage.locator('.win[data-type="porownanie"] .cmp-status').textContent()).includes('Próbki historyczne'),
+    'paused mobile labs are labeled historical, never two live streams');
   await phonePage.screenshot({ path:path.join(shots,'phone-entry.png'), fullPage:true });
   await phoneCtx.close();
 } finally {
