@@ -55,7 +55,8 @@ try {
   const A = await context.newPage();
   await waitReady(A, srv.base + '/_gpt61_old_v6.html');
   const noteId = await A.evaluate(() => {
-    const id = window.__JASK.noteNew('SYNTHETIC_OLD');
+    const id = 'gpt61_synthetic_note';
+    window.__JASK.store.notes[id] = { text: 'SYNTHETIC_OLD', upd: 100 };
     window.__JASK.persistNow();
     return id;
   });
