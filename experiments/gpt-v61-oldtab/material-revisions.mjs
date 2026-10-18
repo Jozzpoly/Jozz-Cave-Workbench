@@ -36,6 +36,33 @@ const ready = async (page, file) => {
   await page.goto(server.base + '/' + file, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => Boolean(window.__JASK?.store && window.Jaskinia?.materialy), null, { timeout: 30000 });
 };
+// Read actual committed IndexedDB records rather than a tab's possibly stale or initializing MATS cache.
+async function persistedMaterial(page, id) {
+  return page.evaluate(async mid => {
+    const db=await new Promise((resolve,reject)=>{
+      const q=indexedDB.open('jaskinia-materialy',1);
+      q.onsuccess=()=>resolve(q.result); q.onerror=()=>reject(q.error);
+    });
+    try {
+      const m=await new Promise((resolve,reject)=>{
+        const tx=db.transaction('materialy','readonly');
+        const q=tx.objectStore('materialy').get(mid);
+        q.onsuccess=()=>resolve(q.result||null);q.onerror=()=>reject(q.error);
+      });
+      return m ? {id:m.id,scale:m.scale,rot:m.rot,hasSets:Array.isArray(m.sets),
+        sets:(m.sets||[]).map(x=>({n:x.n,scale:x.scale,rot:x.rot}))}:null;
+    } finally { db.close(); }
+  },id);
+}
+async function untilPersisted(page,id,pred,label,timeout=30000) {
+  const end=Date.now()+timeout;
+  while(Date.now()<end){
+    const m=await persistedMaterial(page,id);
+    if(pred(m))return m;
+    await page.waitForTimeout(200);
+  }
+  throw new Error('Timed out waiting for durable IndexedDB '+label);
+}
 async function pickMaterial(page, name) {
   await page.locator('.mt-tile', { hasText: name }).first().click({ timeout: 30000 });
   await page.waitForFunction(n => document.querySelector('.mt-cap b')?.textContent === n && Boolean(document.querySelector('.mt-go')), name, {timeout: 30000});
@@ -69,23 +96,26 @@ try {
   await pickMaterial(B,'gpt61_synthetic_material');
   await B.locator('.mt-bar .jk-tb',{hasText:/Skala/}).first().click();
   await B.locator('.jk-menu button, .jk-menu .mi, [role=menuitem]',{hasText:'×2'}).first().click();
-  await B.waitForFunction(async id => (await window.Jaskinia.materialy.settings(id)).length===2,mid,{timeout:30000});
+  const modernPersisted=await untilPersisted(B,mid,m=>m?.sets?.length===2 && m.sets[1].scale===2,'v6.1 settings rev 2');
   const before=await B.evaluate(id=>window.Jaskinia.materialy.settings(id),mid);
   assert.equal(before[1].n,2); assert.equal(before[1].scale,2);
   // The stale v6 view was opened before B wrote the settings revision.
   await A.locator('.mt-bar .jk-tb',{hasText:/Obrót/}).first().click();
   await A.locator('.jk-menu button, .jk-menu .mi, [role=menuitem]',{hasText:'Postaw: X +90°'}).first().click();
-  await A.waitForFunction(async id => (await window.Jaskinia.materialy.get(id))?.rot?.[0]===1,mid,{timeout:30000});
+  const olderPersisted=await untilPersisted(A,mid,m=>m?.rot?.[0]===1 && !m.hasSets,'stale v6 whole-record write');
   const C=await context.newPage();
   await ready(C,'_gpt61_new_v61.html');
+  const afterRecord=await persistedMaterial(C,mid);
   const after=await C.evaluate(id=>window.Jaskinia.materialy.settings(id),mid);
-  const rawRecord=await C.evaluate(id=>window.Jaskinia.materialy.get(id),mid);
   report.materialId=mid;
   report.originalSettings=original.sets;
+  report.modernCommitted=modernPersisted;
+  report.staleV6Committed=olderPersisted;
   report.newSettingsBefore=before.map(s=>({n:s.n,scale:s.scale}));
   report.settingsAfterStaleV6Write=after.map(s=>({n:s.n,scale:s.scale}));
-  report.recordHasSettingsArray=Array.isArray(rawRecord.sets);
-  report.releaseGate=after.some(x=>x.n===2)?'PASS':'FAIL';
+  report.recordHasSettingsArray=Boolean(afterRecord?.hasSets);
+  report.durableFinal=afterRecord;
+  report.releaseGate=afterRecord?.sets?.some(x=>x.n===2)?'PASS':'FAIL';
   report.observation=report.releaseGate==='FAIL'?'V6_ERASED_V61_SETTING_REVISION':'REVISION_SURVIVED';
   fs.writeFileSync(path.join(out,'material-result.json'),JSON.stringify(report,null,2)+'\n');
   console.log(JSON.stringify(report,null,2));
