@@ -1,0 +1,38 @@
+name: GPT v6-v6.1 old-tab release falsifier (no deploy)
+on:
+  push:
+    branches:
+      - experiment/gpt-v61-oldtab-2026-10-18
+    paths:
+      - '.github/workflows/gpt-v61-oldtab.yml'
+      - 'experiments/gpt-v61-oldtab/**'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: gpt-v61-oldtab-synthetic
+  cancel-in-progress: true
+jobs:
+  legacy-tab:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - name: Observe exact published v6 tab writing over v6.1 in real Chromium
+        run: node experiments/gpt-v61-oldtab/run.mjs
+      - name: Preserve synthetic observations, not user data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gpt-v61-oldtab-negative-release-falsifier
+          path: shots/gpt-v61-oldtab/result.json
+          retention-days: 5
+          if-no-files-found: error
