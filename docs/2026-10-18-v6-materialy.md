@@ -66,13 +66,15 @@ silently.
 
 ## Checks
 
-`node tools/jk6_test.mjs [shots] [models]` runs 41 checks in SwiftShader with real models from the owner's
+`node tools/jk6_test.mjs [shots] [models]` runs 47 checks in SwiftShader with real models from the owner's
 repositories. The page itself does not need the network. The checks cover:
 - import, facts in metres, versions and dedupe;
 - orientation and scale, the API object, and the 3D stage surviving a theme change;
 - walking: the house stops the body, the stairs are climbed, a map is landed on;
 - a file drop anywhere, and a refused drop that never navigates away;
-- soft delete, the library surviving a reload, two games side by side, phone and claude.ai.
+- soft delete, the library surviving a reload, two games side by side, phone and claude.ai;
+- a window type registered from outside after a build that did not know it (GPT-6's seam check);
+- companion files in a material's identity, on the VAW Blockbench sample (Medium's counterexample).
 
 SwiftShader takes seconds per frame for this scene, so the walking checks hold the drawing loop and move the body
 with `simulate()`. On a real GPU the same scene draws in milliseconds.

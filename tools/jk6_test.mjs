@@ -48,7 +48,7 @@ async function pick(page, J, name) {
 }
 const lib = J => J(async () => (await Jaskinia.materialy.list()).map(m => ({ id: m.id, name: m.name, ver: m.ver, size: m.facts?.size, tris: m.facts?.tris, anims: m.facts?.anims, from: m.from, rot: m.rot, scale: m.scale, thumb: !!m.thumb })));
 
-const ONLY = process.env.ONLY || ''; // run one part: desk, repo, phone, claude
+const ONLY = process.env.ONLY || ''; // run one part: desk, repo, phone, claude, ext, identity
 /* ---------- 1. desk ---------- */
 if (!ONLY || ONLY === 'desk') {
   const { ctx, page, J, wait, shot } = await open();
@@ -249,8 +249,46 @@ if (!ONLY || ONLY === 'claude') {
   await ctx.close();
 }
 
+/* ---------- 5. a window type registered from outside, after a build that did not know it (GPT's seam check) ---------- */
+if (!ONLY || ONLY === 'ext') {
+  const { ctx, page, J, wait } = await open();
+  // a saved window of a type this build does not know, with authored data in it
+  await J(() => { const id = __JASK.leafIds(__JASK.L.tree)[0]; __JASK.commit('test: obcy typ', () => { const w = __JASK.L.wins[id]; w.type = 'miejsce_test'; w.st = { savedDocument: { id: 'own-doc', geometry: [1, 3, 5] } }; }); __JASK.persistNow(); });
+  await page.reload(); await wait(1200);
+  const kept = await J(() => Object.entries(__JASK.L.wins).find(([, w]) => w.lost && w.lost.type === 'miejsce_test'));
+  ok(kept && kept[1].type === 'wybor' && JSON.stringify(kept[1].st.savedDocument) === '{"id":"own-doc","geometry":[1,3,5]}', 'a build that does not know a window type keeps it aside with its data', JSON.stringify(kept && kept[1]));
+  await J(() => Jaskinia.ext.type('miejsce_test', { name: 'Miejsce (test)', render(box, c) { box.append(Object.assign(document.createElement('p'), { className: 'miejsce-test', textContent: 'doc ' + c.win.st.savedDocument.id })); } }));
+  await wait(500);
+  const back = await J(id => { const w = __JASK.L.wins[id]; return { type: w.type, lost: w.lost || null, st: w.st, shown: document.querySelector(`.win[data-id="${id}"] .miejsce-test`)?.textContent || '' }; }, kept && kept[0]);
+  ok(back.type === 'miejsce_test' && !back.lost && back.st.savedDocument.id === 'own-doc' && back.shown === 'doc own-doc', 'registering the type later brings the window back with its data, drawn by the new type', JSON.stringify(back));
+  await page.reload(); await wait(1200);
+  ok(await J(id => __JASK.L.wins[id]?.type === 'wybor' && __JASK.L.wins[id]?.lost?.type === 'miejsce_test', kept && kept[0]), 'after a reload without the extension the window waits aside again, data intact');
+  await ctx.close();
+}
+
+/* ---------- 6. identity of a material with companion files (Medium's counterexample, the VAW Blockbench sample) ---------- */
+if ((!ONLY || ONLY === 'identity') && have('ext__vector_thruster_gltf.gltf')) {
+  const { ctx, page, J, wait } = await open();
+  await J(() => Jaskinia.ext.open('materialy')); await wait(500);
+  const F = (name, file) => ({ name, mimeType: 'application/octet-stream', buffer: fs.readFileSync(file) });
+  const A = [F('vector_thruster_gltf.gltf', M('ext__vector_thruster_gltf.gltf')), F('vector_thruster_gltf.bin', M('ext__vector_thruster_gltf.bin')), F('vector_thruster_texture.png', M('ext__vector_thruster_texture.png'))];
+  await page.setInputFiles('.mt input[type=file]', A);
+  const a = await waitFor(J, () => Jaskinia.materialy.list().then(l => l[0] && { id: l[0].id, deps: l[0].deps.map(d => d.name), missing: l[0].missing, texs: l[0].facts.texs }), null, 30000);
+  ok(a && a.deps.length === 2 && !a.missing.length && a.texs >= 1, 'a .gltf with its .bin and texture (in textures/) keeps both as companions and shows the texture', JSON.stringify(a));
+  const B = [A[0], A[1], F('vector_thruster_texture.png', path.join(models, 'ext_b', 'vector_thruster_texture.png'))];
+  await page.setInputFiles('.mt input[type=file]', B);
+  const b = await waitFor(J, () => Jaskinia.materialy.list().then(l => l.find(m => m.ver === 2) || null).then(m => m && { id: m.id, ver: m.ver }), null, 30000);
+  ok(b && a && b.id !== a.id, 'the same .gltf bytes with a different texture are a different material (v2), never the old one reused', JSON.stringify({ a: a && a.id, b }));
+  await page.setInputFiles('.mt input[type=file]', [A[0]]);
+  await wait(2500);
+  const c = await J(() => Jaskinia.materialy.list().then(l => l.map(m => m.ver)));
+  ok(JSON.stringify(c) === '[2]' && await J(() => /nie dało się wczytać/.test([...document.querySelectorAll('.jk-toast')].map(x => x.textContent).join(' '))), 'the .gltf without its .bin is refused out loud, nothing half-made is stored', JSON.stringify(c));
+  await ctx.close();
+}
+
 await browser.close(); SRV.close?.();
-const real = errs.filter(e => !/Failed to load resource/.test(e));
+// GLTFLoader says this itself when a .gltf comes without its texture: the identity check provokes it on purpose
+const real = errs.filter(e => !/Failed to load resource/.test(e) && !/GLTFLoader: Couldn't load texture/.test(e));
 ok(!real.length, 'no errors in the console', real.slice(0, 5).join(' | '));
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
