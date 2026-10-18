@@ -535,6 +535,21 @@ function openWinOfType(type, opts = {}) {
   if (phone) phoneSwitch(id);
   return id;
 }
+/* put a new window beside another (inside a commit): tiled windows split, a floating one gets a neighbour, the phone stacks */
+function winBeside(anchor, nid, side, share) {
+  if (phone || !L.wins[anchor]) { const host = hasLeaf(L.tree, anchor) ? anchor : (phoneCurrent() && hasLeaf(L.tree, phoneCurrent()) ? phoneCurrent() : leafIds(L.tree)[0]); L.tree = splitAt(L.tree, host, 'bottom', nid, 0.5); return; }
+  if (isFloat(anchor)) {
+    // room on the right: the neighbour goes there; no room: the two share the width, side by side, nothing covered
+    const f = L.floats.find(x => x.id === anchor);
+    if (f.x + f.w * 2 <= 1.02) { L.floats.push({ id: nid, x: clamp(f.x + f.w, 0, 0.9), y: f.y, w: f.w, h: f.h, anchor: null }); return; }
+    const w2 = 0.5;
+    f.x = 0; f.w = w2;
+    L.floats.push({ id: nid, x: w2, y: f.y, w: w2, h: f.h, anchor: null });
+    return;
+  }
+  if (L.max) L.max = null;
+  L.tree = splitAt(L.tree, anchor, side, nid, share);
+}
 
 /* ---------- gestures: borders ---------- */
 function divDown(e, el) {
@@ -1406,13 +1421,28 @@ function boot() {
   });
   B.HOOK.go = hash => { const m = /^#repo~(.+)$/.exec(decodeURIComponent(hash)); if (m && R[m[1]]) select(m[1], 'win'); };
   B.HOOK.refresh = () => { for (const id of allIds()) { const rt = RT.get(id); if (rt && !typeOf(L.wins[id]).live) rt.key = null; refreshWin(id); } }; // a theme change never restarts a running lab
+  /* "Zagraj" never stops the game Jozz is playing (v5 took over the first game window: M1 in docs/2026-10-16-szwy.md).
+     A game window that follows the selection is pinned to what it shows before the selection moves; the new game gets
+     the window that already shows it, or a new one beside the last game window (tiled, so nothing covers anything). */
   B.HOOK.play = r => {
+    const prev = store.sel, inWin = gamesInWindow();
+    const following = inWin ? allIds().filter(id => L.wins[id].type === 'gra' && !L.wins[id].pin) : [];
+    if (following.length && prev && prev !== r.name && R[prev]) commit(t('gra zostaje: {0}', R[prev].short), () => { for (const id of following) L.wins[id].pin = prev; });
     select(r.name);
-    logEv(t('zagraj: {0} ({1})', r.short, gamesInWindow() ? t('w oknie') : t('w nowej karcie')));
-    if (!gamesInWindow()) return false; // the link opens the game in a new tab
-    const gid = allIds().find(id => L.wins[id].type === 'gra');
-    if (gid) { const w = L.wins[gid]; if (w.pin && w.pin !== r.name) commit(t('gra: {0}', r.short), () => { w.pin = r.name; }); focusWin(gid); if (phone) phoneSwitch(gid); }
-    else openWinOfType('gra', { pin: r.name, fresh: true, w: 0.72, h: 0.86 });
+    logEv(t('zagraj: {0} ({1})', r.short, inWin ? t('w oknie') : t('w nowej karcie')));
+    if (!inWin) return false; // the link opens the game in a new tab
+    const same = allIds().find(id => L.wins[id].type === 'gra' && (L.wins[id].pin || store.sel) === r.name);
+    if (same) {
+      focusWin(same);
+      if (phone) phoneSwitch(same); else if (isFloat(same)) { raiseFloat(same); apply(); } else if (L.max && L.max !== same) toggleMax(same);
+      RT.get(same)?.el.classList.add('flash');
+      setTimeout(() => RT.get(same)?.el.classList.remove('flash'), 700);
+      return true;
+    }
+    const last = allIds().filter(id => L.wins[id].type === 'gra').pop();
+    if (!last) { openWinOfType('gra', { pin: r.name, fresh: true, w: 0.72, h: 0.86 }); return true; }
+    const nid = newWinId(), rr = rects.wins[last];
+    if (commit(t('gra obok: {0}', r.short), () => { L.wins[nid] = { type: 'gra', z: 1, pin: r.name, st: {} }; winBeside(last, nid, rr && rr.h > rr.w * 1.1 ? 'bottom' : 'right', 0.5); })) { focusWin(nid); if (phone) phoneSwitch(nid); }
     return true;
   };
   new ResizeObserver(() => apply()).observe(stage);
@@ -1423,6 +1453,7 @@ function boot() {
   maybeAutoBackup();
   showNotices();
   firstHint();
+  v6Hint();
   window.__JASK = { get L() { return L; }, get store() { return store; }, get phone() { return phone; }, RT, WALLS, apply, select, commit, undo, redo, setSpace, layoutRects, leafIds, rects: () => rects, prefs, openSettings, readBackups, persistNow, get log() { return jlog; }, get uwagi() { return uwagi; }, packageData, packageText, deleteSpace, restoreTrash, forgetTrash, restoreBackup, setPref, signalsBeside, uwagaPop,
     live: () => [...LIVE.values()].map(e => ({ id: e.id, url: e.url, hello: e.hello, state: e.state, sigs: [...e.sigs.keys()], n: Object.fromEntries([...e.sigs].map(([k, v]) => [k, v.v.length])), evs: e.evs.map(x => x.text), marks: e.marks.length, last: e.last, vis: e.vis })) };
 }

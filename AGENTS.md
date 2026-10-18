@@ -2,8 +2,9 @@
 
 For any agent (Claude, GPT, Codex) working on Jaskinia. Read this file first, then these, in order:
 1. [docs/2026-10-16-z-gory.md](docs/2026-10-16-z-gory.md): in Polish, what we are fighting for, the honest state and the next steps.
-2. [docs/2026-10-16-szwy.md](docs/2026-10-16-szwy.md): the evening review of 16 Oct, covering the seams found with GPT, Medium and the Studio line, the measurements, and the current order of work.
-3. [docs/design/2026-10-14-jaskinia-v2-decisions.md](docs/design/2026-10-14-jaskinia-v2-decisions.md).
+2. [docs/2026-10-18-v6-materialy.md](docs/2026-10-18-v6-materialy.md): v6, the owner's own models in 3D and walking inside them; the shared goal with Feniks Studio (Astra) and the `window.Jaskinia` API.
+3. [docs/2026-10-16-szwy.md](docs/2026-10-16-szwy.md): the evening review of 16 Oct, covering the seams found with GPT, Medium and the Studio line, the measurements, and the current order of work.
+4. [docs/design/2026-10-14-jaskinia-v2-decisions.md](docs/design/2026-10-14-jaskinia-v2-decisions.md).
 
 ## The owner
 
@@ -21,6 +22,7 @@ Jozz, a solo game developer and graphic designer, writes in Polish and casually.
   - Loaded is not always running: a lab from another origin stops animating while its window is in another layout, and a resize reaches the lab ([docs/2026-10-16-szwy.md](docs/2026-10-16-szwy.md)).
   - Labs that speak the instrument contract ([docs/przyrzad/KONTRAKT.md](docs/przyrzad/KONTRAKT.md)) are heard only from frames Jaskinia opened, and only as text.
 - **Note text never enters the log.** A menu item whose label comes from something the owner wrote carries a `log` label (the notes menu logs "notatka"), and a package without notes scrubs every note's title and lines out of the log.
+- **Materials are the owner's files, kept whole.** The same bytes are the same material (id from SHA-256). A changed file with the same name is a new version beside the old one, never a silent replacement. Deleting is soft and has "Cofnij". Materials live outside layout undo, in IndexedDB `jaskinia-materialy`.
 - **Notes live outside layout undo.** Their text is in `store.notes`; a notes window only holds `st.note` (an id). Ctrl+Z of a layout never rewinds typing.
 - **The wall never rearranges itself.** Arranging happens only on request ("Ułóż…") and is one undo step. Camera position is per window in `store.views` and is not part of undo.
 - **Colours say something true.** Life colours measure time since the last commit at snapshot time, not "now", so an old snapshot does not make living projects look dead. Green means alive, older fades to calm blue and the background, red only marks findings that need a decision.
@@ -50,18 +52,22 @@ Jozz, a solo game developer and graphic designer, writes in Polish and casually.
 | `45-settings.js` | themes (`data-jk`), life ramps (`data-life`), density, the Settings window, export/import |
 | `50-shell.js` | the shell: top bar, workspaces (tabs), windows, dividers, drag and drop, menus and sheets, phone mode (Back closes a sheet, two fingers zoom a window), undo/redo, trash, reset, toasts |
 | `52-przyrzady.js` | instruments: the owner's labs and games running in `przyrzad` and `gra` windows, the instrument contract (hello, state, signals, events, remarks back), the live "Sygnały" window, the picker of what to run, and the demo lab carried inside (`LAB_DEMO`) |
+| `56-swiat.js` | the 3D runtime every 3D window shares: `swStage` (light, theme colours, metre grid, framing, the 1.8 m person, adaptive resolution, renders only on change) and `swWalk` (first person at 1:1, a capsule against a BVH, step-up, jump, fly, phone sticks) |
+| `57-materialy.js` | Materiały: the owner's models and pictures in IndexedDB (files by SHA-256, materials with versions, orientation and scale defaults), the window, file drops anywhere in Jaskinia, his models from his public repositories |
+| `58-api.js` | `window.Jaskinia` v1, the surface other tools may use: `ext.type/icon/strings/open`, `materialy.*`, `swiat.*` (see the v6 doc) |
+| `../vendor/swiat3d.js` | three.js 0.180.0 + addons + three-mesh-bvh 0.9.2, bundled by `tools/swiat/build.mjs`; `render.py` puts it before Jaskinia's script; it only defines a factory until a 3D window asks |
 | `55-feedback.js` | the feedback loop: the log (`jaskinia:dziennik`), "To mnie uwiera" notes pinned to the moment (`jaskinia:uwagi`), "Paczka dla Claude'a" (file or text), the Settings section "Uwagi i paczka" |
 | `version.txt` | the version number the top bar shows; `render.py` stamps it with the build time into `JASK_BUILD` |
 
 Phone mode switches on when the stage is narrower than 700 px: one window at a time, a dock of window chips at the bottom, menus as bottom sheets.
 
-A window type is an entry in `TYPES` with a `name`, a `glyph`, a `desc` and `render(box, c)`. `c` is the context: the window, its layout, the selected repo, `save()`, `setView()`, `busy()`. Optional flags: `sized` (needs its size), `fill`, `zoomKey`, `noZoom`, `ranged` (stats periods), `ctx` (header controls).
+Code outside this repository (Feniks Studio first) adds window types through `Jaskinia.ext.type(key, def)` instead of editing these files. A window type is an entry in `TYPES` with a `name`, a `glyph`, a `desc` and `render(box, c)`. `c` is the context: the window, its layout, the selected repo, `save()`, `setView()`, `busy()`. Optional flags: `sized` (needs its size), `fill`, `zoomKey`, `noZoom`, `ranged` (stats periods), `ctx` (header controls).
 
 Interface strings are written in Polish in the source and wrapped in `t('…')`. The English dictionary sits beside them. Panels that come from the Library are still Polish only.
 
 ## Before you propose a change
 
-- Run `node tools/jk_test.mjs`, `node tools/jk2_test.mjs`, `node tools/jk4_test.mjs`, `node tools/jk5_test.mjs` and `node tools/jk2_chaos.mjs 400 <seed>`. All must pass. They open the pages over http (`tools/serve.mjs`), because headless Chromium can drop the `localStorage` of `file://` pages across reloads, which would test the browser instead of Jaskinia.
+- Run `node tools/jk_test.mjs`, `node tools/jk2_test.mjs`, `node tools/jk4_test.mjs`, `node tools/jk5_test.mjs`, `node tools/jk6_test.mjs [shots] [models]` and `node tools/jk2_chaos.mjs 400 <seed>`. The v6 checks run WebGL in SwiftShader and need a folder of the owner's public models (see the script's header). All must pass. They open the pages over http (`tools/serve.mjs`), because headless Chromium can drop the `localStorage` of `file://` pages across reloads, which would test the browser instead of Jaskinia.
 - For anything visible, take screenshots on desktop and phone (`tools/jk4_look.mjs [dir] [scenario]` shows how) and look at them.
 - **Playwright's Chromium is not the owner's browser.** It turns storage partitioning off and changes some throttling. A claim about storage, origins, hidden frames or folder access needs a run with partitioning on (`node tools/probes/hosting.mjs` shows how), a note of the flags it ran with, and finally the owner's own browser.
 - Work on a branch and open a pull request. `main` is the owner's.
@@ -78,7 +84,7 @@ Interface strings are written in Polish in the source and wrapped in `t('…')`.
 6. In the claude.ai artifact, games open in a new tab, not in a window (a downloaded file and the owner's own server can open them in a window since v4). The demo lab is the exception: it is carried inside the page.
 7. The instrument contract reaches labs only in a window. A lab opened in a separate tab (the phone's default for games) does not talk to Jaskinia yet, and no real lab speaks the contract yet: the first adopters decide whether it is worth it.
 8. Changing the interface language rebuilds Jaskinia, so running labs start again.
-9. **A game window is not an instance (GPT's M1).** Unpinned "Gra" windows follow one selection, and "Zagraj" reuses the first game window. GPT's launch-hook fix sits on `experiment/gpt-multi-game-isolation-2026-10-16`. The new window still lands exactly on top of the old one.
+9. ~~A game window is not an instance (GPT's M1).~~ Fixed in v6: "Zagraj" pins the game being played, opens the next one beside it (sharing the width when floating), and goes to a game already open.
 10. **Origins.**
     - On GitHub Pages, Jaskinia and the games share one origin: a game can read Jaskinia's storage (M2), and copies of a game share one save.
     - Other hosting changes what a framed game sees and can do (table 2 in the evening review).
@@ -93,5 +99,6 @@ Interface strings are written in Polish in the source and wrapped in `t('…')`.
     - Backup dedupe ignores views.
     - The trash silently stops at 200 items.
     - The "Cała Jaskinia" export is not disaster recovery.
+15. **Materials (v6).** One browser only, no sync; on GitHub Pages the storage is shared with every page of `jozzpoly.github.io`. Draco/meshopt glTF, KTX2 and FBX are not read; several models in one file are one material. Skinned meshes collide in their rest pose.
 
 The order in which to tackle these is in [docs/2026-10-16-szwy.md](docs/2026-10-16-szwy.md), which replaces the order in the view from above.

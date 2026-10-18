@@ -53,6 +53,11 @@ if A.app == "jaskinia":
         "<script>\n" + open(os.path.join(demo_dir, "jaskinia-przyrzad.js"), encoding="utf-8").read().replace("</script", "<\\/script") + "\n</script>")
     lab_demo = "const LAB_DEMO = " + json.dumps(demo, ensure_ascii=False) + ";\n"
     script = (f'const BIB_HOST = "{A.host}";\nconst BIB_MODE = "jaskinia";\nconst JASK_BUILD = {build};\n' + lab_demo + app + "\n(() => {\n'use strict';\n" + shell + "\n})();\n")
+    # the 3D runtime (tools/swiat/build.mjs): three.js and a few addons; it only defines a factory, so a Jaskinia
+    # without 3D windows pays the parse and nothing else (56-swiat.js starts it when a 3D window first asks)
+    vend = P("src", "vendor", "swiat3d.js")
+    if os.path.exists(vend):
+        script = open(vend, encoding="utf-8").read().replace("<!--", "<\\!--") + "\n" + script
     out = (tpl.replace("/*N*/", str(n)).replace("/*FONTS*/", fonts).replace("/*CSS*/", css).replace("/*JCSS*/", jcss)
            .replace("/*DATA*/", payload).replace("/*APP*/", script.replace("</script", "<\\/script")))
     name = "jaskinia.html" if A.host == "artifact" else "jaskinia-web.html"

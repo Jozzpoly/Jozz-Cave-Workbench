@@ -18,7 +18,7 @@ P = lambda *a: os.path.join(ROOT, *a)
 D = lambda *a: os.path.join(DEST, *a)
 
 COPY = ["src", "tools", "docs", "README.md", "AGENTS.md", "GENERATOR.md", "package.json", "package-lock.json", ".gitignore"]
-SKIP = re.compile(r"(__pycache__|\.pyc$|^tools/_|/_[^/]*\.mjs$)")
+SKIP = re.compile(r"(__pycache__|\.pyc$|^tools/_|/_[^/]*\.mjs$|(^|/)node_modules/)")
 
 conn = json.load(open(P("data", "connector_repos.json"), encoding="utf-8"))
 private = sorted(r["name"] for r in conn["repos"] if r.get("visibility") == "private")
