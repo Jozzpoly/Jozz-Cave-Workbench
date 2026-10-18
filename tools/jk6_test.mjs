@@ -53,7 +53,7 @@ const ONLY = process.env.ONLY || ''; // run one part: desk, repo, phone, claude,
 if (!ONLY || ONLY === 'desk') {
   const { ctx, page, J, wait, shot } = await open();
   const api = await J(() => ({ v: window.Jaskinia?.v, build: JASK_BUILD?.v, types: typeof Jaskinia?.ext?.type, mat: !!__JASK && Object.keys(window.Jaskinia.materialy) }));
-  ok(api.v === 1 && api.build === '6' && api.types === 'function', 'boot: window.Jaskinia v1 in build 6', JSON.stringify(api));
+  ok(api.v === 1 && /^6(\.\d+)?$/.test(api.build) && api.types === 'function', 'boot: window.Jaskinia v1 in build 6.x', JSON.stringify(api));
   // open Materiały from the API (what a window chooser does)
   const wid = await J(() => Jaskinia.ext.open('materialy'));
   await wait(600);
@@ -286,7 +286,7 @@ if ((!ONLY || ONLY === 'identity') && have('ext__vector_thruster_gltf.gltf')) {
   await ctx.close();
 }
 
-/* ---------- 7. Blockbench's own files, a whole folder at once (the owner's saves; a .vox file must stay untouched) ---------- */
+/* ---------- 7. Blockbench's own files, a whole folder at once (the owner's saves; a file of another kind is not read) ---------- */
 const BB = path.join(models, 'bb');
 if ((!ONLY || ONLY === 'blockbench') && fs.existsSync(BB)) {
   const tmp = path.join(shots, 'bbfolder');
@@ -299,7 +299,7 @@ if ((!ONLY || ONLY === 'blockbench') && fs.existsSync(BB)) {
   await page.setInputFiles('.mt-dirin', tmp);
   const got = await waitFor(J, n => Jaskinia.materialy.list().then(l => l.length >= n ? l.map(m => ({ name: m.name, kind: m.kind, texs: m.facts.texs, size: m.facts.size.map(v => +v.toFixed(2)), missing: m.missing.length, main: m.main.name })) : null), nBB, 120000);
   ok(got && got.length === nBB && got.every(m => /\.bbmodel$/.test(m.main) && m.texs >= 1 && !m.missing), 'a folder of Blockbench saves: every .bbmodel comes in with its own pictures', JSON.stringify(got));
-  ok(got && !got.some(m => /vox/i.test(m.main)), 'a .vox file in the folder is left alone');
+  ok(got && !got.some(m => /vox/i.test(m.main)), 'a file of another kind in the folder (.vox) is not read');
   const wheel = got && got.find(m => m.name === 'small_wheels');
   if (wheel) ok(Math.abs(wheel.size[1] - 1.02) < 0.05, 'Blockbench pixels become metres like its glTF export (16 px = 1 m)', JSON.stringify(wheel.size));
   await ctx.close();

@@ -28,19 +28,25 @@ const JASKINIA_API = {
     toast: (msg, action, ms) => jtoast(msg, action, ms),
     open: (type, opts) => openWinOfType(type, opts || {}),
   },
-  /* Jozz's materials: list(), get(id), object(id, {ground}) → Promise<THREE.Object3D> (a fresh copy with the material's
-     orientation and scale; with ground: true it also stands on the ground in the middle), import(files), versions(id).
-     An id is "m" + the start of the SHA-256 of the material's bytes: the same bytes are the same material, everywhere. */
+  /* Jozz's materials: list(), get(id), object(id, {ground, set}) → Promise<THREE.Object3D> (a fresh copy turned and
+     scaled by the material's settings; with ground: true it also stands on the ground in the middle), import(files),
+     versions(id), settings(id).
+     An id is "m" + the start of the SHA-256 of the material's bytes: the same bytes are the same material, everywhere.
+     Settings (turns and scale) have numbered revisions (v6.1): object(id, {set: n}) gives the look a place was built
+     with, object(id) the newest; userData.set says which one it is. Changing the settings never changes an old revision. */
   materialy: {
     list: () => matList(),
     get: async id => (await matAll()).get(id) || null,
     versions: async id => { const m = (await matAll()).get(id); return m ? matVersions(m) : []; },
+    settings: async id => { const m = (await matAll()).get(id); return m ? matSets(m).map(s => ({ ...s, rot: [...s.rot] })) : []; },
     async object(id, o = {}) {
       const m = (await matAll()).get(id);
       if (!m) throw new Error('no material ' + id);
+      const s = matSetting(m, o.set);
       const { object, animations } = await matLoad(m);
-      const g = matWrap(object, m);
+      const g = matWrap(object, m, s);
       g.userData.material = id;
+      g.userData.set = s.n;
       g.userData.animations = animations;
       return o.ground ? matGround(g) : g;
     },

@@ -1,10 +1,11 @@
 # AGENTS.md: start here
 
-For any agent (Claude, GPT, Codex) working on Jaskinia. Read this file first, then these, in order:
-1. [docs/2026-10-16-z-gory.md](docs/2026-10-16-z-gory.md): in Polish, what we are fighting for, the honest state and the next steps.
-2. [docs/2026-10-18-v6-materialy.md](docs/2026-10-18-v6-materialy.md): v6, the owner's own models in 3D and walking inside them; the shared goal with Feniks Studio (Astra) and the `window.Jaskinia` API.
-3. [docs/2026-10-16-szwy.md](docs/2026-10-16-szwy.md): the evening review of 16 Oct, covering the seams found with GPT, Medium and the Studio line, the measurements, and the current order of work.
-4. [docs/design/2026-10-14-jaskinia-v2-decisions.md](docs/design/2026-10-14-jaskinia-v2-decisions.md).
+For any agent (Claude, GPT, Codex) working on Jaskinia. **First read the [Jaskinia compass (issue #5)](https://github.com/Jozzpoly/Jozz-Cave-Workbench/issues/5)**, in Polish: what Jaskinia is for, who holds what, and how we work with the owner. It is the one place for that; changes go there, not into new START_HERE files. Then read this file, then these, in order:
+1. [docs/2026-10-18-v61-fundament.md](docs/2026-10-18-v61-fundament.md): v6.1, the foundation after the owner's look from above (several tabs merge, addresses, the agents window, material settings revisions) and the next steps in order.
+2. [docs/2026-10-16-z-gory.md](docs/2026-10-16-z-gory.md): in Polish, what we are fighting for, the honest state and the next steps.
+3. [docs/2026-10-18-v6-materialy.md](docs/2026-10-18-v6-materialy.md): v6, the owner's own models in 3D and walking inside them; the shared goal with Feniks Studio (Astra) and the `window.Jaskinia` API.
+4. [docs/2026-10-16-szwy.md](docs/2026-10-16-szwy.md): the evening review of 16 Oct, covering the seams found with GPT, Medium and the Studio line, the measurements, and the current order of work.
+5. [docs/design/2026-10-14-jaskinia-v2-decisions.md](docs/design/2026-10-14-jaskinia-v2-decisions.md).
 
 ## The owner
 
@@ -15,6 +16,8 @@ Jozz, a solo game developer and graphic designer, writes in Polish and casually.
 - **Nothing disappears silently.** A broken workspace goes to the trash (`broken`) and the rest keeps working. An unreadable store is kept in the rescue box and the last backup is loaded, with a visible banner. Deleting goes to the trash. "Delete forever" exists only inside the trash.
 - **Risky operations make a backup first** (reset, import, load-all, delete forever) and offer "Cofnij" (undo) in a toast.
 - **Deleting for good keeps a way back.** A copy holds layouts, notes and views, not the trash, so `makeBackup(why, forgotten)` puts what leaves the trash for good inside the copy made just before, and restoring that copy puts it back in the trash. If the copy cannot be written, nothing is deleted.
+- **Several tabs merge, they never overwrite (v6.1).** A tab writes only after it changed something. Every written state names itself and its parent (`rev`, `par`), and another tab's write is merged three ways against the state it grew from: layouts window by window, notes by their newer text, views, saved states and trash item by item. A real clash keeps this tab's version, puts the other in an automatic copy and says so once. Note editors write back only typed text. Never call `persistNow()` to save a change: call `persist()` (it marks the change), as every app path does.
+- **Everything has an address (v6.1).** `#repo~Name`, `#m~id`, `#uklad~id`, `#agenci` and window names work from outside, when typed and from links inside windows (`59-adresy.js`). A link in a window that goes nowhere is a bug, not something to hide with CSS.
 - **An older Jaskinia never erases what a newer one wrote.** Every Jaskinia downloaded to one computer shares the same `file://` storage, and the public build shares it with the private one. A window type or a pinned project that a build does not know waits in `w.lost` and comes back in a build that knows it.
 - **A running lab is never reloaded by Jaskinia.**
   - Window types with `live: true` (`przyrzad`, `gra`) are rebuilt only when what they run changes (`liveKey`). Theme, density, zoom, a layout change or a narrow window never rebuild them.
@@ -55,6 +58,7 @@ Jozz, a solo game developer and graphic designer, writes in Polish and casually.
 | `56-swiat.js` | the 3D runtime every 3D window shares: `swStage` (light, theme colours, metre grid, framing, the 1.8 m person, adaptive resolution, renders only on change) and `swWalk` (first person at 1:1, a capsule against a BVH, step-up, jump, fly, phone sticks) |
 | `56b-blockbench.js` | Blockbench's `.bbmodel` read directly into three.js (cubes, meshes, pivots, ZYX rotations, embedded pictures; 16 px = 1 m) |
 | `57-materialy.js` | Materiały: the owner's models and pictures in IndexedDB (files by SHA-256, materials with versions, orientation and scale defaults), the window, file drops anywhere in Jaskinia, his models from his public repositories |
+| `59-adresy.js` | addresses (`#repo~`, `#m~`, `#uklad~`, window names): at start, on `hashchange` and from links in windows; the address follows the selection; the "Dla agentów" window (`agenci`) |
 | `58-api.js` | `window.Jaskinia` v1, the surface other tools may use: `ext.type/icon/strings/open`, `materialy.*`, `swiat.*` (see the v6 doc) |
 | `../vendor/swiat3d.js` | three.js 0.180.0 + addons + three-mesh-bvh 0.9.2, bundled by `tools/swiat/build.mjs`; `render.py` puts it before Jaskinia's script; it only defines a factory until a 3D window asks |
 | `55-feedback.js` | the feedback loop: the log (`jaskinia:dziennik`), "To mnie uwiera" notes pinned to the moment (`jaskinia:uwagi`), "Paczka dla Claude'a" (file or text), the Settings section "Uwagi i paczka" |
@@ -100,6 +104,6 @@ Interface strings are written in Polish in the source and wrapped in `t('…')`.
     - Backup dedupe ignores views.
     - The trash silently stops at 200 items.
     - The "Cała Jaskinia" export is not disaster recovery.
-15. **Materials (v6).** One browser only, no sync; on GitHub Pages the storage is shared with every page of `jozzpoly.github.io`. Draco/meshopt glTF, KTX2 and FBX are not read; several models in one file are one material; Blockbench animations are not played. Skinned meshes collide in their rest pose. A folder import never opens files that are not models or their pictures (the owner's `.vox` files hold work that is not his to share).
+15. **Materials (v6).** One browser only, no sync; on GitHub Pages the storage is shared with every page of `jozzpoly.github.io`. Draco/meshopt glTF, KTX2 and FBX are not read; several models in one file are one material; Blockbench animations are not played. Skinned meshes collide in their rest pose. A folder import reads only models and their pictures; files of other kinds are not read. (The owner's rule about `.vox` is for agents searching his disk: never open, list or copy his MagicaVoxel files there. It does not forbid Jaskinia from reading a `.vox` he drops himself.)
 
 The order in which to tackle these is in [docs/2026-10-16-szwy.md](docs/2026-10-16-szwy.md), which replaces the order in the view from above.

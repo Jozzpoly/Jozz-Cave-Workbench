@@ -45,7 +45,13 @@ async function sha256(blob) {
 const baseName = n => String(n || '').split(/[\\/]/).pop();
 const stem = n => baseName(n).replace(/\.[^.]+$/, '');
 const extOf = n => (/\.([^.]+)$/.exec(baseName(n)) || [])[1]?.toLowerCase() || '';
-function matEmit(detail) { document.dispatchEvent(new CustomEvent('jk:materialy', { detail })); }
+/* every tab of this Jaskinia shares the library: a change in one tab tells the others, which read it again (v6.1) */
+const MAT_BC = (() => { try { return new BroadcastChannel('jaskinia-materialy'); } catch { return null; } })();
+function matEmit(detail, fromOther) {
+  document.dispatchEvent(new CustomEvent('jk:materialy', { detail }));
+  if (!fromOther && MAT_BC) { const { target, ...rest } = detail || {}; void target; try { MAT_BC.postMessage(rest); } catch { /* a closed channel: the other tabs read on their next start */ } }
+}
+if (MAT_BC) MAT_BC.onmessage = e => { MATS = null; matEmit(e.data || {}, true); };
 
 /* ---------- the library ---------- */
 let MATS = null; // id → material, read once, then kept in step with every write
@@ -128,12 +134,25 @@ async function matLoad(m) {
   return { object: obj, animations: anims, missing: [...missing].filter(n => n && n !== ',' && !/^(blob|data):/.test(n) && !/^[0-9a-f-]{36}$/i.test(n)) };
 }
 /* the material's defaults: quarter turns about X, Y, Z and a scale, applied around its own origin */
-function matWrap(obj, m) {
+/* Settings revisions (v6.1). Turning or scaling a material used to change it in place, so a place that pointed at the
+   material's id would quietly change size and orientation (GPT-6, PR #4). Every change now adds a numbered revision
+   and keeps the earlier ones: a place can pin the revision it was built with (Jaskinia.materialy.object(id, {set})) or
+   follow the newest. A material from before v6.1 has one revision: its settings as they are. */
+function matSets(m) { return m.sets && m.sets.length ? m.sets : [{ n: 1, rot: [...(m.rot || [0, 0, 0])], scale: m.scale || 1, at: m.added || 0 }]; }
+function matSetting(m, n) {
+  const list = matSets(m);
+  if (n == null) return list[list.length - 1];
+  const s = list.find(x => x.n === n);
+  if (!s) throw new Error(t('materiał {0} nie ma ustawień nr {1}', m.id, n));
+  return s;
+}
+function matWrap(obj, m, set) {
   const { THREE } = swiat();
-  const g = new THREE.Group(), r = m.rot || [0, 0, 0];
+  const cfg = set || { rot: m.rot || [0, 0, 0], scale: m.scale || 1 };
+  const g = new THREE.Group(), r = cfg.rot || [0, 0, 0];
   g.name = m.name;
   g.rotation.set(r[0] * Math.PI / 2, r[1] * Math.PI / 2, r[2] * Math.PI / 2, 'XYZ');
-  const s = m.scale || 1;
+  const s = cfg.scale || 1;
   g.scale.set(s, s, s);
   g.add(obj);
   const outer = new THREE.Group(); outer.add(g); outer.name = m.name;
@@ -188,15 +207,29 @@ async function matThumb(obj) {
 }
 
 /* ---------- import ---------- */
-/* files: File objects (or {name, blob}); from: where they came from ('plik' or 'repo:Owner/Repo/path') */
+/* A model names its files by relative uri. From a folder, two models may each have their own "texture.png" (dom/ and
+   wieza/): v6 matched by bare name, so both models took both pictures and one of them showed the other's (Feniks GPT's
+   counterexample, 18 Oct). The file is now the one at that path beside the model, or the nearest one with that name. */
+const relOf = f => String(f.rel || f.blob?.webkitRelativePath || '').replace(/\\/g, '/');
+const dirOf = p => p.slice(0, p.lastIndexOf('/') + 1);
+const normPath = p => { const o = []; for (const seg of String(p).split('/')) { if (seg === '..') o.pop(); else if (seg && seg !== '.') o.push(seg); } return o.join('/').toLowerCase(); };
+function sideFor(side, from, uri) {
+  const want = baseName(uri).toLowerCase(), cands = side.filter(s => baseName(s.name).toLowerCase() === want);
+  if (cands.length < 2) return cands[0] || null;
+  const fromRel = relOf(from), at = normPath(dirOf(fromRel) + String(uri).replace(/\\/g, '/')), d = dirOf(fromRel).toLowerCase();
+  return cands.find(s => normPath(relOf(s)) === at) || cands.find(s => dirOf(relOf(s)).toLowerCase() === d) || cands.find(s => relOf(s).toLowerCase().startsWith(d)) || null;
+}
+const uriOf = u => { try { return decodeURIComponent(u); } catch { return u; } };
+/* files: File objects (or {name, blob, rel}); from: where they came from ('plik' or 'repo:Owner/Repo/path') */
 async function matImport(files, from = 'plik', label, onStep) {
-  const list = [...files].map(f => ({ name: f.name, blob: f.blob || f })).filter(f => f.name);
+  const list = [...files].map(f => ({ name: f.name, blob: f.blob || f, rel: f.rel || '' })).filter(f => f.name);
   const mains = list.filter(f => MAT_MODEL.test(f.name));
   const side = list.filter(f => !MAT_MODEL.test(f.name) && MAT_SIDE.test(f.name));
   const pics = list.filter(f => MAT_PIC.test(f.name));
   const skipped = list.filter(f => !MAT_MODEL.test(f.name) && !MAT_SIDE.test(f.name)).map(f => f.name);
   const out = [];
-  const store = async f => { const sha = await sha256(f.blob); if (!(await mget('pliki', sha))) await mput('pliki', { sha, name: baseName(f.name), size: f.blob.size, data: f.blob }); return { name: baseName(f.name), sha, size: f.blob.size }; };
+  const fresh = new Set(); // bytes this import wrote: what a failed model leaves behind is removed at the end
+  const store = async f => { const sha = await sha256(f.blob); if (!(await mget('pliki', sha))) { await mput('pliki', { sha, name: baseName(f.name), size: f.blob.size, data: f.blob }); fresh.add(sha); } return { name: baseName(f.name), sha, size: f.blob.size }; };
   const all = await matAll();
   const used = new Set();
   const jobs = mains.length ? mains.map(f => ({ main: f, kind: 'model' })) : pics.map(f => ({ main: f, kind: 'tekstura' }));
@@ -205,7 +238,7 @@ async function matImport(files, from = 'plik', label, onStep) {
   const stems = new Map();
   for (const job of jobs) { const k = stem(job.main.name).toLowerCase(); stems.set(k, (stems.get(k) || 0) + 1); }
   const nameOf = job => {
-    const st0 = stem(job.main.name), rel = job.main.blob?.webkitRelativePath || '';
+    const st0 = stem(job.main.name), rel = relOf(job.main);
     const parent = rel.split('/').slice(-2, -1)[0] || '';
     return parent && rel.includes('/') && (GENERIC.test(st0) || stems.get(st0.toLowerCase()) > 1) ? parent + ' · ' + st0 : st0;
   };
@@ -213,14 +246,23 @@ async function matImport(files, from = 'plik', label, onStep) {
   for (const job of jobs) {
     onStep?.(++step, jobs.length, job.main.name);
     const main = await store(job.main);
-    // the main file's companions: for a .gltf its buffers and pictures, for an .obj its .mtl and pictures (by name)
+    // the main file's companions: for a .gltf its buffers and pictures, for an .obj its .mtl and the .mtl's pictures,
+    // each found by its path beside the file that names it (sideFor)
     let deps = [];
     if (job.kind === 'model' && extOf(main.name) !== 'glb') {
       const txt = await job.main.blob.text();
-      const wanted = new Set();
-      if (extOf(main.name) === 'gltf') { try { const j = JSON.parse(txt); for (const x of [...(j.buffers || []), ...(j.images || [])]) if (x.uri && !/^data:/.test(x.uri)) wanted.add(baseName(decodeURIComponent(x.uri)).toLowerCase()); } catch { /* the loader will say */ } }
-      else { const ml = (/^mtllib\s+(.+?)\s*$/m.exec(txt) || [])[1]; if (ml) { wanted.add(baseName(ml).toLowerCase()); const mf = side.find(s => baseName(s.name).toLowerCase() === baseName(ml).toLowerCase()); if (mf) for (const mm of (await mf.blob.text()).matchAll(/^\s*map_\w+\s+(?:-\S+\s+\S+\s+)*(.+?)\s*$/gm)) wanted.add(baseName(mm[1]).toLowerCase()); } }
-      for (const s of side) if (wanted.has(baseName(s.name).toLowerCase())) { deps.push(await store(s)); used.add(s); }
+      const wanted = []; // { uri, from }
+      if (extOf(main.name) === 'gltf') { try { const j = JSON.parse(txt); for (const x of [...(j.buffers || []), ...(j.images || [])]) if (x.uri && !/^data:/.test(x.uri)) wanted.push({ uri: uriOf(x.uri), from: job.main }); } catch { /* the loader will say */ } }
+      else {
+        const ml = (/^mtllib\s+(.+?)\s*$/m.exec(txt) || [])[1];
+        if (ml) {
+          wanted.push({ uri: ml, from: job.main });
+          const mf = sideFor(side, job.main, ml);
+          if (mf) for (const mm of (await mf.blob.text()).matchAll(/^\s*map_\w+\s+(?:-\S+\s+\S+\s+)*(.+?)\s*$/gm)) wanted.push({ uri: mm[1], from: mf });
+        }
+      }
+      const took = new Set();
+      for (const w of wanted) { const s = sideFor(side, w.from, w.uri); if (s && !took.has(s)) { took.add(s); deps.push(await store(s)); used.add(s); } }
     }
     deps.sort((a, b) => a.name.localeCompare(b.name));
     const id = 'm' + (deps.length ? (await sha256(new Blob([main.sha + deps.map(d => d.name + d.sha).join('')]))) : main.sha).slice(0, 20);
@@ -244,6 +286,11 @@ async function matImport(files, from = 'plik', label, onStep) {
     }
     await matSave(m);
     out.push({ id, name: m.name, ver: m.ver, prev: prev ? prev.id : null });
+  }
+  if (fresh.size && out.some(x => x.error)) { // bytes of a model that could not be read do not stay in the browser for nothing
+    const refd = new Set();
+    for (const x of (await matAll()).values()) { refd.add(x.main?.sha); for (const d of x.deps || []) refd.add(d.sha); }
+    for (const sha of fresh) if (!refd.has(sha)) { try { await mdo('pliki', 'readwrite', os => os.delete(sha)); } catch { /* kept; harmless */ } }
   }
   const unusedSide = mains.length ? side.filter(s => !used.has(s) && !/\.(bin|mtl)$/i.test(s.name) && !MAT_PIC.test(s.name)).map(s => s.name) : [];
   if (out.some(x => !x.error && !x.again)) matEmit({ added: out.filter(x => !x.error && !x.again).map(x => x.id) });
@@ -301,9 +348,9 @@ function renderMaterialy(box, c) {
   const count = h('span', { class: 'mt-count' });
   const input = h('input', { type: 'file', multiple: true, hidden: true, accept: '.bbmodel,.glb,.gltf,.obj,.mtl,.bin,.png,.jpg,.jpeg,.webp,.gif' });
   const addB = h('button', { class: 'jk-tb mt-add', type: 'button', title: t('Dodaj pliki z dysku (albo upuść je gdziekolwiek w Jaskini)'), onclick: () => input.click() }, icon('plus', 12), h('span', { text: t('Dodaj') }));
-  // a whole folder at once (Blockbench's saves): its models with their pictures; other files, .vox included, are left alone
+  // a whole folder at once (Blockbench's saves): its models with their pictures; files of other kinds are not read
   const dirIn = h('input', { type: 'file', multiple: true, hidden: true, webkitdirectory: '', class: 'mt-dirin' });
-  const dirB = h('button', { class: 'jk-tb mt-add', type: 'button', title: t('Dodaj cały folder: modele z ich teksturami, reszta plików zostaje nietknięta'), onclick: () => dirIn.click() }, icon('t_folder', 12), h('span', { text: t('Folder') }));
+  const dirB = h('button', { class: 'jk-tb mt-add', type: 'button', title: t('Dodaj cały folder: modele z ich teksturami, reszta plików nie jest czytana'), onclick: () => dirIn.click() }, icon('t_folder', 12), h('span', { text: t('Folder') }));
   const repoBox = h('section', { class: 'mt-repo' });
   const side = h('div', { class: 'mt-side' }, h('div', { class: 'mt-head' }, h('b', { text: t('Materiały') }), count, dirB, addB, input, dirIn), grid, repoBox,
     h('p', { class: 'mt-note', text: t('Pliki zostają w tej przeglądarce. Upuść model w dowolne miejsce Jaskini, a trafi tutaj. Ten sam plik z nową treścią to nowa wersja, nie podmiana.') }));
@@ -404,7 +451,11 @@ function renderMaterialy(box, c) {
       h('button', { class: 'mt-go', type: 'button', title: t('Stań obok w skali 1:1 i chodź (WASD, mysz). Esc wychodzi.'), onclick: () => enter() }, icon('t_wejdz', 15), h('span', { text: t('Wejdź') }))].filter(Boolean));
   }
   async function setDefaults(m, patch) {
+    const list = matSets(m);
     Object.assign(m, patch);
+    const n = list[list.length - 1].n + 1;
+    m.sets = [...list, { n, rot: [...(m.rot || [0, 0, 0])], scale: m.scale || 1, at: Date.now() }];
+    m.set = n;
     try {
       const { object, animations } = await matLoad(m);
       const wrapped = matGround(matWrap(object, m));
@@ -493,6 +544,7 @@ function renderMaterialy(box, c) {
   const onLib = e => {
     const d = e.detail || {};
     if (d.target === c.id && d.added?.length) { sel(d.added[0]); return; }
+    if (d.target === c.id && d.show) { matAll().then(all => { if (!alive) return; const m = all.get(d.show); if (m && !m.gone) sel(d.show); else jtoast(t('Nie ma w bibliotece materiału {0}.', d.show)); }); return; }
     if (cur && (d.removed || []).includes(cur.id)) return; // remove() picks the next one itself
     drawList();
   };
@@ -508,7 +560,13 @@ function renderMaterialy(box, c) {
   const mo = new MutationObserver(() => { stage?.paint(); });
   mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-jk', 'data-theme', 'style'] });
   c.onDispose(() => mo.disconnect());
-  matAll().then(() => { if (!alive) return; drawList(); if (st.sel) show(st.sel); else matList().then(items => { if (alive && items[0]) sel(items[0].id); }); })
+  matAll().then(all => {
+    if (!alive) return;
+    drawList();
+    if (st.sel && all.get(st.sel) && !all.get(st.sel).gone) { show(st.sel); return; }
+    if (st.sel) jtoast(t('Nie ma w bibliotece materiału {0}.', st.sel));
+    matList().then(items => { if (alive && items[0]) sel(items[0].id); });
+  })
     .catch(err => { say(t('Biblioteka materiałów nie działa w tej przeglądarce: {0}', err.message), 'err'); });
 }
 function fmtScale(v) {

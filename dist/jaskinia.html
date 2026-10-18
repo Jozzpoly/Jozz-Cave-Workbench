@@ -1306,7 +1306,7 @@ body:has(.jk.phone) .jk-toasts { bottom: calc(78px + env(safe-area-inset-bottom,
 .jk .pt-name { overflow-wrap: break-word; word-break: normal; hyphens: manual; }
 .jk .pt-when { overflow-wrap: break-word; }
 .jk .seismo-wrap { padding-top: 12px; }
-.jk .seismo-h a { display: none; }
+.jk .seismo-h a { color: var(--ink-2); } /* v6.1: #historia opens the Historia window (59-adresy.js) */
 .jk .view.repo .crumbs { display: none; }
 .jk .view.repo .card-h { padding-top: 16px; grid-template-columns: clamp(64px, 15cqw, 148px) minmax(0, 1fr); gap: clamp(12px, 3cqw, 26px); }
 .jk .view.repo .card-h > .sig { width: clamp(64px, 15cqw, 148px) !important; height: auto !important; aspect-ratio: 1; }
@@ -5996,7 +5996,7 @@ return __SWIAT3D_MOD;
 
 const BIB_HOST = "artifact";
 const BIB_MODE = "jaskinia";
-const JASK_BUILD = {"v": "6", "built": "2026-10-18T04:54Z", "host": "artifact"};
+const JASK_BUILD = {"v": "6.1", "built": "2026-10-18T16:15Z", "host": "artifact"};
 const LAB_DEMO = "<!doctype html>\n<html lang=\"pl\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n<title>Piłki: przyrząd pokazowy Jaskini</title>\n<style>\n  :root { color-scheme: dark; --bg: #0f1418; --panel: #172027; --ink: #e6edf2; --ink2: #9fb0bd; --line: #2a3640; --hot: #ffb547; --ok: #64d28a; }\n  * { box-sizing: border-box; }\n  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font: 13px/1.4 system-ui, sans-serif; overflow: hidden; }\n  #c { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }\n  .ui { position: absolute; left: 10px; top: 10px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; max-width: calc(100% - 20px); }\n  button { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 4px 10px; cursor: pointer; }\n  button:hover { border-color: var(--ink2); }\n  label { display: inline-flex; align-items: center; gap: 6px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 3px 8px; color: var(--ink2); }\n  .hud { position: absolute; left: 10px; bottom: 10px; color: var(--ink2); font: 12px/1.3 ui-monospace, monospace; }\n  .trace { position: absolute; right: 10px; top: 10px; width: min(300px, 46%); max-height: 45%; overflow: auto; background: color-mix(in srgb, var(--panel) 88%, transparent);\n    border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; display: none; }\n  .trace.on { display: block; }\n  .trace h2 { margin: 0 0 4px; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--ink2); }\n  .trace p { margin: 3px 0; }\n  .trace time { color: var(--hot); font-family: ui-monospace, monospace; margin-right: 6px; }\n  .pause { position: absolute; inset: 0; display: none; place-items: center; color: var(--ink2); font-size: 15px; }\n  .pause.on { display: grid; }\n</style>\n</head>\n<body>\n<canvas id=\"c\" aria-label=\"Piłki odbijające się od podłogi\"></canvas>\n<div class=\"ui\">\n  <button id=\"add\" type=\"button\">Dodaj piłkę</button>\n  <button id=\"shake\" type=\"button\">Potrząśnij</button>\n  <label>sprężystość <input id=\"e\" type=\"range\" min=\"0.5\" max=\"0.98\" step=\"0.01\" value=\"0.86\"></label>\n</div>\n<div class=\"hud\" id=\"hud\"></div>\n<section class=\"trace\" id=\"trace\" aria-live=\"polite\"><h2>Ślad: uwagi z Jaskini</h2></section>\n<div class=\"pause\" id=\"pause\">pauza: okno w Jaskini jest ukryte</div>\n<script>\n/* Jaskinia instrument contract, v1: a drop-in for any lab or game page.\n   Load it with a script tag (src=\"jaskinia-przyrzad.js\") or paste it into an inline script. The contract: docs/przyrzad/KONTRAKT.md\n\n   Jaskinia.hello({ name: 'MiniFeniks', version: 'kampania 04', wants: ['remark'] });   // who you are (once, at start)\n   Jaskinia.state('Dzień 3, 14:20 · Ania niesie deski', { dzien: 3 });                  // what is happening now\n   Jaskinia.signals({ fps: 58, zapas: 12 });                                             // numbers to draw live, a few times a second\n   Jaskinia.event('Ania porzuciła zamiar: brak desek', 'uwaga');                         // something happened ('info' | 'uwaga' | 'blad')\n   Jaskinia.onRemark(r => trace.push(r));      // the owner's remark from Jaskinia's flag: { text, at }\n   Jaskinia.onStateRequest(() => ({ text, data }));   // optional: a fresh state for the moment of the flag\n   Jaskinia.onVisible(v => paused = !v);       // optional: the window was hidden or shown again\n\n   Opened on its own (no Jaskinia around) every call does nothing, so the lab never depends on it. Ctrl+. inside the\n   page asks Jaskinia for the \"To mnie uwiera\" note, pinned to this lab and this second. */\n(() => {\n  if (window.Jaskinia) return;\n  const host = window.parent !== window ? window.parent : null;\n  const send = m => { if (host) try { host.postMessage({ jaskinia: 1, ...m }, '*'); } catch { /* not allowed: fine */ } };\n  let hello = null, last = null, stateFn = null;\n  const remarkFns = [], visFns = [];\n  addEventListener('message', ev => {\n    if (!host || ev.source !== host) return;           // only the page that holds this lab\n    const d = ev.data;\n    if (!d || d.jaskinia !== 1) return;\n    if (d.type === 'hi' && hello) send({ type: 'hello', ...hello });\n    else if (d.type === 'state?') { let s = last; try { if (stateFn) s = stateFn() || last; } catch { /* keep the last one */ } if (s) send({ type: 'state', text: s.text, data: s.data }); }\n    else if (d.type === 'remark') for (const f of remarkFns) try { f({ text: String(d.text || ''), at: String(d.at || '') }); } catch { /* the lab's problem */ }\n    else if (d.type === 'visible') for (const f of visFns) try { f(!!d.visible); } catch { /* the lab's problem */ }\n  });\n  addEventListener('keydown', ev => { if (host && (ev.ctrlKey || ev.metaKey) && ev.key === '.') { ev.preventDefault(); send({ type: 'flag' }); } }, true);\n  window.Jaskinia = {\n    active: !!host,\n    hello(h) { hello = { name: String(h && h.name || ''), version: String(h && h.version || ''), wants: Array.isArray(h && h.wants) ? h.wants : [] }; send({ type: 'hello', ...hello }); },\n    state(text, data) { last = { text: String(text || ''), data }; send({ type: 'state', text: last.text, data }); },\n    signals(values) { send({ type: 'signals', values }); },\n    event(text, level) { send({ type: 'event', text: String(text || ''), level }); },\n    onRemark(fn) { remarkFns.push(fn); },\n    onStateRequest(fn) { stateFn = fn; },\n    onVisible(fn) { visFns.push(fn); },\n  };\n})();\n\n<\/script>\n<script>\n/* A small physics toy that speaks the instrument contract: it tells Jaskinia who it is, what is happening, a few numbers,\n   and what happened; it keeps the owner's remarks in its own trace. Opened on its own, it simply runs. */\nconst cv = document.getElementById('c'), g = cv.getContext('2d');\nconst R = 14, G = 900;              // ball radius (px) and gravity (px/s²); 100 px count as 1 m in the numbers below\nlet W = 0, H = 0, balls = [], restit = 0.86, bounces = [], paused = false, t0 = performance.now(), frames = [];\nfunction size() { const d = devicePixelRatio || 1; W = cv.clientWidth; H = cv.clientHeight; cv.width = Math.round(W * d); cv.height = Math.round(H * d); g.setTransform(d, 0, 0, d, 0, 0); }\naddEventListener('resize', size); size();\nfunction addBall(x, y) {\n  const b = { x: x ?? R + Math.random() * (W - 2 * R), y: y ?? R + Math.random() * H * 0.3, vx: (Math.random() - 0.5) * 420, vy: -Math.random() * 300, still: 0, said: false, hue: 30 + balls.length * 47 % 300 };\n  balls.push(b);\n  Jaskinia.event(`nowa piłka (${balls.length})`);\n  sayState();\n}\ndocument.getElementById('add').onclick = () => addBall();\ndocument.getElementById('shake').onclick = () => { for (const b of balls) { b.vy -= 500 + Math.random() * 300; b.vx += (Math.random() - 0.5) * 400; b.still = 0; b.said = false; } Jaskinia.event('potrząśnięcie'); };\ndocument.getElementById('e').oninput = ev => { restit = +ev.target.value; sayState(); };\ncv.addEventListener('pointerdown', ev => addBall(ev.offsetX, ev.offsetY));\nconst energy = () => balls.reduce((a, b) => a + 0.5 * (b.vx * b.vx + b.vy * b.vy) / 1e4 + G / 100 * (H - R - b.y) / 100, 0);\nfunction sayState() { Jaskinia.state(`${balls.length} piłki, energia ${energy().toFixed(1)} J, sprężystość ${restit.toFixed(2)}`, { pilki: balls.length, energia: +energy().toFixed(2), sprezystosc: restit, czas_s: Math.round((performance.now() - t0) / 1000) }); }\nJaskinia.hello({ name: 'Piłki', version: 'pokaz 1', wants: ['remark'] });\nfor (let i = 0; i < 3; i++) addBall();\nJaskinia.onStateRequest(() => ({ text: `${balls.length} piłki, energia ${energy().toFixed(1)} J, sprężystość ${restit.toFixed(2)}`, data: { pilki: balls.length, energia: +energy().toFixed(2), sprezystosc: restit } }));\nJaskinia.onRemark(r => {\n  const tr = document.getElementById('trace');\n  tr.classList.add('on');\n  const p = document.createElement('p'), tm = document.createElement('time');\n  tm.textContent = (r.at || '').slice(11, 19); p.append(tm, document.createTextNode(r.text));\n  tr.append(p);\n  window.__remarks = (window.__remarks || []).concat(r);\n});\nJaskinia.onVisible(v => { paused = !v; document.getElementById('pause').classList.toggle('on', paused); });\n\nlet last = performance.now(), sigT = 0, stT = 0;\nfunction step(now) {\n  const dt = Math.min(0.033, (now - last) / 1000); last = now;\n  frames.push(now); while (frames.length && now - frames[0] > 1000) frames.shift();\n  if (!paused) for (const b of balls) {\n    b.vy += G * dt; b.vx *= 1 - 0.15 * dt; b.x += b.vx * dt; b.y += b.vy * dt;\n    if (b.x < R) { b.x = R; b.vx = -b.vx * restit; } if (b.x > W - R) { b.x = W - R; b.vx = -b.vx * restit; }\n    if (b.y > H - R) { b.y = H - R; if (b.vy > 60) bounces.push(now); b.vy = -b.vy * restit; b.vx *= 0.98; }\n    const moving = Math.abs(b.vy) > 40 || Math.abs(b.vx) > 25 || b.y < H - R - 2;\n    b.still = moving ? 0 : b.still + dt;\n    if (b.still > 1 && !b.said) { b.said = true; Jaskinia.event('piłka się zatrzymała'); }\n    if (moving) b.said = false;\n  }\n  while (bounces.length && now - bounces[0] > 1000) bounces.shift();\n  g.clearRect(0, 0, W, H);\n  g.strokeStyle = '#2a3640'; g.beginPath(); g.moveTo(0, H - 0.5); g.lineTo(W, H - 0.5); g.stroke();\n  for (const b of balls) { g.fillStyle = `hsl(${b.hue} 80% 62%)`; g.beginPath(); g.arc(b.x, b.y, R, 0, Math.PI * 2); g.fill(); }\n  document.getElementById('hud').textContent = `${balls.length} piłki · ${energy().toFixed(1)} J · ${bounces.length} odbić/s · ${frames.length} kl./s${Jaskinia.active ? ' · w Jaskini' : ''}`;\n  if (now - sigT > 100) { sigT = now; Jaskinia.signals({ energia: +energy().toFixed(2), odbicia: bounces.length, pilki: balls.length, fps: frames.length }); }\n  if (now - stT > 1000) { stT = now; sayState(); }\n  requestAnimationFrame(step);\n}\nrequestAnimationFrame(step);\nwindow.__boot = Math.random().toString(36).slice(2); // lets a check tell a running lab from a restarted one\n<\/script>\n</body>\n</html>\n";
 (() => {
 'use strict';
@@ -8214,7 +8214,7 @@ const EN = {
   'Nazwa ramki': 'Frame name',
   'nazwa ramki': 'frame name',
   'Karty projektów zostają na ścianie; usunąć możesz notatki i ramki.': 'Project cards stay on the wall; you can delete notes and frames.',
-  'notatka': 'note',
+  'notatka': ['note', 'notes'],
   'usunięcie notatek i ramek': 'deleting notes and frames',
   'notatka ze ściany do kosza': 'wall note to the trash',
   'usunięcie ramki': 'deleting a frame',
@@ -9010,6 +9010,27 @@ const EN = {
   'przeciągnij myszą, żeby się rozejrzeć; WASD idzie': 'drag with the mouse to look around; WASD walks',
   'Nowe w v6: Materiały. Upuść swój model z Blockbencha albo Blendera, zobacz go w skali przy człowieku i wejdź do środka.': 'New in v6: Materials. Drop your model from Blockbench or Blender, see it at scale next to a person, and step inside.',
   'Twoje modele i tekstury: upuść pliki, zobacz je w świetle, sprawdź skalę przy człowieku 1,8 m i wejdź do środka.': 'Your models and textures: drop the files, see them in light, check the scale against a 1.8 m person, and step inside.',
+  /* v6.1: several tabs, addresses, the agents window, material settings */
+  'z innej karty': 'from another tab', 'z tej karty, przed scaleniem': 'from this tab, before merging',
+  'dwie karty zmieniły to samo: {0}': 'two tabs changed the same thing: {0}',
+  'To samo zmieniło się w dwóch kartach naraz. Nowsza notatka i układ z tej karty zostały, a druga wersja czeka w kopiach automatycznych.': 'The same thing changed in two tabs at once. The newer note and this tab\'s layout stayed; the other version waits in the automatic copies.',
+  'pamięć wyczyszczona z zewnątrz, Jaskinia zapisana z powrotem': 'storage wiped from outside, Jaskinia written back',
+  'Inna strona pod tym adresem wyczyściła pamięć przeglądarki. Zapisałem Jaskinię z powrotem z tej karty.': 'Another page at this address wiped the browser storage. I wrote Jaskinia back from this tab.',
+  'link bez celu: {0}': 'a link that goes nowhere: {0}', 'Nie znam projektu „{0}”.': 'I do not know the project “{0}”.', 'adres: {0}': 'address: {0}', 'Nie ma układu „{0}”.': 'There is no layout “{0}”.',
+  'Dla agentów': 'For agents',
+  'Ta sama Jaskinia jako zwykły tekst: dla GPT czytającego przez Operę, dla Codexa i dla Claude. Zasady pracy są w kompasie Jaskini (issue #5 w repo Jozz-Cave-Workbench). Ta strona tylko czyta; decyzje podejmuje Jozz.': 'The same Jaskinia as plain text: for GPT reading through Opera, for Codex and for Claude. The working rules are in the Jaskinia compass (issue #5 in the Jozz-Cave-Workbench repository). This page only reads; Jozz decides.',
+  'Jaskinia {0}, zbudowana {1}, miejsce: {2}.': 'Jaskinia {0}, built {1}, place: {2}.', 'Układ na ekranie: {0} ({1}). Okna: {2}.': 'Layout on screen: {0} ({1}). Windows: {2}.',
+  'przypięte: {0}': 'pinned: {0}', 'Zaznaczony projekt: {0} ({1}).': 'Selected project: {0} ({1}).', 'Nic nie jest zaznaczone.': 'Nothing is selected.', 'Układy: {0}.': 'Layouts: {0}.',
+  'Notatki Jozza': 'Jozz\'s notes', '{0}, najnowsze pierwsze. Notatki bez okna też tu są.': '{0}, newest first. Notes without a window are here too.',
+  'Jozz nie ma jeszcze notatek.': 'Jozz has no notes yet.', 'bez okna': 'without a window', 'Adresy': 'Addresses',
+  '#repo~Nazwa: projekt z kartą na ekranie': '#repo~Name: a project, with its card on screen', '#m~id: materiał w oknie Materiały': '#m~id: a material in the Materials window',
+  '#uklad~id: układ (karta u góry)': '#uklad~id: a layout (a tab at the top)', '#agenci, #notatki, #materialy, #historia, #wiedza, #mapa, #sciana, #statystyki: to okno': '#agenci, #notatki, #materialy, #historia, #wiedza, #mapa, #sciana, #statystyki: that window',
+  'Czytam bibliotekę…': 'Reading the library…', 'plik towarzyszący': ['companion file', 'companion files'], 'Biblioteka materiałów jest pusta.': 'The materials library is empty.',
+  'Jaskinia jako zwykły tekst dla agentów: co jest na ekranie, Twoje notatki, materiały i adresy.': 'Jaskinia as plain text for agents: what is on screen, your notes, materials and addresses.',
+  'Nie ma w bibliotece materiału {0}.': 'There is no material {0} in the library.', 'materiał {0} nie ma ustawień nr {1}': 'material {0} has no settings revision {1}',
+  'Dodaj cały folder: modele z ich teksturami, reszta plików nie jest czytana': 'Add a whole folder: models with their textures; other files are not read',
+  'Plik z układami, notatkami i zapisami. Na innym urządzeniu (albo po wyczyszczeniu przeglądarki) wczytasz go w imporcie. Modeli z Materiałów w nim nie ma: zostają w bibliotece tej przeglądarki, a ich pliki masz u siebie na dysku.': 'A file with layouts, notes and saves. On another device (or after clearing the browser) you load it in the import. Models from Materials are not in it: they stay in this browser\'s library, and you have their files on your disk.',
+  'Układy, notatki, zapisy, kopie, kosz i Materiały są tylko w tej przeglądarce, na tym urządzeniu. Nigdzie ich nie wysyłam. Kilka kart Jaskini naraz scala swoje zmiany. Żeby przenieść Jaskinię, użyj eksportu (bez modeli). Dane o projektach to zrzut z GitHuba wbudowany w stronę: odświeża go Claude (regen).': 'Layouts, notes, saves, copies, the trash and Materials are only in this browser, on this device. I send them nowhere. Several Jaskinia tabs at once merge their changes. To move Jaskinia, use the export (without models). The project data is a GitHub snapshot built into the page: Claude refreshes it (regen).',
 };
 
 /* ---------- the layout model (pure; no DOM) ----------
@@ -9406,25 +9427,122 @@ function loadStore() {
       if (st) notices.push({ kind: 'migrated' }); else { rescue(r1); notices.push({ kind: 'lost' }); }
     }
   }
-  return repair(st || freshStore());
+  const out = repair(st || freshStore());
+  synced(raw, out);
+  if (raw == null || JSON.stringify(out) !== raw) dirty = true; // a repaired or migrated state is written at the next chance
+  return out;
+}
+
+/* ---------- several tabs (v6.1) ----------
+   Every tab keeps its own copy in memory. v6 wrote that whole copy on every hide, so an older tab, closed last,
+   overwrote the layouts and notes made in a newer one. Now a tab writes only after it changed something (dirty), takes
+   in what another tab wrote (the 'storage' event, in 50-shell.js) without restarting running windows, and merges both
+   sides against the last state they shared (a three-way merge by layout, note, view, saved state and trash item):
+   - what only one side changed is kept;
+   - a note changed on both sides keeps its newer text;
+   - a layout changed on both sides keeps this tab's version.
+   When the other tab's note or layout loses, it goes into an automatic copy, and Jozz is told once. */
+let dirty = false;      // this tab changed something that is not written yet
+let lastText = null;    // the KEY's value this tab last wrote or took in
+let base = null;        // that state in parts: the common ancestor of the next merge
+/* Two tabs can write in the same moment, each before it sees the other's write. Each written state therefore names
+   itself (rev) and the state it grew from (par), and a tab keeps the last few states it wrote or took in: a state that
+   comes in is merged against the state it grew from, so a tab never mistakes "the other tab had not seen my change yet"
+   for "the other tab removed my change". */
+const known = new Map(); // rev -> parts
+function ancestorFor(theirs) { return (theirs && theirs.par && known.get(theirs.par)) || base; }
+let onForeign = null;   // set by the shell: takes in a state written by another tab (text) before this tab writes
+const asMap = (list, key = 'id') => Object.fromEntries(arr(list).filter(x => x && x[key] != null).map(x => [x[key], JSON.stringify(x)]));
+const jsonMap = o => Object.fromEntries(Object.entries(obj(o)).map(([k, v]) => [k, JSON.stringify(v)]));
+function partsOf(st) { return { spaces: asMap(st.spaces), order: arr(st.spaces).map(s => s.id), notes: jsonMap(st.notes), views: jsonMap(st.views), saved: asMap(st.saved), trash: asMap(st.trash) }; }
+function synced(text, st) {
+  lastText = text; base = partsOf(st);
+  if (st && st.rev) { known.set(st.rev, base); while (known.size > 16) known.delete(known.keys().next().value); }
+}
+const sameMap = (a, b) => { const ka = Object.keys(a); return ka.length === Object.keys(b).length && ka.every(k => a[k] === b[k]); };
+/* the same layouts, notes, views, saved states and trash (cur and sel are each tab's own) */
+function sameParts(x, y) { const a = partsOf(x), b = partsOf(y); return a.order.join('\n') === b.order.join('\n') && ['spaces', 'notes', 'views', 'saved', 'trash'].every(k => sameMap(a[k], b[k])); }
+/* each map: id -> JSON text. pick(ours, theirs) settles a real conflict and says which one lost */
+function merge3(b, o, t0, pick) {
+  const out = {}, lost = [];
+  for (const k of new Set([...Object.keys(b), ...Object.keys(o), ...Object.keys(t0)])) {
+    const bv = b[k], ov = o[k], tv = t0[k];
+    let v;
+    if (ov === tv) v = ov;
+    else if (ov === bv) v = tv;          // only the other tab changed it (or removed it)
+    else if (tv === bv) v = ov;          // only this tab did
+    else if (ov === undefined) v = tv;   // removed here, changed there: keep the change (the trash has the removal anyway)
+    else if (tv === undefined) v = ov;
+    else { v = pick(ov, tv); lost.push(v === ov ? { k, side: 'theirs', v: tv } : { k, side: 'ours', v: ov }); }
+    if (v !== undefined) out[k] = v;
+  }
+  return { out, lost };
+}
+const newerNote = (a, b) => ((JSON.parse(b).upd || 0) > (JSON.parse(a).upd || 0) ? b : a);
+/* one layout changed in both tabs: merged window by window. Its shape (the tree of windows, the floating ones, which one
+   is maximised) is one thing: if both tabs rearranged it, this tab's shape stays and the other one is reported lost.
+   A window's own state, the name and the focus are taken from whichever side changed them (this tab's on a tie). */
+function mergeSpace(bv, ov, tv) {
+  const sB = bv ? JSON.parse(bv) : null, sO = JSON.parse(ov), sT = JSON.parse(tv);
+  const shape = s => s && JSON.stringify([s.L.tree, s.L.floats, s.L.max]);
+  const meta = s => s && JSON.stringify([s.name, s.preset, s.purpose, s.L.stats, s.L.focus]);
+  const take = (f, quiet) => { const b = f(sB), o = f(sO), t0 = f(sT); if (o === t0 || t0 === b) return { s: sO }; if (o === b) return { s: sT }; return { s: sO, clash: !quiet }; };
+  const sh = take(shape), me = take(meta, true);
+  const wins = merge3(sB ? jsonMap(sB.L.wins) : {}, jsonMap(sO.L.wins), jsonMap(sT.L.wins), a => a).out;
+  const out = clone(sO);
+  out.name = me.s.name; out.preset = me.s.preset; out.purpose = me.s.purpose;
+  out.L = { ...clone(sh.s.L), stats: clone(me.s.L.stats), focus: me.s.L.focus, wins: {} };
+  const ids = new Set([...leafIds(out.L.tree), ...arr(out.L.floats).map(f => f.id)]);
+  for (const id of ids) out.L.wins[id] = wins[id] ? JSON.parse(wins[id]) : (sh.s.L.wins[id] ? clone(sh.s.L.wins[id]) : { type: 'wybor', z: 1, pin: null, st: {} });
+  if (out.L.focus && !ids.has(out.L.focus)) out.L.focus = null;
+  if (out.L.max && !ids.has(out.L.max)) out.L.max = null;
+  return { v: JSON.stringify(out), clash: !!sh.clash };
+}
+/* returns { st, lost }: st is the merged store (this tab's cur and sel); lost lists what lost a real conflict, with the side
+   it came from ('ours' or 'theirs'), so the caller can keep that side in an automatic copy */
+function mergeStores(b0, ours, theirs) {
+  const B0 = b0 || { spaces: {}, order: [], notes: {}, views: {}, saved: {}, trash: {} };
+  const O = partsOf(ours), T = partsOf(theirs);
+  const sp = merge3(B0.spaces, O.spaces, T.spaces, a => a);
+  for (const x of sp.lost.splice(0)) { // both sides changed one layout: merge it by window instead of choosing one whole
+    const m = mergeSpace(B0.spaces[x.k], O.spaces[x.k], T.spaces[x.k]);
+    sp.out[x.k] = m.v;
+    if (m.clash) sp.lost.push({ k: x.k, side: 'theirs', v: T.spaces[x.k] });
+  }
+  const nt = merge3(B0.notes, O.notes, T.notes, newerNote);
+  const vw = merge3(B0.views, O.views, T.views, a => a);   // views are cameras and choices: this tab's win quietly
+  const sv = merge3(B0.saved, O.saved, T.saved, a => a), tr = merge3(B0.trash, O.trash, T.trash, a => a);
+  const ordO = O.order.join('\n') !== B0.order.join('\n');  // this tab reordered its tabs: its order wins
+  const pref = ordO ? O.order : T.order, rest = ordO ? T.order : O.order;
+  const ids = [...pref, ...rest].filter((id, i, a) => sp.out[id] && a.indexOf(id) === i);
+  for (const id of Object.keys(sp.out)) if (!ids.includes(id)) ids.push(id);
+  const parse = m => Object.fromEntries(Object.entries(m).map(([k, v]) => [k, JSON.parse(v)]));
+  const byAt = m => Object.values(m).map(v => JSON.parse(v)).sort((a, b) => (b.at || 0) - (a.at || 0));
+  const st = { v: 2, cur: ours.cur, sel: ours.sel, spaces: ids.map(id => JSON.parse(sp.out[id])), notes: parse(nt.out), views: parse(vw.out), saved: byAt(sv.out), trash: byAt(tr.out), rev: theirs.rev || null, par: theirs.par || null };
+  const lost = [...sp.lost.map(x => ({ ...x, kind: 'space', name: JSON.parse(x.v).name })), ...nt.lost.map(x => ({ ...x, kind: 'note', name: noteTitle(JSON.parse(x.v).text) }))];
+  return { st, lost };
 }
 
 /* ---------- writing ---------- */
 let saveT = 0, saveProblem = null, onSaveProblem = null;
 function persistNow() {
   clearTimeout(saveT);
-  if (!storageOK || !store) return;
+  if (!storageOK || !store || !dirty) return; // nothing new here: an old copy never goes over a newer one
+  const now = lsGet(KEY);
+  if (now != null && now !== lastText && onForeign) onForeign(now); // another tab wrote first: merge, then write
+  store.par = store.rev || null; store.rev = uid('r'); // this state, grown from the one this tab last shared
   const txt = JSON.stringify(store);
   let ok = lsSet(KEY, txt) === true;
   if (!ok) { trimBackups(Math.max(1, Math.floor(readBackups().length / 2))); ok = lsSet(KEY, txt) === true; }
+  if (ok) { synced(txt, store); dirty = false; }
   const p = ok ? null : 'full';
   if (p !== saveProblem) { saveProblem = p; onSaveProblem?.(p); }
 }
-function persist() { clearTimeout(saveT); saveT = setTimeout(persistNow, 250); }
+function persist() { dirty = true; clearTimeout(saveT); saveT = setTimeout(persistNow, 250); }
 
 /* ---------- snapshots: a whole Jaskinia in one object (copies, saved states, export) ---------- */
-function snapshotAll() {
-  return { spaces: clone(store.spaces), cur: store.cur, sel: store.sel, notes: clone(store.notes), views: clone(store.views) };
+function snapshotAll(st = store) {
+  return { spaces: clone(st.spaces), cur: st.cur, sel: st.sel, notes: clone(st.notes), views: clone(st.views) };
 }
 function fromSnapshot(d) {
   d = obj(d);
@@ -9444,9 +9562,9 @@ function trimBackups(n) { const l = readBackups(); writeBackups(l.slice(0, Math.
    the things deleted for good ride along in it; restoring that copy puts them back in the trash (GPT's review of v3
    found that the promise "it stays in the copy made now" was not true for layouts and saved states).
    Returns null when the copy could not be written: the caller must not delete then. */
-function makeBackup(why, forgotten) {
-  if (!storageOK || !store) return null;
-  const data = snapshotAll(), list = readBackups(), s0 = sig({ s: data.spaces, n: data.notes });
+function makeBackup(why, forgotten, from = store) {
+  if (!storageOK || !from) return null;
+  const data = snapshotAll(from), list = readBackups(), s0 = sig({ s: data.spaces, n: data.notes });
   const keep = arr(forgotten).filter(Boolean).map(x => clone(x));
   if (list[0] && list[0].sig === s0) {
     if (why === 'auto' && !keep.length) return list[0];
@@ -10222,8 +10340,10 @@ function renderWall(box, c) {
     const ta = h('textarea', { class: 'wn-text', placeholder: t('Notatka…'), 'aria-label': t('Notatka na ścianie'), spellcheck: 'true' });
     ta.value = noteText(n.id);
     let tm = 0;
-    ta.addEventListener('input', () => { clearTimeout(tm); tm = setTimeout(() => noteSet(n.id, ta.value), 250); });
-    ta.addEventListener('blur', () => { clearTimeout(tm); noteSet(n.id, ta.value); });
+    let typed = false; // only typed text is written back: an older text shown here never overwrites a newer one (v6.1)
+    const flush = () => { clearTimeout(tm); if (!typed) return; typed = false; noteSet(n.id, ta.value); };
+    ta.addEventListener('input', () => { typed = true; clearTimeout(tm); tm = setTimeout(flush, 250); });
+    ta.addEventListener('blur', flush);
     ta.addEventListener('pointerdown', e => e.stopPropagation()); // typing and selecting text are the textarea's own
     ta.addEventListener('keydown', e => e.stopPropagation());
     ta.addEventListener('wheel', e => { if (ta.scrollHeight > ta.clientHeight) e.stopPropagation(); }, { passive: true });
@@ -10792,15 +10912,15 @@ function renderNotes(box, c) {
   const ta = h('textarea', { class: 'jk-notes', placeholder: t('Twoje notatki. Zapisują się same, w tej przeglądarce. Cofanie układu (Ctrl+Z) ich nie rusza.'), 'aria-label': t('Notatki'), spellcheck: 'true' });
   ta.value = noteText(id);
   const gone = store.notes[id]?.gone;
-  let tm = 0;
-  ta.addEventListener('input', () => {
-    clearTimeout(tm);
-    tm = setTimeout(() => { noteSet(id, ta.value); document.dispatchEvent(new CustomEvent('jk:note', { detail: { id, from: ta } })); }, 250);
-  });
-  ta.addEventListener('blur', () => { clearTimeout(tm); noteSet(id, ta.value); });
+  /* only what Jozz typed here is written back: a textarea showing an older text (another tab changed the note, v6.1)
+     never writes that older text over the newer one on blur or when the window is redrawn */
+  let tm = 0, typed = false;
+  const flush = () => { clearTimeout(tm); if (!typed) return; typed = false; noteSet(id, ta.value); document.dispatchEvent(new CustomEvent('jk:note', { detail: { id, from: ta } })); };
+  ta.addEventListener('input', () => { typed = true; clearTimeout(tm); tm = setTimeout(flush, 250); });
+  ta.addEventListener('blur', flush);
   const onNote = e => { if (e.detail.id === id && e.detail.from !== ta && document.activeElement !== ta) ta.value = noteText(id); };
   document.addEventListener('jk:note', onNote);
-  c.onDispose(() => { document.removeEventListener('jk:note', onNote); clearTimeout(tm); if (ta.value !== noteText(id)) noteSet(id, ta.value); });
+  c.onDispose(() => { document.removeEventListener('jk:note', onNote); flush(); });
   box.append(h('div', { class: 'jk-pad jk-notes-w' }, gone && !noteText(id) ? h('p', { class: 'jk-sub warn', text: t('Tekstu tej notatki tu nie ma: został usunięty na zawsze albo nie przyszedł z importem. Okno zaczyna od pustej kartki.') }) : null, ta));
 }
 function notesCtx(c) {
@@ -11202,7 +11322,7 @@ const SET_SECTIONS = {
     };
     file.addEventListener('change', () => { const f = file.files && file.files[0]; if (!f) return; f.text().then(tryImport, () => fill(res, h('p', { class: 'set-err', text: t('Nie da się przeczytać tego pliku.') }))); file.value = ''; });
     return h('div', { class: 'set-body' },
-      setCard(t('Eksport'), h('p', { class: 'set-note', text: t('Plik z układami, notatkami i zapisami. Na innym urządzeniu (albo po wyczyszczeniu przeglądarki) wczytasz go w imporcie.') }),
+      setCard(t('Eksport'), h('p', { class: 'set-note', text: t('Plik z układami, notatkami i zapisami. Na innym urządzeniu (albo po wyczyszczeniu przeglądarki) wczytasz go w imporcie. Modeli z Materiałów w nim nie ma: zostają w bibliotece tej przeglądarki, a ich pliki masz u siebie na dysku.') }),
         h('div', { class: 'set-acts' },
           h('button', { class: 'btn', type: 'button', onclick: () => offer('all') }, icon('download', 14), t('Cała Jaskinia')),
           h('button', { class: 'btn ghost', type: 'button', onclick: () => offer('space') }, icon('download', 14), t('Tylko „{0}”', spaceName(space)))), out),
@@ -11234,7 +11354,7 @@ const SET_SECTIONS = {
         h('li', null, h('span', { text: t('pokrycie') }), h('b', { text: `${C.collected}/${C.expected} repo` })),
         h('li', null, h('span', { text: t('razem') }), h('b', { text: `${fmt(T.commits)} commitów · ${T.branches} gałęzi` })),
         h('li', null, h('span', { text: t('zapis Jaskini w tej przeglądarce') }), h('b', { text: storageOK ? `${Math.round(bytes / 1024)} KB` : t('niedostępny') })))),
-      setCard(t('Gdzie to wszystko jest'), h('p', { class: 'set-note', text: t('Układy, notatki, zapisy, kopie i kosz są tylko w tej przeglądarce, na tym urządzeniu. Nigdzie ich nie wysyłam. Żeby przenieść Jaskinię, użyj eksportu. Dane o projektach to zrzut z GitHuba wbudowany w stronę: odświeża go Claude (regen).') })),
+      setCard(t('Gdzie to wszystko jest'), h('p', { class: 'set-note', text: t('Układy, notatki, zapisy, kopie, kosz i Materiały są tylko w tej przeglądarce, na tym urządzeniu. Nigdzie ich nie wysyłam. Kilka kart Jaskini naraz scala swoje zmiany. Żeby przenieść Jaskinię, użyj eksportu (bez modeli). Dane o projektach to zrzut z GitHuba wbudowany w stronę: odświeża go Claude (regen).') })),
       setCard(t('Wersja'), h('ul', { class: 'set-facts' },
         h('li', null, h('span', { text: t('wersja') }), h('b', { text: 'Jaskinia ' + VER })),
         h('li', null, h('span', { text: t('zbudowana') }), h('b', { text: builtShort() })),
@@ -11796,6 +11916,7 @@ function select(name, via) {
   if (!R[name]) return;
   const changed = store.sel !== name;
   if (changed) { store.sel = name; updateSelStyle(); renderSelBox(); persist(); logEv(t('zaznaczony: {0}', R[name].short)); }
+  setAddress('#repo~' + name);
   for (const id of allIds()) { refreshWin(id); RT.get(id)?.onSel?.(name); }
   if (changed && phone && via === 'win') showSelSheet(name);
 }
@@ -12323,6 +12444,47 @@ function rebuildAll() {
   setSpace(store.cur);
   updateSelStyle(); renderSelBox();
 }
+/* ---------- another tab wrote (15-store.js: several tabs) ----------
+   The merged state comes on screen the way switching layouts does: windows that still exist keep running, windows the
+   other tab closed go, a window whose note text changed is redrawn unless Jozz is typing in it. Undo history of a
+   layout the other tab changed is dropped (undoing here would quietly undo that tab's work). */
+function takeForeign(text) {
+  let theirs;
+  try { theirs = JSON.parse(text); } catch { return; }
+  if (!theirs || typeof theirs !== 'object' || !Array.isArray(theirs.spaces)) return;
+  theirs = repair(theirs);
+  const mine = store, m = mergeStores(ancestorFor(theirs), store, theirs);
+  synced(text, theirs);
+  if (m.lost.length) {
+    // what lost a real conflict stays in an automatic copy: the other tab's state, or this tab's for a note that lost here
+    const kept = (m.lost.some(x => x.side === 'theirs') ? makeBackup(t('z innej karty'), null, theirs) : null) || (m.lost.some(x => x.side === 'ours') ? makeBackup(t('z tej karty, przed scaleniem'), null, mine) : null);
+    logEv(t('dwie karty zmieniły to samo: {0}', m.lost.map(x => x.name || (x.kind === 'note' ? t('notatka') : t('układ'))).join(', ')));
+    jtoast(t('To samo zmieniło się w dwóch kartach naraz. Nowsza notatka i układ z tej karty zostały, a druga wersja czeka w kopiach automatycznych.'), kept ? { label: t('Pokaż'), act: () => openSettings('kopie') } : null, 9000);
+  }
+  adoptStore(repair(m.st));
+  if (!sameParts(store, theirs)) dirty = true; // this tab still holds something the other one has not seen
+}
+function adoptStore(next) {
+  const prevNotes = store.notes;
+  for (const sp of next.spaces) { const old = store.spaces.find(x => x.id === sp.id); if (!old || JSON.stringify(old.L) !== JSON.stringify(sp.L)) delete hist[sp.id]; }
+  store = next;
+  const keep = allWinIds(store);
+  for (const id of [...RT.keys()]) if (!keep.has(id)) dropWin(id);
+  space = store.spaces.find(sp => sp.id === store.cur) || store.spaces[0];
+  store.cur = space.id; L = space.L;
+  const changedNotes = new Set(Object.keys(store.notes).filter(id => !prevNotes[id] || prevNotes[id].text !== store.notes[id].text));
+  const typingIn = document.activeElement && document.activeElement.closest?.('.win');
+  for (const id of allIds()) {
+    const w = L.wins[id], rt = RT.get(id);
+    if (!rt || !changedNotes.size || (typingIn && rt.el.contains(typingIn))) continue;
+    const ids = w.type === 'notatki' ? [w.st && w.st.note] : w.type === 'sciana' ? arr(w.st && w.st.notes).map(n => n && n.id) : [];
+    if (ids.some(n => n && changedNotes.has(n))) rt.key = null;
+  }
+  closeMenus();
+  renderTabs(); updateUndoUI(); updateSelStyle(); renderSelBox(); renderDock();
+  apply();
+  for (const id of allIds()) refreshWin(id);
+}
 function restoreBackup(id, quiet) {
   const b = readBackups().find(x => x.id === id);
   if (!b) { jtoast(t('Tej kopii już nie ma.')); return; }
@@ -12702,6 +12864,18 @@ function boot() {
   applyLook();
   buildChrome();
   store = loadStore();
+  onForeign = takeForeign;
+  if (dirty) persistNow(); // a first start or a repaired state is written at once: a second tab opened next reads the same windows
+  addEventListener('storage', e => { // another tab of this Jaskinia (or another page at this address) wrote
+    if (e.storageArea !== localStorage) return;
+    if (e.key === null || (e.key === KEY && e.newValue == null)) { // the state was wiped from outside: this tab still holds it
+      dirty = true; persistNow();
+      logEv(t('pamięć wyczyszczona z zewnątrz, Jaskinia zapisana z powrotem'));
+      jtoast(t('Inna strona pod tym adresem wyczyściła pamięć przeglądarki. Zapisałem Jaskinię z powrotem z tej karty.'), null, 9000);
+      return;
+    }
+    if (e.key === KEY && e.newValue !== lastText) takeForeign(e.newValue);
+  });
   logEv(t('start: Jaskinia {0}, {1}, okno {2}', VER, t(PLACE_NAME[PLACE]), `${innerWidth}×${innerHeight}`), { v: VER, place: PLACE });
   space = store.spaces.find(sp => sp.id === store.cur) || store.spaces[0];
   L = space.L;
@@ -12709,14 +12883,13 @@ function boot() {
   bindKeys();
   onSaveProblem = () => renderStatus();
   renderStatus();
-  stage.addEventListener('click', e => { // links inside windows select instead of navigating away
+  stage.addEventListener('click', e => { // links inside windows go to that thing in Jaskinia instead of navigating away
     const a = e.target.closest('a[href^="#"]');
-    if (!a) return;
+    if (!a || e.defaultPrevented) return;
     e.preventDefault();
-    const href = decodeURIComponent(a.getAttribute('href'));
-    if (href.startsWith('#repo~')) select(href.slice(6), 'win');
+    if (!route(a.getAttribute('href'), true)) logEv(t('link bez celu: {0}', a.getAttribute('href')));
   });
-  B.HOOK.go = hash => { const m = /^#repo~(.+)$/.exec(decodeURIComponent(hash)); if (m && R[m[1]]) select(m[1], 'win'); };
+  B.HOOK.go = hash => route(hash, true); // the Library's own links and clicks inside windows
   B.HOOK.refresh = () => { for (const id of allIds()) { const rt = RT.get(id); if (rt && !typeOf(L.wins[id]).live) rt.key = null; refreshWin(id); } }; // a theme change never restarts a running lab
   /* "Zagraj" never stops the game Jozz is playing (v5 took over the first game window: M1 in docs/2026-10-16-szwy.md).
      A game window that follows the selection is pinned to what it shows before the selection moves; the new game gets
@@ -12751,7 +12924,8 @@ function boot() {
   showNotices();
   firstHint();
   v6Hint();
-  window.__JASK = { get L() { return L; }, get store() { return store; }, get phone() { return phone; }, RT, WALLS, apply, select, commit, undo, redo, setSpace, layoutRects, leafIds, rects: () => rects, prefs, openSettings, readBackups, persistNow, get log() { return jlog; }, get uwagi() { return uwagi; }, packageData, packageText, deleteSpace, restoreTrash, forgetTrash, restoreBackup, setPref, signalsBeside, uwagaPop,
+  routeStart();
+  window.__JASK = { get L() { return L; }, get store() { return store; }, get phone() { return phone; }, RT, WALLS, apply, select, commit, undo, redo, setSpace, layoutRects, leafIds, rects: () => rects, prefs, openSettings, readBackups, persistNow, get log() { return jlog; }, get uwagi() { return uwagi; }, packageData, packageText, deleteSpace, restoreTrash, forgetTrash, restoreBackup, setPref, signalsBeside, uwagaPop, noteSet, noteNew, persist, route, get dirty() { return dirty; }, get lastText() { return lastText; },
     live: () => [...LIVE.values()].map(e => ({ id: e.id, url: e.url, hello: e.hello, state: e.state, sigs: [...e.sigs.keys()], n: Object.fromEntries([...e.sigs].map(([k, v]) => [k, v.v.length])), evs: e.evs.map(x => x.text), marks: e.marks.length, last: e.last, vis: e.vis })) };
 }
 
@@ -14050,7 +14224,13 @@ async function sha256(blob) {
 const baseName = n => String(n || '').split(/[\\/]/).pop();
 const stem = n => baseName(n).replace(/\.[^.]+$/, '');
 const extOf = n => (/\.([^.]+)$/.exec(baseName(n)) || [])[1]?.toLowerCase() || '';
-function matEmit(detail) { document.dispatchEvent(new CustomEvent('jk:materialy', { detail })); }
+/* every tab of this Jaskinia shares the library: a change in one tab tells the others, which read it again (v6.1) */
+const MAT_BC = (() => { try { return new BroadcastChannel('jaskinia-materialy'); } catch { return null; } })();
+function matEmit(detail, fromOther) {
+  document.dispatchEvent(new CustomEvent('jk:materialy', { detail }));
+  if (!fromOther && MAT_BC) { const { target, ...rest } = detail || {}; void target; try { MAT_BC.postMessage(rest); } catch { /* a closed channel: the other tabs read on their next start */ } }
+}
+if (MAT_BC) MAT_BC.onmessage = e => { MATS = null; matEmit(e.data || {}, true); };
 
 /* ---------- the library ---------- */
 let MATS = null; // id → material, read once, then kept in step with every write
@@ -14133,12 +14313,25 @@ async function matLoad(m) {
   return { object: obj, animations: anims, missing: [...missing].filter(n => n && n !== ',' && !/^(blob|data):/.test(n) && !/^[0-9a-f-]{36}$/i.test(n)) };
 }
 /* the material's defaults: quarter turns about X, Y, Z and a scale, applied around its own origin */
-function matWrap(obj, m) {
+/* Settings revisions (v6.1). Turning or scaling a material used to change it in place, so a place that pointed at the
+   material's id would quietly change size and orientation (GPT-6, PR #4). Every change now adds a numbered revision
+   and keeps the earlier ones: a place can pin the revision it was built with (Jaskinia.materialy.object(id, {set})) or
+   follow the newest. A material from before v6.1 has one revision: its settings as they are. */
+function matSets(m) { return m.sets && m.sets.length ? m.sets : [{ n: 1, rot: [...(m.rot || [0, 0, 0])], scale: m.scale || 1, at: m.added || 0 }]; }
+function matSetting(m, n) {
+  const list = matSets(m);
+  if (n == null) return list[list.length - 1];
+  const s = list.find(x => x.n === n);
+  if (!s) throw new Error(t('materiał {0} nie ma ustawień nr {1}', m.id, n));
+  return s;
+}
+function matWrap(obj, m, set) {
   const { THREE } = swiat();
-  const g = new THREE.Group(), r = m.rot || [0, 0, 0];
+  const cfg = set || { rot: m.rot || [0, 0, 0], scale: m.scale || 1 };
+  const g = new THREE.Group(), r = cfg.rot || [0, 0, 0];
   g.name = m.name;
   g.rotation.set(r[0] * Math.PI / 2, r[1] * Math.PI / 2, r[2] * Math.PI / 2, 'XYZ');
-  const s = m.scale || 1;
+  const s = cfg.scale || 1;
   g.scale.set(s, s, s);
   g.add(obj);
   const outer = new THREE.Group(); outer.add(g); outer.name = m.name;
@@ -14193,15 +14386,29 @@ async function matThumb(obj) {
 }
 
 /* ---------- import ---------- */
-/* files: File objects (or {name, blob}); from: where they came from ('plik' or 'repo:Owner/Repo/path') */
+/* A model names its files by relative uri. From a folder, two models may each have their own "texture.png" (dom/ and
+   wieza/): v6 matched by bare name, so both models took both pictures and one of them showed the other's (Feniks GPT's
+   counterexample, 18 Oct). The file is now the one at that path beside the model, or the nearest one with that name. */
+const relOf = f => String(f.rel || f.blob?.webkitRelativePath || '').replace(/\\/g, '/');
+const dirOf = p => p.slice(0, p.lastIndexOf('/') + 1);
+const normPath = p => { const o = []; for (const seg of String(p).split('/')) { if (seg === '..') o.pop(); else if (seg && seg !== '.') o.push(seg); } return o.join('/').toLowerCase(); };
+function sideFor(side, from, uri) {
+  const want = baseName(uri).toLowerCase(), cands = side.filter(s => baseName(s.name).toLowerCase() === want);
+  if (cands.length < 2) return cands[0] || null;
+  const fromRel = relOf(from), at = normPath(dirOf(fromRel) + String(uri).replace(/\\/g, '/')), d = dirOf(fromRel).toLowerCase();
+  return cands.find(s => normPath(relOf(s)) === at) || cands.find(s => dirOf(relOf(s)).toLowerCase() === d) || cands.find(s => relOf(s).toLowerCase().startsWith(d)) || null;
+}
+const uriOf = u => { try { return decodeURIComponent(u); } catch { return u; } };
+/* files: File objects (or {name, blob, rel}); from: where they came from ('plik' or 'repo:Owner/Repo/path') */
 async function matImport(files, from = 'plik', label, onStep) {
-  const list = [...files].map(f => ({ name: f.name, blob: f.blob || f })).filter(f => f.name);
+  const list = [...files].map(f => ({ name: f.name, blob: f.blob || f, rel: f.rel || '' })).filter(f => f.name);
   const mains = list.filter(f => MAT_MODEL.test(f.name));
   const side = list.filter(f => !MAT_MODEL.test(f.name) && MAT_SIDE.test(f.name));
   const pics = list.filter(f => MAT_PIC.test(f.name));
   const skipped = list.filter(f => !MAT_MODEL.test(f.name) && !MAT_SIDE.test(f.name)).map(f => f.name);
   const out = [];
-  const store = async f => { const sha = await sha256(f.blob); if (!(await mget('pliki', sha))) await mput('pliki', { sha, name: baseName(f.name), size: f.blob.size, data: f.blob }); return { name: baseName(f.name), sha, size: f.blob.size }; };
+  const fresh = new Set(); // bytes this import wrote: what a failed model leaves behind is removed at the end
+  const store = async f => { const sha = await sha256(f.blob); if (!(await mget('pliki', sha))) { await mput('pliki', { sha, name: baseName(f.name), size: f.blob.size, data: f.blob }); fresh.add(sha); } return { name: baseName(f.name), sha, size: f.blob.size }; };
   const all = await matAll();
   const used = new Set();
   const jobs = mains.length ? mains.map(f => ({ main: f, kind: 'model' })) : pics.map(f => ({ main: f, kind: 'tekstura' }));
@@ -14210,7 +14417,7 @@ async function matImport(files, from = 'plik', label, onStep) {
   const stems = new Map();
   for (const job of jobs) { const k = stem(job.main.name).toLowerCase(); stems.set(k, (stems.get(k) || 0) + 1); }
   const nameOf = job => {
-    const st0 = stem(job.main.name), rel = job.main.blob?.webkitRelativePath || '';
+    const st0 = stem(job.main.name), rel = relOf(job.main);
     const parent = rel.split('/').slice(-2, -1)[0] || '';
     return parent && rel.includes('/') && (GENERIC.test(st0) || stems.get(st0.toLowerCase()) > 1) ? parent + ' · ' + st0 : st0;
   };
@@ -14218,14 +14425,23 @@ async function matImport(files, from = 'plik', label, onStep) {
   for (const job of jobs) {
     onStep?.(++step, jobs.length, job.main.name);
     const main = await store(job.main);
-    // the main file's companions: for a .gltf its buffers and pictures, for an .obj its .mtl and pictures (by name)
+    // the main file's companions: for a .gltf its buffers and pictures, for an .obj its .mtl and the .mtl's pictures,
+    // each found by its path beside the file that names it (sideFor)
     let deps = [];
     if (job.kind === 'model' && extOf(main.name) !== 'glb') {
       const txt = await job.main.blob.text();
-      const wanted = new Set();
-      if (extOf(main.name) === 'gltf') { try { const j = JSON.parse(txt); for (const x of [...(j.buffers || []), ...(j.images || [])]) if (x.uri && !/^data:/.test(x.uri)) wanted.add(baseName(decodeURIComponent(x.uri)).toLowerCase()); } catch { /* the loader will say */ } }
-      else { const ml = (/^mtllib\s+(.+?)\s*$/m.exec(txt) || [])[1]; if (ml) { wanted.add(baseName(ml).toLowerCase()); const mf = side.find(s => baseName(s.name).toLowerCase() === baseName(ml).toLowerCase()); if (mf) for (const mm of (await mf.blob.text()).matchAll(/^\s*map_\w+\s+(?:-\S+\s+\S+\s+)*(.+?)\s*$/gm)) wanted.add(baseName(mm[1]).toLowerCase()); } }
-      for (const s of side) if (wanted.has(baseName(s.name).toLowerCase())) { deps.push(await store(s)); used.add(s); }
+      const wanted = []; // { uri, from }
+      if (extOf(main.name) === 'gltf') { try { const j = JSON.parse(txt); for (const x of [...(j.buffers || []), ...(j.images || [])]) if (x.uri && !/^data:/.test(x.uri)) wanted.push({ uri: uriOf(x.uri), from: job.main }); } catch { /* the loader will say */ } }
+      else {
+        const ml = (/^mtllib\s+(.+?)\s*$/m.exec(txt) || [])[1];
+        if (ml) {
+          wanted.push({ uri: ml, from: job.main });
+          const mf = sideFor(side, job.main, ml);
+          if (mf) for (const mm of (await mf.blob.text()).matchAll(/^\s*map_\w+\s+(?:-\S+\s+\S+\s+)*(.+?)\s*$/gm)) wanted.push({ uri: mm[1], from: mf });
+        }
+      }
+      const took = new Set();
+      for (const w of wanted) { const s = sideFor(side, w.from, w.uri); if (s && !took.has(s)) { took.add(s); deps.push(await store(s)); used.add(s); } }
     }
     deps.sort((a, b) => a.name.localeCompare(b.name));
     const id = 'm' + (deps.length ? (await sha256(new Blob([main.sha + deps.map(d => d.name + d.sha).join('')]))) : main.sha).slice(0, 20);
@@ -14249,6 +14465,11 @@ async function matImport(files, from = 'plik', label, onStep) {
     }
     await matSave(m);
     out.push({ id, name: m.name, ver: m.ver, prev: prev ? prev.id : null });
+  }
+  if (fresh.size && out.some(x => x.error)) { // bytes of a model that could not be read do not stay in the browser for nothing
+    const refd = new Set();
+    for (const x of (await matAll()).values()) { refd.add(x.main?.sha); for (const d of x.deps || []) refd.add(d.sha); }
+    for (const sha of fresh) if (!refd.has(sha)) { try { await mdo('pliki', 'readwrite', os => os.delete(sha)); } catch { /* kept; harmless */ } }
   }
   const unusedSide = mains.length ? side.filter(s => !used.has(s) && !/\.(bin|mtl)$/i.test(s.name) && !MAT_PIC.test(s.name)).map(s => s.name) : [];
   if (out.some(x => !x.error && !x.again)) matEmit({ added: out.filter(x => !x.error && !x.again).map(x => x.id) });
@@ -14306,9 +14527,9 @@ function renderMaterialy(box, c) {
   const count = h('span', { class: 'mt-count' });
   const input = h('input', { type: 'file', multiple: true, hidden: true, accept: '.bbmodel,.glb,.gltf,.obj,.mtl,.bin,.png,.jpg,.jpeg,.webp,.gif' });
   const addB = h('button', { class: 'jk-tb mt-add', type: 'button', title: t('Dodaj pliki z dysku (albo upuść je gdziekolwiek w Jaskini)'), onclick: () => input.click() }, icon('plus', 12), h('span', { text: t('Dodaj') }));
-  // a whole folder at once (Blockbench's saves): its models with their pictures; other files, .vox included, are left alone
+  // a whole folder at once (Blockbench's saves): its models with their pictures; files of other kinds are not read
   const dirIn = h('input', { type: 'file', multiple: true, hidden: true, webkitdirectory: '', class: 'mt-dirin' });
-  const dirB = h('button', { class: 'jk-tb mt-add', type: 'button', title: t('Dodaj cały folder: modele z ich teksturami, reszta plików zostaje nietknięta'), onclick: () => dirIn.click() }, icon('t_folder', 12), h('span', { text: t('Folder') }));
+  const dirB = h('button', { class: 'jk-tb mt-add', type: 'button', title: t('Dodaj cały folder: modele z ich teksturami, reszta plików nie jest czytana'), onclick: () => dirIn.click() }, icon('t_folder', 12), h('span', { text: t('Folder') }));
   const repoBox = h('section', { class: 'mt-repo' });
   const side = h('div', { class: 'mt-side' }, h('div', { class: 'mt-head' }, h('b', { text: t('Materiały') }), count, dirB, addB, input, dirIn), grid, repoBox,
     h('p', { class: 'mt-note', text: t('Pliki zostają w tej przeglądarce. Upuść model w dowolne miejsce Jaskini, a trafi tutaj. Ten sam plik z nową treścią to nowa wersja, nie podmiana.') }));
@@ -14409,7 +14630,11 @@ function renderMaterialy(box, c) {
       h('button', { class: 'mt-go', type: 'button', title: t('Stań obok w skali 1:1 i chodź (WASD, mysz). Esc wychodzi.'), onclick: () => enter() }, icon('t_wejdz', 15), h('span', { text: t('Wejdź') }))].filter(Boolean));
   }
   async function setDefaults(m, patch) {
+    const list = matSets(m);
     Object.assign(m, patch);
+    const n = list[list.length - 1].n + 1;
+    m.sets = [...list, { n, rot: [...(m.rot || [0, 0, 0])], scale: m.scale || 1, at: Date.now() }];
+    m.set = n;
     try {
       const { object, animations } = await matLoad(m);
       const wrapped = matGround(matWrap(object, m));
@@ -14498,6 +14723,7 @@ function renderMaterialy(box, c) {
   const onLib = e => {
     const d = e.detail || {};
     if (d.target === c.id && d.added?.length) { sel(d.added[0]); return; }
+    if (d.target === c.id && d.show) { matAll().then(all => { if (!alive) return; const m = all.get(d.show); if (m && !m.gone) sel(d.show); else jtoast(t('Nie ma w bibliotece materiału {0}.', d.show)); }); return; }
     if (cur && (d.removed || []).includes(cur.id)) return; // remove() picks the next one itself
     drawList();
   };
@@ -14513,7 +14739,13 @@ function renderMaterialy(box, c) {
   const mo = new MutationObserver(() => { stage?.paint(); });
   mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-jk', 'data-theme', 'style'] });
   c.onDispose(() => mo.disconnect());
-  matAll().then(() => { if (!alive) return; drawList(); if (st.sel) show(st.sel); else matList().then(items => { if (alive && items[0]) sel(items[0].id); }); })
+  matAll().then(all => {
+    if (!alive) return;
+    drawList();
+    if (st.sel && all.get(st.sel) && !all.get(st.sel).gone) { show(st.sel); return; }
+    if (st.sel) jtoast(t('Nie ma w bibliotece materiału {0}.', st.sel));
+    matList().then(items => { if (alive && items[0]) sel(items[0].id); });
+  })
     .catch(err => { say(t('Biblioteka materiałów nie działa w tej przeglądarce: {0}', err.message), 'err'); });
 }
 function fmtScale(v) {
@@ -14592,19 +14824,25 @@ const JASKINIA_API = {
     toast: (msg, action, ms) => jtoast(msg, action, ms),
     open: (type, opts) => openWinOfType(type, opts || {}),
   },
-  /* Jozz's materials: list(), get(id), object(id, {ground}) → Promise<THREE.Object3D> (a fresh copy with the material's
-     orientation and scale; with ground: true it also stands on the ground in the middle), import(files), versions(id).
-     An id is "m" + the start of the SHA-256 of the material's bytes: the same bytes are the same material, everywhere. */
+  /* Jozz's materials: list(), get(id), object(id, {ground, set}) → Promise<THREE.Object3D> (a fresh copy turned and
+     scaled by the material's settings; with ground: true it also stands on the ground in the middle), import(files),
+     versions(id), settings(id).
+     An id is "m" + the start of the SHA-256 of the material's bytes: the same bytes are the same material, everywhere.
+     Settings (turns and scale) have numbered revisions (v6.1): object(id, {set: n}) gives the look a place was built
+     with, object(id) the newest; userData.set says which one it is. Changing the settings never changes an old revision. */
   materialy: {
     list: () => matList(),
     get: async id => (await matAll()).get(id) || null,
     versions: async id => { const m = (await matAll()).get(id); return m ? matVersions(m) : []; },
+    settings: async id => { const m = (await matAll()).get(id); return m ? matSets(m).map(s => ({ ...s, rot: [...s.rot] })) : []; },
     async object(id, o = {}) {
       const m = (await matAll()).get(id);
       if (!m) throw new Error('no material ' + id);
+      const s = matSetting(m, o.set);
       const { object, animations } = await matLoad(m);
-      const g = matWrap(object, m);
+      const g = matWrap(object, m, s);
       g.userData.material = id;
+      g.userData.set = s.n;
       g.userData.animations = animations;
       return o.ground ? matGround(g) : g;
     },
@@ -14621,6 +14859,112 @@ const JASKINIA_API = {
   },
 };
 window.Jaskinia = JASKINIA_API;
+
+/* ---------- addresses (v6.1): everything Jozz or an agent points at has a link ----------
+   v6 handled only #repo~ clicks inside windows, silently swallowed every other #link ("Pełna historia" did nothing) and
+   ignored the address the page was opened with, so neither Jozz nor an agent could open Jaskinia on a given thing.
+     #repo~Name   a project: selected, with a card on screen that follows the selection
+     #m~id        a material: the Materiały window shows it
+     #uklad~id    a layout (a tab), by its id or its name
+     #agenci, #notatki, #materialy, #historia, #wiedza, #mapa (#panorama), #sciana, #statystyki: that window
+   The address follows the selected project through replaceState, which never adds a history step. While the phone's
+   Back guard stands (50-shell.js: one history entry under the sheets), the address is left as it is: the entry under the
+   guard keeps the same address, so stepping Back off the guard changes nothing and only closes the sheet. */
+const ROUTE_WIN = { agenci: 'agenci', notatki: 'notatki', materialy: 'materialy', historia: 'historia', wiedza: 'wiedza', mapa: 'mapa', panorama: 'mapa', sciana: 'sciana', statystyki: 'statystyki', kataster: 'kataster', spis: 'spis', zagraj: 'zagraj' };
+function readHash(hash) {
+  const raw = String(hash || '').replace(/^#/, '');
+  try { return decodeURIComponent(raw); } catch { return raw; }
+}
+/* returns true when the address named something Jaskinia has. inner: a link clicked inside a window (it only selects,
+   as before); otherwise the address came from outside (opened, typed, an agent) and the thing is put on screen */
+function route(hash, inner) {
+  const h0 = readHash(hash);
+  if (!h0 || !store) return false;
+  const i = h0.indexOf('~'), k = (i < 0 ? h0 : h0.slice(0, i)).toLowerCase(), v = i < 0 ? '' : h0.slice(i + 1);
+  if (k === 'repo') {
+    const n = R[v] ? v : Object.keys(R).find(x => x.toLowerCase() === v.toLowerCase());
+    if (!n) { jtoast(t('Nie znam projektu „{0}”.', v)); return false; }
+    select(n, 'win');
+    if (!inner && !phone && !allIds().some(id => typeOf(L.wins[id]).follows && !L.wins[id].pin)) openWinOfType('karta', { free: true, w: 0.5, h: 0.8 });
+    if (!inner) logEv(t('adres: {0}', '#' + h0));
+    return true;
+  }
+  if (k === 'm' && v) { showMaterial(v); logEv(t('adres: {0}', '#' + h0)); return true; }
+  if (k === 'uklad' && v) {
+    const sp = store.spaces.find(s => s.id === v) || store.spaces.find(s => s.name.toLowerCase() === v.toLowerCase());
+    if (!sp) { jtoast(t('Nie ma układu „{0}”.', v)); return false; }
+    setSpace(sp.id);
+    return true;
+  }
+  const type = ROUTE_WIN[k];
+  if (type && TYPES[type]) { openWinOfType(type, { free: true, w: 0.62, h: 0.82 }); logEv(t('adres: {0}', '#' + h0)); return true; }
+  return false;
+}
+function showMaterial(id) {
+  const ex = allIds().find(w => L.wins[w].type === 'materialy');
+  const wid = openWinOfType('materialy', ex ? {} : { st: { sel: id }, w: 0.7, h: 0.82 });
+  if (ex) document.dispatchEvent(new CustomEvent('jk:materialy', { detail: { show: id, target: wid } }));
+}
+/* the address bar names what is selected (a copied link opens Jaskinia on it) */
+function setAddress(hash) {
+  if (location.hash === hash || backGuard.on) return;
+  try { history.replaceState(history.state, '', hash); } catch { /* a host that forbids it keeps its own address */ }
+}
+addEventListener('hashchange', () => { route(location.hash); });
+/* called at the end of boot(): the address the page was opened with */
+function routeStart() {
+  const h0 = location.hash;
+  if (h0 && h0.length > 1) setTimeout(() => route(h0), 0);
+}
+
+/* ---------- "Dla agentów": the same Jaskinia as plain text ----------
+   For GPT reading Jozz's Jaskinia through Opera, for Codex and for Claude. Everything is visible without opening anything:
+   what is on screen, Jozz's notes (newest first: this is where he leaves words for agents), the materials and their
+   addresses, then the Library's brief. It only reads; agents act through their own tools and ask Jozz to decide. */
+function renderAgents(box, c) {
+  const sp = store.spaces.find(s => s.id === store.cur), sel = R[store.sel];
+  const notes = Object.entries(store.notes).filter(([, n]) => n && n.text && n.text.trim()).map(([id, n]) => ({ id, text: n.text, upd: n.upd || 0 })).sort((a, b) => b.upd - a.upd);
+  const used = notesReferenced();
+  const wrap = h('div', { class: 'wrap sec agents-jk' });
+  const sec = (title, ...kids) => h('section', { class: 'agent-text' }, h('h2', { text: title }), ...kids);
+  const winList = allIds().map(id => { const w = L.wins[id]; return `${winTitle(id)}${w.pin ? ' (' + t('przypięte: {0}', R[w.pin]?.short || w.pin) + ')' : ''}`; });
+  wrap.append(
+    sec(t('Dla agentów'),
+      h('p', { text: t('Ta sama Jaskinia jako zwykły tekst: dla GPT czytającego przez Operę, dla Codexa i dla Claude. Zasady pracy są w kompasie Jaskini (issue #5 w repo Jozz-Cave-Workbench). Ta strona tylko czyta; decyzje podejmuje Jozz.') }),
+      h('ul', null,
+        h('li', { text: t('Jaskinia {0}, zbudowana {1}, miejsce: {2}.', VER, BUILD.built || '?', t(PLACE_NAME[PLACE])) }),
+        h('li', { text: t('Układ na ekranie: {0} ({1}). Okna: {2}.', sp ? spaceName(sp) : '?', '#uklad~' + store.cur, winList.join(', ') || '—') }),
+        h('li', { text: sel ? t('Zaznaczony projekt: {0} ({1}).', sel.name, '#repo~' + sel.name) : t('Nic nie jest zaznaczone.') }),
+        h('li', { text: t('Układy: {0}.', store.spaces.map(s => `${spaceName(s)} (#uklad~${s.id})`).join(', ')) }))),
+    sec(t('Notatki Jozza'),
+      notes.length ? h('p', { class: 'muted', text: t('{0}, najnowsze pierwsze. Notatki bez okna też tu są.', tn(notes.length, 'notatka', 'notatki', 'notatek')) }) : h('p', { text: t('Jozz nie ma jeszcze notatek.') }),
+      ...notes.map(n => h('article', { class: 'agent-note' },
+        h('h3', { text: noteTitle(n.text) || t('Notatka') }),
+        h('p', { class: 'muted', text: [n.upd ? dshort(new Date(n.upd)) : '', used.has(n.id) ? '' : t('bez okna')].filter(Boolean).join(' · ') }),
+        h('pre', { class: 'agent-note-text', text: n.text })))),
+    sec(t('Adresy'),
+      h('ul', null,
+        h('li', { text: t('#repo~Nazwa: projekt z kartą na ekranie') }),
+        h('li', { text: t('#m~id: materiał w oknie Materiały') }),
+        h('li', { text: t('#uklad~id: układ (karta u góry)') }),
+        h('li', { text: t('#agenci, #notatki, #materialy, #historia, #wiedza, #mapa, #sciana, #statystyki: to okno') }))));
+  const mats = sec(t('Materiały'), h('p', { class: 'muted', text: t('Czytam bibliotekę…') }));
+  wrap.append(mats);
+  box.append(wrap);
+  let alive = true;
+  c.onDispose(() => { alive = false; });
+  matList().then(list => {
+    if (!alive) return;
+    mats.replaceChildren(h('h2', { text: t('Materiały') }), list.length
+      ? h('ul', null, list.map(m => h('li', { text: `${m.name}${(m.ver || 1) > 1 ? ' v' + m.ver : ''} (#m~${m.id}): ${m.main?.name || ''}${m.deps?.length ? ', ' + tn(m.deps.length, 'plik towarzyszący', 'pliki towarzyszące', 'plików towarzyszących') : ''}` })))
+      : h('p', { text: t('Biblioteka materiałów jest pusta.') }));
+  }).catch(err => { if (alive) mats.replaceChildren(h('h2', { text: t('Materiały') }), h('p', { text: t('Biblioteka materiałów nie działa w tej przeglądarce: {0}', err.message) })); });
+  if (B.agentsView) box.append(B.agentsView());
+}
+ICONS.t_agenci = 'M3 3.5h10v7H7.5L4.5 13v-2.5H3z M5.5 6.5h5 M5.5 8.5h3';
+Object.assign(TYPES, {
+  agenci: { key: 'agenci', group: 'misc', name: 'Dla agentów', glyph: 't_agenci', desc: 'Jaskinia jako zwykły tekst dla agentów: co jest na ekranie, Twoje notatki, materiały i adresy.', render: renderAgents },
+});
 
 boot();
 

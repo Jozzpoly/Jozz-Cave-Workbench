@@ -164,25 +164,122 @@ function loadStore() {
       if (st) notices.push({ kind: 'migrated' }); else { rescue(r1); notices.push({ kind: 'lost' }); }
     }
   }
-  return repair(st || freshStore());
+  const out = repair(st || freshStore());
+  synced(raw, out);
+  if (raw == null || JSON.stringify(out) !== raw) dirty = true; // a repaired or migrated state is written at the next chance
+  return out;
+}
+
+/* ---------- several tabs (v6.1) ----------
+   Every tab keeps its own copy in memory. v6 wrote that whole copy on every hide, so an older tab, closed last,
+   overwrote the layouts and notes made in a newer one. Now a tab writes only after it changed something (dirty), takes
+   in what another tab wrote (the 'storage' event, in 50-shell.js) without restarting running windows, and merges both
+   sides against the last state they shared (a three-way merge by layout, note, view, saved state and trash item):
+   - what only one side changed is kept;
+   - a note changed on both sides keeps its newer text;
+   - a layout changed on both sides keeps this tab's version.
+   When the other tab's note or layout loses, it goes into an automatic copy, and Jozz is told once. */
+let dirty = false;      // this tab changed something that is not written yet
+let lastText = null;    // the KEY's value this tab last wrote or took in
+let base = null;        // that state in parts: the common ancestor of the next merge
+/* Two tabs can write in the same moment, each before it sees the other's write. Each written state therefore names
+   itself (rev) and the state it grew from (par), and a tab keeps the last few states it wrote or took in: a state that
+   comes in is merged against the state it grew from, so a tab never mistakes "the other tab had not seen my change yet"
+   for "the other tab removed my change". */
+const known = new Map(); // rev -> parts
+function ancestorFor(theirs) { return (theirs && theirs.par && known.get(theirs.par)) || base; }
+let onForeign = null;   // set by the shell: takes in a state written by another tab (text) before this tab writes
+const asMap = (list, key = 'id') => Object.fromEntries(arr(list).filter(x => x && x[key] != null).map(x => [x[key], JSON.stringify(x)]));
+const jsonMap = o => Object.fromEntries(Object.entries(obj(o)).map(([k, v]) => [k, JSON.stringify(v)]));
+function partsOf(st) { return { spaces: asMap(st.spaces), order: arr(st.spaces).map(s => s.id), notes: jsonMap(st.notes), views: jsonMap(st.views), saved: asMap(st.saved), trash: asMap(st.trash) }; }
+function synced(text, st) {
+  lastText = text; base = partsOf(st);
+  if (st && st.rev) { known.set(st.rev, base); while (known.size > 16) known.delete(known.keys().next().value); }
+}
+const sameMap = (a, b) => { const ka = Object.keys(a); return ka.length === Object.keys(b).length && ka.every(k => a[k] === b[k]); };
+/* the same layouts, notes, views, saved states and trash (cur and sel are each tab's own) */
+function sameParts(x, y) { const a = partsOf(x), b = partsOf(y); return a.order.join('\n') === b.order.join('\n') && ['spaces', 'notes', 'views', 'saved', 'trash'].every(k => sameMap(a[k], b[k])); }
+/* each map: id -> JSON text. pick(ours, theirs) settles a real conflict and says which one lost */
+function merge3(b, o, t0, pick) {
+  const out = {}, lost = [];
+  for (const k of new Set([...Object.keys(b), ...Object.keys(o), ...Object.keys(t0)])) {
+    const bv = b[k], ov = o[k], tv = t0[k];
+    let v;
+    if (ov === tv) v = ov;
+    else if (ov === bv) v = tv;          // only the other tab changed it (or removed it)
+    else if (tv === bv) v = ov;          // only this tab did
+    else if (ov === undefined) v = tv;   // removed here, changed there: keep the change (the trash has the removal anyway)
+    else if (tv === undefined) v = ov;
+    else { v = pick(ov, tv); lost.push(v === ov ? { k, side: 'theirs', v: tv } : { k, side: 'ours', v: ov }); }
+    if (v !== undefined) out[k] = v;
+  }
+  return { out, lost };
+}
+const newerNote = (a, b) => ((JSON.parse(b).upd || 0) > (JSON.parse(a).upd || 0) ? b : a);
+/* one layout changed in both tabs: merged window by window. Its shape (the tree of windows, the floating ones, which one
+   is maximised) is one thing: if both tabs rearranged it, this tab's shape stays and the other one is reported lost.
+   A window's own state, the name and the focus are taken from whichever side changed them (this tab's on a tie). */
+function mergeSpace(bv, ov, tv) {
+  const sB = bv ? JSON.parse(bv) : null, sO = JSON.parse(ov), sT = JSON.parse(tv);
+  const shape = s => s && JSON.stringify([s.L.tree, s.L.floats, s.L.max]);
+  const meta = s => s && JSON.stringify([s.name, s.preset, s.purpose, s.L.stats, s.L.focus]);
+  const take = (f, quiet) => { const b = f(sB), o = f(sO), t0 = f(sT); if (o === t0 || t0 === b) return { s: sO }; if (o === b) return { s: sT }; return { s: sO, clash: !quiet }; };
+  const sh = take(shape), me = take(meta, true);
+  const wins = merge3(sB ? jsonMap(sB.L.wins) : {}, jsonMap(sO.L.wins), jsonMap(sT.L.wins), a => a).out;
+  const out = clone(sO);
+  out.name = me.s.name; out.preset = me.s.preset; out.purpose = me.s.purpose;
+  out.L = { ...clone(sh.s.L), stats: clone(me.s.L.stats), focus: me.s.L.focus, wins: {} };
+  const ids = new Set([...leafIds(out.L.tree), ...arr(out.L.floats).map(f => f.id)]);
+  for (const id of ids) out.L.wins[id] = wins[id] ? JSON.parse(wins[id]) : (sh.s.L.wins[id] ? clone(sh.s.L.wins[id]) : { type: 'wybor', z: 1, pin: null, st: {} });
+  if (out.L.focus && !ids.has(out.L.focus)) out.L.focus = null;
+  if (out.L.max && !ids.has(out.L.max)) out.L.max = null;
+  return { v: JSON.stringify(out), clash: !!sh.clash };
+}
+/* returns { st, lost }: st is the merged store (this tab's cur and sel); lost lists what lost a real conflict, with the side
+   it came from ('ours' or 'theirs'), so the caller can keep that side in an automatic copy */
+function mergeStores(b0, ours, theirs) {
+  const B0 = b0 || { spaces: {}, order: [], notes: {}, views: {}, saved: {}, trash: {} };
+  const O = partsOf(ours), T = partsOf(theirs);
+  const sp = merge3(B0.spaces, O.spaces, T.spaces, a => a);
+  for (const x of sp.lost.splice(0)) { // both sides changed one layout: merge it by window instead of choosing one whole
+    const m = mergeSpace(B0.spaces[x.k], O.spaces[x.k], T.spaces[x.k]);
+    sp.out[x.k] = m.v;
+    if (m.clash) sp.lost.push({ k: x.k, side: 'theirs', v: T.spaces[x.k] });
+  }
+  const nt = merge3(B0.notes, O.notes, T.notes, newerNote);
+  const vw = merge3(B0.views, O.views, T.views, a => a);   // views are cameras and choices: this tab's win quietly
+  const sv = merge3(B0.saved, O.saved, T.saved, a => a), tr = merge3(B0.trash, O.trash, T.trash, a => a);
+  const ordO = O.order.join('\n') !== B0.order.join('\n');  // this tab reordered its tabs: its order wins
+  const pref = ordO ? O.order : T.order, rest = ordO ? T.order : O.order;
+  const ids = [...pref, ...rest].filter((id, i, a) => sp.out[id] && a.indexOf(id) === i);
+  for (const id of Object.keys(sp.out)) if (!ids.includes(id)) ids.push(id);
+  const parse = m => Object.fromEntries(Object.entries(m).map(([k, v]) => [k, JSON.parse(v)]));
+  const byAt = m => Object.values(m).map(v => JSON.parse(v)).sort((a, b) => (b.at || 0) - (a.at || 0));
+  const st = { v: 2, cur: ours.cur, sel: ours.sel, spaces: ids.map(id => JSON.parse(sp.out[id])), notes: parse(nt.out), views: parse(vw.out), saved: byAt(sv.out), trash: byAt(tr.out), rev: theirs.rev || null, par: theirs.par || null };
+  const lost = [...sp.lost.map(x => ({ ...x, kind: 'space', name: JSON.parse(x.v).name })), ...nt.lost.map(x => ({ ...x, kind: 'note', name: noteTitle(JSON.parse(x.v).text) }))];
+  return { st, lost };
 }
 
 /* ---------- writing ---------- */
 let saveT = 0, saveProblem = null, onSaveProblem = null;
 function persistNow() {
   clearTimeout(saveT);
-  if (!storageOK || !store) return;
+  if (!storageOK || !store || !dirty) return; // nothing new here: an old copy never goes over a newer one
+  const now = lsGet(KEY);
+  if (now != null && now !== lastText && onForeign) onForeign(now); // another tab wrote first: merge, then write
+  store.par = store.rev || null; store.rev = uid('r'); // this state, grown from the one this tab last shared
   const txt = JSON.stringify(store);
   let ok = lsSet(KEY, txt) === true;
   if (!ok) { trimBackups(Math.max(1, Math.floor(readBackups().length / 2))); ok = lsSet(KEY, txt) === true; }
+  if (ok) { synced(txt, store); dirty = false; }
   const p = ok ? null : 'full';
   if (p !== saveProblem) { saveProblem = p; onSaveProblem?.(p); }
 }
-function persist() { clearTimeout(saveT); saveT = setTimeout(persistNow, 250); }
+function persist() { dirty = true; clearTimeout(saveT); saveT = setTimeout(persistNow, 250); }
 
 /* ---------- snapshots: a whole Jaskinia in one object (copies, saved states, export) ---------- */
-function snapshotAll() {
-  return { spaces: clone(store.spaces), cur: store.cur, sel: store.sel, notes: clone(store.notes), views: clone(store.views) };
+function snapshotAll(st = store) {
+  return { spaces: clone(st.spaces), cur: st.cur, sel: st.sel, notes: clone(st.notes), views: clone(st.views) };
 }
 function fromSnapshot(d) {
   d = obj(d);
@@ -202,9 +299,9 @@ function trimBackups(n) { const l = readBackups(); writeBackups(l.slice(0, Math.
    the things deleted for good ride along in it; restoring that copy puts them back in the trash (GPT's review of v3
    found that the promise "it stays in the copy made now" was not true for layouts and saved states).
    Returns null when the copy could not be written: the caller must not delete then. */
-function makeBackup(why, forgotten) {
-  if (!storageOK || !store) return null;
-  const data = snapshotAll(), list = readBackups(), s0 = sig({ s: data.spaces, n: data.notes });
+function makeBackup(why, forgotten, from = store) {
+  if (!storageOK || !from) return null;
+  const data = snapshotAll(from), list = readBackups(), s0 = sig({ s: data.spaces, n: data.notes });
   const keep = arr(forgotten).filter(Boolean).map(x => clone(x));
   if (list[0] && list[0].sig === s0) {
     if (why === 'auto' && !keep.length) return list[0];

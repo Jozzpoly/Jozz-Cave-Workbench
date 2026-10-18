@@ -228,7 +228,7 @@ const SET_SECTIONS = {
     };
     file.addEventListener('change', () => { const f = file.files && file.files[0]; if (!f) return; f.text().then(tryImport, () => fill(res, h('p', { class: 'set-err', text: t('Nie da się przeczytać tego pliku.') }))); file.value = ''; });
     return h('div', { class: 'set-body' },
-      setCard(t('Eksport'), h('p', { class: 'set-note', text: t('Plik z układami, notatkami i zapisami. Na innym urządzeniu (albo po wyczyszczeniu przeglądarki) wczytasz go w imporcie.') }),
+      setCard(t('Eksport'), h('p', { class: 'set-note', text: t('Plik z układami, notatkami i zapisami. Na innym urządzeniu (albo po wyczyszczeniu przeglądarki) wczytasz go w imporcie. Modeli z Materiałów w nim nie ma: zostają w bibliotece tej przeglądarki, a ich pliki masz u siebie na dysku.') }),
         h('div', { class: 'set-acts' },
           h('button', { class: 'btn', type: 'button', onclick: () => offer('all') }, icon('download', 14), t('Cała Jaskinia')),
           h('button', { class: 'btn ghost', type: 'button', onclick: () => offer('space') }, icon('download', 14), t('Tylko „{0}”', spaceName(space)))), out),
@@ -260,7 +260,7 @@ const SET_SECTIONS = {
         h('li', null, h('span', { text: t('pokrycie') }), h('b', { text: `${C.collected}/${C.expected} repo` })),
         h('li', null, h('span', { text: t('razem') }), h('b', { text: `${fmt(T.commits)} commitów · ${T.branches} gałęzi` })),
         h('li', null, h('span', { text: t('zapis Jaskini w tej przeglądarce') }), h('b', { text: storageOK ? `${Math.round(bytes / 1024)} KB` : t('niedostępny') })))),
-      setCard(t('Gdzie to wszystko jest'), h('p', { class: 'set-note', text: t('Układy, notatki, zapisy, kopie i kosz są tylko w tej przeglądarce, na tym urządzeniu. Nigdzie ich nie wysyłam. Żeby przenieść Jaskinię, użyj eksportu. Dane o projektach to zrzut z GitHuba wbudowany w stronę: odświeża go Claude (regen).') })),
+      setCard(t('Gdzie to wszystko jest'), h('p', { class: 'set-note', text: t('Układy, notatki, zapisy, kopie, kosz i Materiały są tylko w tej przeglądarce, na tym urządzeniu. Nigdzie ich nie wysyłam. Kilka kart Jaskini naraz scala swoje zmiany. Żeby przenieść Jaskinię, użyj eksportu (bez modeli). Dane o projektach to zrzut z GitHuba wbudowany w stronę: odświeża go Claude (regen).') })),
       setCard(t('Wersja'), h('ul', { class: 'set-facts' },
         h('li', null, h('span', { text: t('wersja') }), h('b', { text: 'Jaskinia ' + VER })),
         h('li', null, h('span', { text: t('zbudowana') }), h('b', { text: builtShort() })),

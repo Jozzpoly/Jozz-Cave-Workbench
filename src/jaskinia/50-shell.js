@@ -499,6 +499,7 @@ function select(name, via) {
   if (!R[name]) return;
   const changed = store.sel !== name;
   if (changed) { store.sel = name; updateSelStyle(); renderSelBox(); persist(); logEv(t('zaznaczony: {0}', R[name].short)); }
+  setAddress('#repo~' + name);
   for (const id of allIds()) { refreshWin(id); RT.get(id)?.onSel?.(name); }
   if (changed && phone && via === 'win') showSelSheet(name);
 }
@@ -1026,6 +1027,47 @@ function rebuildAll() {
   setSpace(store.cur);
   updateSelStyle(); renderSelBox();
 }
+/* ---------- another tab wrote (15-store.js: several tabs) ----------
+   The merged state comes on screen the way switching layouts does: windows that still exist keep running, windows the
+   other tab closed go, a window whose note text changed is redrawn unless Jozz is typing in it. Undo history of a
+   layout the other tab changed is dropped (undoing here would quietly undo that tab's work). */
+function takeForeign(text) {
+  let theirs;
+  try { theirs = JSON.parse(text); } catch { return; }
+  if (!theirs || typeof theirs !== 'object' || !Array.isArray(theirs.spaces)) return;
+  theirs = repair(theirs);
+  const mine = store, m = mergeStores(ancestorFor(theirs), store, theirs);
+  synced(text, theirs);
+  if (m.lost.length) {
+    // what lost a real conflict stays in an automatic copy: the other tab's state, or this tab's for a note that lost here
+    const kept = (m.lost.some(x => x.side === 'theirs') ? makeBackup(t('z innej karty'), null, theirs) : null) || (m.lost.some(x => x.side === 'ours') ? makeBackup(t('z tej karty, przed scaleniem'), null, mine) : null);
+    logEv(t('dwie karty zmieniły to samo: {0}', m.lost.map(x => x.name || (x.kind === 'note' ? t('notatka') : t('układ'))).join(', ')));
+    jtoast(t('To samo zmieniło się w dwóch kartach naraz. Nowsza notatka i układ z tej karty zostały, a druga wersja czeka w kopiach automatycznych.'), kept ? { label: t('Pokaż'), act: () => openSettings('kopie') } : null, 9000);
+  }
+  adoptStore(repair(m.st));
+  if (!sameParts(store, theirs)) dirty = true; // this tab still holds something the other one has not seen
+}
+function adoptStore(next) {
+  const prevNotes = store.notes;
+  for (const sp of next.spaces) { const old = store.spaces.find(x => x.id === sp.id); if (!old || JSON.stringify(old.L) !== JSON.stringify(sp.L)) delete hist[sp.id]; }
+  store = next;
+  const keep = allWinIds(store);
+  for (const id of [...RT.keys()]) if (!keep.has(id)) dropWin(id);
+  space = store.spaces.find(sp => sp.id === store.cur) || store.spaces[0];
+  store.cur = space.id; L = space.L;
+  const changedNotes = new Set(Object.keys(store.notes).filter(id => !prevNotes[id] || prevNotes[id].text !== store.notes[id].text));
+  const typingIn = document.activeElement && document.activeElement.closest?.('.win');
+  for (const id of allIds()) {
+    const w = L.wins[id], rt = RT.get(id);
+    if (!rt || !changedNotes.size || (typingIn && rt.el.contains(typingIn))) continue;
+    const ids = w.type === 'notatki' ? [w.st && w.st.note] : w.type === 'sciana' ? arr(w.st && w.st.notes).map(n => n && n.id) : [];
+    if (ids.some(n => n && changedNotes.has(n))) rt.key = null;
+  }
+  closeMenus();
+  renderTabs(); updateUndoUI(); updateSelStyle(); renderSelBox(); renderDock();
+  apply();
+  for (const id of allIds()) refreshWin(id);
+}
 function restoreBackup(id, quiet) {
   const b = readBackups().find(x => x.id === id);
   if (!b) { jtoast(t('Tej kopii już nie ma.')); return; }
@@ -1405,6 +1447,18 @@ function boot() {
   applyLook();
   buildChrome();
   store = loadStore();
+  onForeign = takeForeign;
+  if (dirty) persistNow(); // a first start or a repaired state is written at once: a second tab opened next reads the same windows
+  addEventListener('storage', e => { // another tab of this Jaskinia (or another page at this address) wrote
+    if (e.storageArea !== localStorage) return;
+    if (e.key === null || (e.key === KEY && e.newValue == null)) { // the state was wiped from outside: this tab still holds it
+      dirty = true; persistNow();
+      logEv(t('pamięć wyczyszczona z zewnątrz, Jaskinia zapisana z powrotem'));
+      jtoast(t('Inna strona pod tym adresem wyczyściła pamięć przeglądarki. Zapisałem Jaskinię z powrotem z tej karty.'), null, 9000);
+      return;
+    }
+    if (e.key === KEY && e.newValue !== lastText) takeForeign(e.newValue);
+  });
   logEv(t('start: Jaskinia {0}, {1}, okno {2}', VER, t(PLACE_NAME[PLACE]), `${innerWidth}×${innerHeight}`), { v: VER, place: PLACE });
   space = store.spaces.find(sp => sp.id === store.cur) || store.spaces[0];
   L = space.L;
@@ -1412,14 +1466,13 @@ function boot() {
   bindKeys();
   onSaveProblem = () => renderStatus();
   renderStatus();
-  stage.addEventListener('click', e => { // links inside windows select instead of navigating away
+  stage.addEventListener('click', e => { // links inside windows go to that thing in Jaskinia instead of navigating away
     const a = e.target.closest('a[href^="#"]');
-    if (!a) return;
+    if (!a || e.defaultPrevented) return;
     e.preventDefault();
-    const href = decodeURIComponent(a.getAttribute('href'));
-    if (href.startsWith('#repo~')) select(href.slice(6), 'win');
+    if (!route(a.getAttribute('href'), true)) logEv(t('link bez celu: {0}', a.getAttribute('href')));
   });
-  B.HOOK.go = hash => { const m = /^#repo~(.+)$/.exec(decodeURIComponent(hash)); if (m && R[m[1]]) select(m[1], 'win'); };
+  B.HOOK.go = hash => route(hash, true); // the Library's own links and clicks inside windows
   B.HOOK.refresh = () => { for (const id of allIds()) { const rt = RT.get(id); if (rt && !typeOf(L.wins[id]).live) rt.key = null; refreshWin(id); } }; // a theme change never restarts a running lab
   /* "Zagraj" never stops the game Jozz is playing (v5 took over the first game window: M1 in docs/2026-10-16-szwy.md).
      A game window that follows the selection is pinned to what it shows before the selection moves; the new game gets
@@ -1454,6 +1507,7 @@ function boot() {
   showNotices();
   firstHint();
   v6Hint();
-  window.__JASK = { get L() { return L; }, get store() { return store; }, get phone() { return phone; }, RT, WALLS, apply, select, commit, undo, redo, setSpace, layoutRects, leafIds, rects: () => rects, prefs, openSettings, readBackups, persistNow, get log() { return jlog; }, get uwagi() { return uwagi; }, packageData, packageText, deleteSpace, restoreTrash, forgetTrash, restoreBackup, setPref, signalsBeside, uwagaPop,
+  routeStart();
+  window.__JASK = { get L() { return L; }, get store() { return store; }, get phone() { return phone; }, RT, WALLS, apply, select, commit, undo, redo, setSpace, layoutRects, leafIds, rects: () => rects, prefs, openSettings, readBackups, persistNow, get log() { return jlog; }, get uwagi() { return uwagi; }, packageData, packageText, deleteSpace, restoreTrash, forgetTrash, restoreBackup, setPref, signalsBeside, uwagaPop, noteSet, noteNew, persist, route, get dirty() { return dirty; }, get lastText() { return lastText; },
     live: () => [...LIVE.values()].map(e => ({ id: e.id, url: e.url, hello: e.hello, state: e.state, sigs: [...e.sigs.keys()], n: Object.fromEntries([...e.sigs].map(([k, v]) => [k, v.v.length])), evs: e.evs.map(x => x.text), marks: e.marks.length, last: e.last, vis: e.vis })) };
 }

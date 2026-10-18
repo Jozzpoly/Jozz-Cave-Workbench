@@ -94,15 +94,15 @@ function renderNotes(box, c) {
   const ta = h('textarea', { class: 'jk-notes', placeholder: t('Twoje notatki. Zapisują się same, w tej przeglądarce. Cofanie układu (Ctrl+Z) ich nie rusza.'), 'aria-label': t('Notatki'), spellcheck: 'true' });
   ta.value = noteText(id);
   const gone = store.notes[id]?.gone;
-  let tm = 0;
-  ta.addEventListener('input', () => {
-    clearTimeout(tm);
-    tm = setTimeout(() => { noteSet(id, ta.value); document.dispatchEvent(new CustomEvent('jk:note', { detail: { id, from: ta } })); }, 250);
-  });
-  ta.addEventListener('blur', () => { clearTimeout(tm); noteSet(id, ta.value); });
+  /* only what Jozz typed here is written back: a textarea showing an older text (another tab changed the note, v6.1)
+     never writes that older text over the newer one on blur or when the window is redrawn */
+  let tm = 0, typed = false;
+  const flush = () => { clearTimeout(tm); if (!typed) return; typed = false; noteSet(id, ta.value); document.dispatchEvent(new CustomEvent('jk:note', { detail: { id, from: ta } })); };
+  ta.addEventListener('input', () => { typed = true; clearTimeout(tm); tm = setTimeout(flush, 250); });
+  ta.addEventListener('blur', flush);
   const onNote = e => { if (e.detail.id === id && e.detail.from !== ta && document.activeElement !== ta) ta.value = noteText(id); };
   document.addEventListener('jk:note', onNote);
-  c.onDispose(() => { document.removeEventListener('jk:note', onNote); clearTimeout(tm); if (ta.value !== noteText(id)) noteSet(id, ta.value); });
+  c.onDispose(() => { document.removeEventListener('jk:note', onNote); flush(); });
   box.append(h('div', { class: 'jk-pad jk-notes-w' }, gone && !noteText(id) ? h('p', { class: 'jk-sub warn', text: t('Tekstu tej notatki tu nie ma: został usunięty na zawsze albo nie przyszedł z importem. Okno zaczyna od pustej kartki.') }) : null, ta));
 }
 function notesCtx(c) {

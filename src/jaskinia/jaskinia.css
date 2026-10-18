@@ -482,7 +482,7 @@ body:has(.jk.phone) .jk-toasts { bottom: calc(78px + env(safe-area-inset-bottom,
 .jk .pt-name { overflow-wrap: break-word; word-break: normal; hyphens: manual; }
 .jk .pt-when { overflow-wrap: break-word; }
 .jk .seismo-wrap { padding-top: 12px; }
-.jk .seismo-h a { display: none; }
+.jk .seismo-h a { color: var(--ink-2); } /* v6.1: #historia opens the Historia window (59-adresy.js) */
 .jk .view.repo .crumbs { display: none; }
 .jk .view.repo .card-h { padding-top: 16px; grid-template-columns: clamp(64px, 15cqw, 148px) minmax(0, 1fr); gap: clamp(12px, 3cqw, 26px); }
 .jk .view.repo .card-h > .sig { width: clamp(64px, 15cqw, 148px) !important; height: auto !important; aspect-ratio: 1; }

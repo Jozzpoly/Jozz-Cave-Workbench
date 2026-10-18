@@ -424,8 +424,10 @@ function renderWall(box, c) {
     const ta = h('textarea', { class: 'wn-text', placeholder: t('Notatka…'), 'aria-label': t('Notatka na ścianie'), spellcheck: 'true' });
     ta.value = noteText(n.id);
     let tm = 0;
-    ta.addEventListener('input', () => { clearTimeout(tm); tm = setTimeout(() => noteSet(n.id, ta.value), 250); });
-    ta.addEventListener('blur', () => { clearTimeout(tm); noteSet(n.id, ta.value); });
+    let typed = false; // only typed text is written back: an older text shown here never overwrites a newer one (v6.1)
+    const flush = () => { clearTimeout(tm); if (!typed) return; typed = false; noteSet(n.id, ta.value); };
+    ta.addEventListener('input', () => { typed = true; clearTimeout(tm); tm = setTimeout(flush, 250); });
+    ta.addEventListener('blur', flush);
     ta.addEventListener('pointerdown', e => e.stopPropagation()); // typing and selecting text are the textarea's own
     ta.addEventListener('keydown', e => e.stopPropagation());
     ta.addEventListener('wheel', e => { if (ta.scrollHeight > ta.clientHeight) e.stopPropagation(); }, { passive: true });
