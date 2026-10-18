@@ -26,3 +26,5 @@ Requires an installed Playwright Chromium (the workflow installs it). A local
 static HTTP server serves both revisions on the same disposable localhost origin.
 It **never** navigates to the actual \`jozzpoly.github.io\` storage origin.
 Source discussion: https://github.com/Jozzpoly/Jozz-Cave-Workbench/pull/4#issuecomment-6253177404
+
+The separate `material-revisions.mjs` extends this to **real IndexedDB**: two versions of the same synthetic 2×2 PNG, B changes a v6.1 scale and creates revision 2, then A edits the same older material record's rotation; C checks if `settings(id)` still exposes revision 2. Again, a green workflow records the *negative* counterexample; `releaseGate=FAIL` denotes product-data safety failure. No Owner models are accessed.
