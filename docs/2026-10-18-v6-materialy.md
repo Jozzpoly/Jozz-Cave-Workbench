@@ -13,9 +13,17 @@ Astra's half is the place document and its editor (composition, variants, return
 
 ## What the owner can do now
 
-- **Bring his own models.** Drop `.glb`, `.gltf` (with its `.bin` and pictures), `.obj` (with its `.mtl` and
-  pictures) or pictures alone anywhere in Jaskinia, or use "Dodaj" in a "Materiały" window (group "Studio").
-  Blockbench exports keep their embedded textures, skins and animations.
+- **Bring his own models.** Drop **Blockbench's own `.bbmodel`** (straight from a save, no export), `.glb`, `.gltf`
+  (with its `.bin` and pictures), `.obj` (with its `.mtl` and pictures) or pictures alone anywhere in Jaskinia, or use
+  "Dodaj" in a "Materiały" window (group "Studio"). "Folder" takes a whole folder, such as Blockbench's saves, and
+  reads only the models and the pictures they use; every other file (`.vox` included) is never opened.
+  - `.bbmodel` (formats 4 and 5, checked on the owner's own saves): cubes with per-face UVs and face rotation,
+    element and group pivots and rotations in Blockbench's ZYX order, inflate, mesh elements, embedded pictures kept
+    pixel-sharp, and only what was visible when it was saved. 16 pixels are 1 metre, as in Blockbench's glTF export.
+    Animations are not played yet.
+  - Two `model.gltf` files in `hull/` and `thruster/` become "hull · model" and "thruster · model", not two versions
+    of one material.
+  - Blockbench glTF exports keep their embedded textures, skins and animations.
 - **See them as they are.** A lit stage in the theme's colours: soft shadows, a metre grid, a 1.8 m person beside the
   model, and the size in metres (`11,0 m × 7,59 m × 10,4 m`), triangles, textures, a skeleton, animations to play.
 - **Fix orientation and scale without touching the file.** Quarter turns about X, Y, Z and a scale (×1, ×1/16 for
@@ -38,7 +46,8 @@ Astra's half is the place document and its editor (composition, variants, return
 |---|---|---|
 | 3D runtime | `src/vendor/swiat3d.js`, built by `tools/swiat/build.mjs` | three.js 0.180.0, GLTFLoader, OBJLoader/MTLLoader, OrbitControls, RoomEnvironment, BufferGeometryUtils, SkeletonUtils, three-mesh-bvh 0.9.2. It is carried inside the page (no CDN, so it works from `file://` and in claude.ai) and only defines `window.__SWIAT3D_FACTORY`: three.js starts when a 3D window first asks. Adds about 0.85 MB to the page. |
 | stage and walk | `src/jaskinia/56-swiat.js` | `swStage(host)`: renderer, light, theme colours (`--ground`, `--plate`, `--hand`, …), metre grid, framing, the 1.8 m person. It renders only when something changed, never in a hidden window, and lowers its pixel ratio while frames are slow. `swWalk(stage)`: a capsule (r 0.3, 1.8 m) against a BVH of the model and the ground, with ~300 substeps a second and a step-up probe. |
-| materials | `src/jaskinia/57-materialy.js` | IndexedDB `jaskinia-materialy`: `pliki` (bytes by SHA-256) and `materialy`. A material is a main file plus its companions. Its id is `m` plus the first 20 hex digits of its SHA-256 (or of the main and companion hashes). The `Materiały` window type is `live`, so a theme or layout change never rebuilds the stage. In claude.ai, glTF textures load through `<img>`, because the page may not `fetch()` its own `blob:` URLs. |
+| materials | `src/jaskinia/56b-blockbench.js` | `bbModel(json)`: Blockbench's `.bbmodel` to three.js, as described above |
+| `src/jaskinia/57-materialy.js` | IndexedDB `jaskinia-materialy`: `pliki` (bytes by SHA-256) and `materialy`. A material is a main file plus its companions. Its id is `m` plus the first 20 hex digits of its SHA-256 (or of the main and companion hashes). The `Materiały` window type is `live`, so a theme or layout change never rebuilds the stage. In claude.ai, glTF textures load through `<img>`, because the page may not `fetch()` its own `blob:` URLs. |
 | public API | `src/jaskinia/58-api.js` | `window.Jaskinia` (v1), below. `JASK` is already the Library's flag, hence the full name. |
 
 The materials stay outside layout undo, like notes. A window remembers only which material it shows (`st.sel`) and
@@ -66,7 +75,7 @@ silently.
 
 ## Checks
 
-`node tools/jk6_test.mjs [shots] [models]` runs 47 checks in SwiftShader with real models from the owner's
+`node tools/jk6_test.mjs [shots] [models]` runs 51 checks in SwiftShader with real models from the owner's
 repositories. The page itself does not need the network. The checks cover:
 - import, facts in metres, versions and dedupe;
 - orientation and scale, the API object, and the 3D stage surviving a theme change;
@@ -74,7 +83,8 @@ repositories. The page itself does not need the network. The checks cover:
 - a file drop anywhere, and a refused drop that never navigates away;
 - soft delete, the library surviving a reload, two games side by side, phone and claude.ai;
 - a window type registered from outside after a build that did not know it (GPT-6's seam check);
-- companion files in a material's identity, on the VAW Blockbench sample (Medium's counterexample).
+- companion files in a material's identity, on the VAW Blockbench sample (Medium's counterexample);
+- a folder of the owner's Blockbench saves (with a `.vox` file that must stay unopened), and the naming of same-named files.
 
 SwiftShader takes seconds per frame for this scene, so the walking checks hold the drawing loop and move the body
 with `simulate()`. On a real GPU the same scene draws in milliseconds.
@@ -89,3 +99,17 @@ with `simulate()`. On a real GPU the same scene draws in milliseconds.
   not push the body.
 - **Mouse.** Pointer lock needs a click. In some embeddings (claude.ai) the mouse may not lock: dragging to look is
   then the phone's way.
+
+## Next (state at the end of 18 Oct, for whoever continues)
+
+1. **Astra's place editor** on `window.Jaskinia`: her move, and she has not answered yet. When she does, settle three
+   things on PR #2: how her document references materials, `object(id)` copies in her scene, and `walk()` on her stage.
+2. **`materialy.pack(ids)` / `unpack(file)`:** one file that carries the bytes. It moves materials between the
+   artifact, Pages and downloaded files, and lets a place export carry its materials (Medium's continuity check).
+3. **Folder sync:** keep the folder handle (File System Access API), so that a Blockbench save becomes a new
+   version with one "Odśwież z folderu", without picking files again.
+4. **Blockbench:** play animations (keyframes on groups), and handle `box_uv` cubes saved without face UVs.
+5. **The owner's own pass decides the next forging:** a real GPU, the real mouse lock, his saves.
+   - Tests here run in SwiftShader and cannot judge feel.
+   - The per-repository curation of experiment directions (the shelved Okazy) belongs to the GPT line, slowly.
+

@@ -48,7 +48,7 @@ async function pick(page, J, name) {
 }
 const lib = J => J(async () => (await Jaskinia.materialy.list()).map(m => ({ id: m.id, name: m.name, ver: m.ver, size: m.facts?.size, tris: m.facts?.tris, anims: m.facts?.anims, from: m.from, rot: m.rot, scale: m.scale, thumb: !!m.thumb })));
 
-const ONLY = process.env.ONLY || ''; // run one part: desk, repo, phone, claude, ext, identity
+const ONLY = process.env.ONLY || ''; // run one part: desk, repo, phone, claude, ext, identity, blockbench, names
 /* ---------- 1. desk ---------- */
 if (!ONLY || ONLY === 'desk') {
   const { ctx, page, J, wait, shot } = await open();
@@ -283,6 +283,36 @@ if ((!ONLY || ONLY === 'identity') && have('ext__vector_thruster_gltf.gltf')) {
   await wait(2500);
   const c = await J(() => Jaskinia.materialy.list().then(l => l.map(m => m.ver)));
   ok(JSON.stringify(c) === '[2]' && await J(() => /nie dało się wczytać/.test([...document.querySelectorAll('.jk-toast')].map(x => x.textContent).join(' '))), 'the .gltf without its .bin is refused out loud, nothing half-made is stored', JSON.stringify(c));
+  await ctx.close();
+}
+
+/* ---------- 7. Blockbench's own files, a whole folder at once (the owner's saves; a .vox file must stay untouched) ---------- */
+const BB = path.join(models, 'bb');
+if ((!ONLY || ONLY === 'blockbench') && fs.existsSync(BB)) {
+  const tmp = path.join(shots, 'bbfolder');
+  fs.rmSync(tmp, { recursive: true, force: true });
+  fs.cpSync(BB, tmp, { recursive: true });
+  fs.writeFileSync(path.join(tmp, 'studio_secret.vox'), 'VOX ');
+  const nBB = fs.readdirSync(tmp, { recursive: true }).filter(f => /\.bbmodel$/i.test(f)).length;
+  const { ctx, page, J, wait } = await open();
+  await J(() => Jaskinia.ext.open('materialy')); await wait(500);
+  await page.setInputFiles('.mt-dirin', tmp);
+  const got = await waitFor(J, n => Jaskinia.materialy.list().then(l => l.length >= n ? l.map(m => ({ name: m.name, kind: m.kind, texs: m.facts.texs, size: m.facts.size.map(v => +v.toFixed(2)), missing: m.missing.length, main: m.main.name })) : null), nBB, 120000);
+  ok(got && got.length === nBB && got.every(m => /\.bbmodel$/.test(m.main) && m.texs >= 1 && !m.missing), 'a folder of Blockbench saves: every .bbmodel comes in with its own pictures', JSON.stringify(got));
+  ok(got && !got.some(m => /vox/i.test(m.main)), 'a .vox file in the folder is left alone');
+  const wheel = got && got.find(m => m.name === 'small_wheels');
+  if (wheel) ok(Math.abs(wheel.size[1] - 1.02) < 0.05, 'Blockbench pixels become metres like its glTF export (16 px = 1 m)', JSON.stringify(wheel.size));
+  await ctx.close();
+}
+
+/* ---------- 8. names: two files called model.gltf in different folders are two materials, not versions of one ---------- */
+const VB = path.join(models, 'vawblocks');
+if ((!ONLY || ONLY === 'names') && fs.existsSync(VB)) {
+  const { ctx, page, J, wait } = await open();
+  await J(() => Jaskinia.ext.open('materialy')); await wait(500);
+  await page.setInputFiles('.mt-dirin', VB);
+  const got = await waitFor(J, () => Jaskinia.materialy.list().then(l => l.length >= 2 ? l.map(m => m.name + ' v' + m.ver).sort() : null), null, 60000);
+  ok(JSON.stringify(got) === JSON.stringify(['hull · model v1', 'thruster · model v1']), 'model.gltf in hull/ and in thruster/ become "hull · model" and "thruster · model"', JSON.stringify(got));
   await ctx.close();
 }
 

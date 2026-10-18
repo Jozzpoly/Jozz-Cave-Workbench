@@ -5996,7 +5996,7 @@ return __SWIAT3D_MOD;
 
 const BIB_HOST = "artifact";
 const BIB_MODE = "jaskinia";
-const JASK_BUILD = {"v": "6", "built": "2026-10-18T04:21Z", "host": "artifact"};
+const JASK_BUILD = {"v": "6", "built": "2026-10-18T04:54Z", "host": "artifact"};
 const LAB_DEMO = "<!doctype html>\n<html lang=\"pl\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n<title>Piłki: przyrząd pokazowy Jaskini</title>\n<style>\n  :root { color-scheme: dark; --bg: #0f1418; --panel: #172027; --ink: #e6edf2; --ink2: #9fb0bd; --line: #2a3640; --hot: #ffb547; --ok: #64d28a; }\n  * { box-sizing: border-box; }\n  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font: 13px/1.4 system-ui, sans-serif; overflow: hidden; }\n  #c { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }\n  .ui { position: absolute; left: 10px; top: 10px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; max-width: calc(100% - 20px); }\n  button { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 4px 10px; cursor: pointer; }\n  button:hover { border-color: var(--ink2); }\n  label { display: inline-flex; align-items: center; gap: 6px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 3px 8px; color: var(--ink2); }\n  .hud { position: absolute; left: 10px; bottom: 10px; color: var(--ink2); font: 12px/1.3 ui-monospace, monospace; }\n  .trace { position: absolute; right: 10px; top: 10px; width: min(300px, 46%); max-height: 45%; overflow: auto; background: color-mix(in srgb, var(--panel) 88%, transparent);\n    border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; display: none; }\n  .trace.on { display: block; }\n  .trace h2 { margin: 0 0 4px; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--ink2); }\n  .trace p { margin: 3px 0; }\n  .trace time { color: var(--hot); font-family: ui-monospace, monospace; margin-right: 6px; }\n  .pause { position: absolute; inset: 0; display: none; place-items: center; color: var(--ink2); font-size: 15px; }\n  .pause.on { display: grid; }\n</style>\n</head>\n<body>\n<canvas id=\"c\" aria-label=\"Piłki odbijające się od podłogi\"></canvas>\n<div class=\"ui\">\n  <button id=\"add\" type=\"button\">Dodaj piłkę</button>\n  <button id=\"shake\" type=\"button\">Potrząśnij</button>\n  <label>sprężystość <input id=\"e\" type=\"range\" min=\"0.5\" max=\"0.98\" step=\"0.01\" value=\"0.86\"></label>\n</div>\n<div class=\"hud\" id=\"hud\"></div>\n<section class=\"trace\" id=\"trace\" aria-live=\"polite\"><h2>Ślad: uwagi z Jaskini</h2></section>\n<div class=\"pause\" id=\"pause\">pauza: okno w Jaskini jest ukryte</div>\n<script>\n/* Jaskinia instrument contract, v1: a drop-in for any lab or game page.\n   Load it with a script tag (src=\"jaskinia-przyrzad.js\") or paste it into an inline script. The contract: docs/przyrzad/KONTRAKT.md\n\n   Jaskinia.hello({ name: 'MiniFeniks', version: 'kampania 04', wants: ['remark'] });   // who you are (once, at start)\n   Jaskinia.state('Dzień 3, 14:20 · Ania niesie deski', { dzien: 3 });                  // what is happening now\n   Jaskinia.signals({ fps: 58, zapas: 12 });                                             // numbers to draw live, a few times a second\n   Jaskinia.event('Ania porzuciła zamiar: brak desek', 'uwaga');                         // something happened ('info' | 'uwaga' | 'blad')\n   Jaskinia.onRemark(r => trace.push(r));      // the owner's remark from Jaskinia's flag: { text, at }\n   Jaskinia.onStateRequest(() => ({ text, data }));   // optional: a fresh state for the moment of the flag\n   Jaskinia.onVisible(v => paused = !v);       // optional: the window was hidden or shown again\n\n   Opened on its own (no Jaskinia around) every call does nothing, so the lab never depends on it. Ctrl+. inside the\n   page asks Jaskinia for the \"To mnie uwiera\" note, pinned to this lab and this second. */\n(() => {\n  if (window.Jaskinia) return;\n  const host = window.parent !== window ? window.parent : null;\n  const send = m => { if (host) try { host.postMessage({ jaskinia: 1, ...m }, '*'); } catch { /* not allowed: fine */ } };\n  let hello = null, last = null, stateFn = null;\n  const remarkFns = [], visFns = [];\n  addEventListener('message', ev => {\n    if (!host || ev.source !== host) return;           // only the page that holds this lab\n    const d = ev.data;\n    if (!d || d.jaskinia !== 1) return;\n    if (d.type === 'hi' && hello) send({ type: 'hello', ...hello });\n    else if (d.type === 'state?') { let s = last; try { if (stateFn) s = stateFn() || last; } catch { /* keep the last one */ } if (s) send({ type: 'state', text: s.text, data: s.data }); }\n    else if (d.type === 'remark') for (const f of remarkFns) try { f({ text: String(d.text || ''), at: String(d.at || '') }); } catch { /* the lab's problem */ }\n    else if (d.type === 'visible') for (const f of visFns) try { f(!!d.visible); } catch { /* the lab's problem */ }\n  });\n  addEventListener('keydown', ev => { if (host && (ev.ctrlKey || ev.metaKey) && ev.key === '.') { ev.preventDefault(); send({ type: 'flag' }); } }, true);\n  window.Jaskinia = {\n    active: !!host,\n    hello(h) { hello = { name: String(h && h.name || ''), version: String(h && h.version || ''), wants: Array.isArray(h && h.wants) ? h.wants : [] }; send({ type: 'hello', ...hello }); },\n    state(text, data) { last = { text: String(text || ''), data }; send({ type: 'state', text: last.text, data }); },\n    signals(values) { send({ type: 'signals', values }); },\n    event(text, level) { send({ type: 'event', text: String(text || ''), level }); },\n    onRemark(fn) { remarkFns.push(fn); },\n    onStateRequest(fn) { stateFn = fn; },\n    onVisible(fn) { visFns.push(fn); },\n  };\n})();\n\n<\/script>\n<script>\n/* A small physics toy that speaks the instrument contract: it tells Jaskinia who it is, what is happening, a few numbers,\n   and what happened; it keeps the owner's remarks in its own trace. Opened on its own, it simply runs. */\nconst cv = document.getElementById('c'), g = cv.getContext('2d');\nconst R = 14, G = 900;              // ball radius (px) and gravity (px/s²); 100 px count as 1 m in the numbers below\nlet W = 0, H = 0, balls = [], restit = 0.86, bounces = [], paused = false, t0 = performance.now(), frames = [];\nfunction size() { const d = devicePixelRatio || 1; W = cv.clientWidth; H = cv.clientHeight; cv.width = Math.round(W * d); cv.height = Math.round(H * d); g.setTransform(d, 0, 0, d, 0, 0); }\naddEventListener('resize', size); size();\nfunction addBall(x, y) {\n  const b = { x: x ?? R + Math.random() * (W - 2 * R), y: y ?? R + Math.random() * H * 0.3, vx: (Math.random() - 0.5) * 420, vy: -Math.random() * 300, still: 0, said: false, hue: 30 + balls.length * 47 % 300 };\n  balls.push(b);\n  Jaskinia.event(`nowa piłka (${balls.length})`);\n  sayState();\n}\ndocument.getElementById('add').onclick = () => addBall();\ndocument.getElementById('shake').onclick = () => { for (const b of balls) { b.vy -= 500 + Math.random() * 300; b.vx += (Math.random() - 0.5) * 400; b.still = 0; b.said = false; } Jaskinia.event('potrząśnięcie'); };\ndocument.getElementById('e').oninput = ev => { restit = +ev.target.value; sayState(); };\ncv.addEventListener('pointerdown', ev => addBall(ev.offsetX, ev.offsetY));\nconst energy = () => balls.reduce((a, b) => a + 0.5 * (b.vx * b.vx + b.vy * b.vy) / 1e4 + G / 100 * (H - R - b.y) / 100, 0);\nfunction sayState() { Jaskinia.state(`${balls.length} piłki, energia ${energy().toFixed(1)} J, sprężystość ${restit.toFixed(2)}`, { pilki: balls.length, energia: +energy().toFixed(2), sprezystosc: restit, czas_s: Math.round((performance.now() - t0) / 1000) }); }\nJaskinia.hello({ name: 'Piłki', version: 'pokaz 1', wants: ['remark'] });\nfor (let i = 0; i < 3; i++) addBall();\nJaskinia.onStateRequest(() => ({ text: `${balls.length} piłki, energia ${energy().toFixed(1)} J, sprężystość ${restit.toFixed(2)}`, data: { pilki: balls.length, energia: +energy().toFixed(2), sprezystosc: restit } }));\nJaskinia.onRemark(r => {\n  const tr = document.getElementById('trace');\n  tr.classList.add('on');\n  const p = document.createElement('p'), tm = document.createElement('time');\n  tm.textContent = (r.at || '').slice(11, 19); p.append(tm, document.createTextNode(r.text));\n  tr.append(p);\n  window.__remarks = (window.__remarks || []).concat(r);\n});\nJaskinia.onVisible(v => { paused = !v; document.getElementById('pause').classList.toggle('on', paused); });\n\nlet last = performance.now(), sigT = 0, stT = 0;\nfunction step(now) {\n  const dt = Math.min(0.033, (now - last) / 1000); last = now;\n  frames.push(now); while (frames.length && now - frames[0] > 1000) frames.shift();\n  if (!paused) for (const b of balls) {\n    b.vy += G * dt; b.vx *= 1 - 0.15 * dt; b.x += b.vx * dt; b.y += b.vy * dt;\n    if (b.x < R) { b.x = R; b.vx = -b.vx * restit; } if (b.x > W - R) { b.x = W - R; b.vx = -b.vx * restit; }\n    if (b.y > H - R) { b.y = H - R; if (b.vy > 60) bounces.push(now); b.vy = -b.vy * restit; b.vx *= 0.98; }\n    const moving = Math.abs(b.vy) > 40 || Math.abs(b.vx) > 25 || b.y < H - R - 2;\n    b.still = moving ? 0 : b.still + dt;\n    if (b.still > 1 && !b.said) { b.said = true; Jaskinia.event('piłka się zatrzymała'); }\n    if (moving) b.said = false;\n  }\n  while (bounces.length && now - bounces[0] > 1000) bounces.shift();\n  g.clearRect(0, 0, W, H);\n  g.strokeStyle = '#2a3640'; g.beginPath(); g.moveTo(0, H - 0.5); g.lineTo(W, H - 0.5); g.stroke();\n  for (const b of balls) { g.fillStyle = `hsl(${b.hue} 80% 62%)`; g.beginPath(); g.arc(b.x, b.y, R, 0, Math.PI * 2); g.fill(); }\n  document.getElementById('hud').textContent = `${balls.length} piłki · ${energy().toFixed(1)} J · ${bounces.length} odbić/s · ${frames.length} kl./s${Jaskinia.active ? ' · w Jaskini' : ''}`;\n  if (now - sigT > 100) { sigT = now; Jaskinia.signals({ energia: +energy().toFixed(2), odbicia: bounces.length, pilki: balls.length, fps: frames.length }); }\n  if (now - stT > 1000) { stT = now; sayState(); }\n  requestAnimationFrame(step);\n}\nrequestAnimationFrame(step);\nwindow.__boot = Math.random().toString(36).slice(2); // lets a check tell a running lab from a restarted one\n<\/script>\n</body>\n</html>\n";
 (() => {
 'use strict';
@@ -9002,6 +9002,11 @@ const EN = {
   'Tego tu nie wezmę: {0}. Materiały to .glb, .gltf, .obj i obrazki.': 'Not taking this here: {0}. Materials are .glb, .gltf, .obj and pictures.',
   'materiał': ['material', 'materials'], 'plik': ['file', 'files'], 'trójkąt': ['triangle', 'triangles'], 'animacja': ['animation', 'animations'],
   'Studio': 'Studio', 'Otwórz': 'Open',
+  'Dodaj cały folder: modele z ich teksturami, reszta plików zostaje nietknięta': 'Add a whole folder: models with their textures; other files are left alone', 'Folder': 'Folder',
+  'W tym folderze nie ma modeli (.bbmodel, .glb, .gltf, .obj).': 'There are no models in this folder (.bbmodel, .glb, .gltf, .obj).', 'Wczytuję folder…': 'Reading the folder…', 'Wczytuję {0} z {1}: {2}': 'Reading {0} of {1}: {2}',
+  'pliki .bbmodel, modele .glb, .gltf, .obj (z plikami obok) albo obrazki': '.bbmodel files, .glb, .gltf, .obj models (with the files beside them) or pictures',
+  'Upuść tu pliki z Blockbencha (.bbmodel, prosto z zapisu) albo eksporty z Blockbencha i Blendera: .glb, .gltf (z .bin i teksturami obok), .obj (z .mtl). Zobaczysz je w świetle, przy człowieku 1,8 m, i wejdziesz do środka.': 'Drop files from Blockbench here (.bbmodel, straight from your save) or exports from Blockbench and Blender: .glb, .gltf (with the .bin and textures beside it), .obj (with its .mtl). You will see them in light, next to a 1.8 m person, and step inside.',
+  'Tego tu nie wezmę: {0}. Materiały to .bbmodel, .glb, .gltf, .obj i obrazki.': 'Not taking this here: {0}. Materials are .bbmodel, .glb, .gltf, .obj and pictures.',
   'przeciągnij myszą, żeby się rozejrzeć; WASD idzie': 'drag with the mouse to look around; WASD walks',
   'Nowe w v6: Materiały. Upuść swój model z Blockbencha albo Blendera, zobacz go w skali przy człowieku i wejdź do środka.': 'New in v6: Materials. Drop your model from Blockbench or Blender, see it at scale next to a person, and step inside.',
   'Twoje modele i tekstury: upuść pliki, zobacz je w świetle, sprawdź skalę przy człowieku 1,8 m i wejdź do środka.': 'Your models and textures: drop the files, see them in light, check the scale against a 1.8 m person, and step inside.',
@@ -13467,18 +13472,28 @@ function swStage(host, o = {}) {
     sc.updateProjectionMatrix();
     camera.near = Math.max(0.01, r / 200); camera.far = r * 60 + 50;
     scene.fog.near = r * 4; scene.fog.far = r * 4 + Math.max(30, r * 14);
-    if (!keepView) {
-      const fov = camera.fov * Math.PI / 180, dist = r / Math.sin(fov / 2) * 1.08;
-      const dir = new THREE.Vector3(0.95, 0.55, 1.25).normalize();
-      camera.position.copy(bounds.center).addScaledVector(dir, dist);
-      controls.target.copy(bounds.center);
-    }
+    if (body) placeBody();
+    if (!keepView) look();
     camera.updateProjectionMatrix();
     controls.minDistance = r * 0.05; controls.maxDistance = r * 20 + 20;
     controls.update();
     need = true;
     return bounds;
   };
+  /* the camera frames what is shown, and the body beside it when it is there (a 1 m wheel must not hide behind a giant) */
+  function look() {
+    const vb = bounds.box.clone();
+    if (body) vb.union(new THREE.Box3().setFromObject(body));
+    const sp = vb.getBoundingSphere(new THREE.Sphere()), rr = Math.max(sp.radius, 0.05);
+    const fov = camera.fov * Math.PI / 180, dist = rr / Math.sin(fov / 2) * 1.08;
+    const dir = new THREE.Vector3(0.95, 0.55, 1.25).normalize();
+    camera.position.copy(sp.center).addScaledVector(dir, dist);
+    controls.target.copy(sp.center);
+    camera.far = Math.max(camera.far, dist * 4);
+    camera.updateProjectionMatrix();
+    controls.update();
+  }
+  function placeBody() { const b = bounds; body.position.set(b.box.max.x + 0.45 + Math.min(1, b.size * 0.08), b.box.min.y, b.center.z); }
   st.set = obj => {
     for (const ch of root.children.splice(0)) { ch.parent = null; swDispose(ch); }
     if (obj) { obj.traverse(x => { if (x.isMesh) { x.castShadow = true; x.receiveShadow = true; } }); root.add(obj); }
@@ -13486,7 +13501,7 @@ function swStage(host, o = {}) {
   };
   /* the body: 1.8 m, beside the thing, so its size is felt and not only read */
   let body = null;
-  st.human = on => {
+  st.human = (on, keep) => {
     if (!on) { if (body) { extra.remove(body); swDispose(body); body = null; } need = true; return; }
     if (!body) {
       // a plain mannequin, 1.8 m: legs, body, arms, head (made of capsules, so it reads as a person from any side)
@@ -13502,8 +13517,9 @@ function swStage(host, o = {}) {
       body.name = 'człowiek 1,8 m';
       extra.add(body);
     }
-    const b = bounds || st.frame(true);
-    body.position.set(b.box.max.x + 0.45 + Math.min(1, b.size * 0.08), b.box.min.y, b.center.z);
+    if (!bounds) st.frame(true);
+    placeBody();
+    if (!keep) look();
     need = true;
   };
   const ro = new ResizeObserver(() => {
@@ -13830,6 +13846,163 @@ function swWalk(stage, o = {}) {
     simulate(sec, hold = []) { for (const k of hold) keys.add(k); for (let tt = 0; tt < sec; tt += 1 / 60) step(1 / 60); for (const k of hold) keys.delete(k); syncCam(); } };
 }
 
+/* ---------- Blockbench's own file (.bbmodel), read directly ----------
+   What Jozz saves in Blockbench (format 4 and 5, Java block/free models: cubes, and meshes) becomes three.js without an
+   export step: cubes with per-face UVs and face rotation, element and group pivots and rotations (Blockbench's ZYX order),
+   inflate, the embedded pictures (pixel-sharp), and only what was visible when he saved it (all of it if nothing was).
+   Pixels become metres the way Blockbench's own glTF export does it: 16 pixels are 1 metre. */
+const BB_ORDER = 'ZYX';
+function bbModel(j, mgr, missing) {
+  const { THREE } = swiat();
+  const CLAY = 0xb9b2a6; // the colour of a face without a picture, as in Materiały
+  const S = 1 / 16, rad = THREE.MathUtils.degToRad;
+  const res = j.resolution || { width: 16, height: 16 };
+  // pictures: one material per texture (pixel-sharp, cut-out alpha, both sides for flat planes)
+  const tl = new THREE.TextureLoader(mgr);
+  const texs = (j.textures || []).map((tx, i) => {
+    const uvw = tx.uv_width || res.width || tx.width || 16, uvh = tx.uv_height || res.height || tx.height || 16;
+    let map = null;
+    if (tx.source && /^data:image\//.test(tx.source)) {
+      map = tl.load(tx.source);
+      map.colorSpace = THREE.SRGBColorSpace; map.magFilter = THREE.NearestFilter; map.minFilter = THREE.NearestFilter; map.generateMipmaps = false;
+    } else if (tx.name) missing.add(tx.name);
+    const mat = new THREE.MeshStandardMaterial({ map, color: map ? 0xffffff : CLAY, roughness: 0.86, metalness: 0, alphaTest: 0.5, side: THREE.DoubleSide });
+    mat.name = tx.name || 'texture ' + i;
+    return { uuid: tx.uuid, uvw, uvh, mat };
+  });
+  const noTex = new THREE.MeshStandardMaterial({ color: CLAY, roughness: 0.86, side: THREE.DoubleSide });
+  const texOf = v => { if (v === null || v === undefined || v === false) return null; if (typeof v === 'number') return texs[v] || null; return texs.find(x => x.uuid === v) || null; };
+  // which elements and groups count: visible and exported (when nothing is visible, everything)
+  const els = (j.elements || []).filter(e => e.export !== false);
+  const anyVisible = els.some(e => e.visibility !== false);
+  const shown = e => !anyVisible || e.visibility !== false;
+  const byId = new Map(els.map(e => [e.uuid, e]));
+  const groups = new Map((j.groups || []).map(g => [g.uuid, g]));
+  const v3 = a => new THREE.Vector3((a?.[0] || 0) * S, (a?.[1] || 0) * S, (a?.[2] || 0) * S);
+  // one cube: six faces, each a quad with its own UVs, texture and rotation
+  const FACE = { // corners top-left, top-right, bottom-right, bottom-left, as Minecraft lays a face's picture
+    north: (a, b) => [[b.x, b.y, a.z], [a.x, b.y, a.z], [a.x, a.y, a.z], [b.x, a.y, a.z]],
+    south: (a, b) => [[a.x, b.y, b.z], [b.x, b.y, b.z], [b.x, a.y, b.z], [a.x, a.y, b.z]],
+    east: (a, b) => [[b.x, b.y, b.z], [b.x, b.y, a.z], [b.x, a.y, a.z], [b.x, a.y, b.z]],
+    west: (a, b) => [[a.x, b.y, a.z], [a.x, b.y, b.z], [a.x, a.y, b.z], [a.x, a.y, a.z]],
+    up: (a, b) => [[a.x, b.y, a.z], [b.x, b.y, a.z], [b.x, b.y, b.z], [a.x, b.y, b.z]],
+    down: (a, b) => [[a.x, a.y, b.z], [b.x, a.y, b.z], [b.x, a.y, a.z], [a.x, a.y, a.z]],
+  };
+  const NORM = { north: [0, 0, -1], south: [0, 0, 1], east: [1, 0, 0], west: [-1, 0, 0], up: [0, 1, 0], down: [0, -1, 0] };
+  function cube(e, pivot) {
+    const inf = (e.inflate || 0);
+    const a = new THREE.Vector3(Math.min(e.from[0], e.to[0]) - inf, Math.min(e.from[1], e.to[1]) - inf, Math.min(e.from[2], e.to[2]) - inf).multiplyScalar(S);
+    const b = new THREE.Vector3(Math.max(e.from[0], e.to[0]) + inf, Math.max(e.from[1], e.to[1]) + inf, Math.max(e.from[2], e.to[2]) + inf).multiplyScalar(S);
+    const o = v3(e.origin);
+    const pos = [], uv = [], nor = [], idx = [], grp = [];
+    const mats = [];
+    for (const side of Object.keys(FACE)) {
+      const f = e.faces?.[side];
+      if (!f) continue;
+      const tx = texOf(f.texture);
+      if (f.texture === null || f.texture === false) continue; // Blockbench: no texture means no face
+      let mi = mats.indexOf(tx ? tx.mat : noTex);
+      if (mi < 0) { mats.push(tx ? tx.mat : noTex); mi = mats.length - 1; }
+      const c = FACE[side](a, b), n = NORM[side];
+      const w = tx ? tx.uvw : res.width, hgt = tx ? tx.uvh : res.height;
+      const [u1, v1, u2, v2] = f.uv || [0, 0, w, hgt];
+      const quv = [[u1, v1], [u2, v1], [u2, v2], [u1, v2]];
+      const k = (((f.rotation || 0) / 90) % 4 + 4) % 4;
+      const base = pos.length / 3;
+      for (let i = 0; i < 4; i++) {
+        const q = quv[(i - k + 4) % 4];
+        pos.push(c[i][0] - o.x, c[i][1] - o.y, c[i][2] - o.z);
+        uv.push(q[0] / w, 1 - q[1] / hgt);
+        nor.push(...n);
+      }
+      const start = idx.length;
+      idx.push(base, base + 3, base + 1, base + 1, base + 3, base + 2);
+      grp.push([start, 6, mi]);
+    }
+    if (!pos.length) return null;
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+    g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+    g.setIndex(idx);
+    for (const [st, cnt, mi] of grp) g.addGroup(st, cnt, mi);
+    const mesh = new THREE.Mesh(g, mats.length === 1 ? mats[0] : mats);
+    mesh.name = e.name || 'cube';
+    const holder = new THREE.Group();
+    holder.position.copy(o).sub(pivot);
+    const r = e.rotation || [0, 0, 0];
+    holder.rotation.set(rad(r[0] || 0), rad(r[1] || 0), rad(r[2] || 0), BB_ORDER);
+    holder.add(mesh);
+    return holder;
+  }
+  // a Blockbench mesh element: vertices and polygons (triangles or quads) with their own UVs
+  function polyMesh(e, pivot) {
+    const o = v3(e.origin), keys = Object.keys(e.vertices || {});
+    const P = new Map(keys.map(k => [k, e.vertices[k]]));
+    const pos = [], uv = [], idx = [], grp = [], mats = [];
+    for (const f of Object.values(e.faces || {})) {
+      const vs = f.vertices || [];
+      if (vs.length < 3) continue;
+      const tx = texOf(f.texture);
+      let mi = mats.indexOf(tx ? tx.mat : noTex);
+      if (mi < 0) { mats.push(tx ? tx.mat : noTex); mi = mats.length - 1; }
+      const w = tx ? tx.uvw : res.width, hgt = tx ? tx.uvh : res.height, base = pos.length / 3, start = idx.length;
+      const ord = vs.length === 4 ? [vs[0], vs[1], vs[3], vs[2]] : vs; // Blockbench stores quads in a cross order
+      for (const k of ord) { const p = P.get(k) || [0, 0, 0], q = f.uv?.[k] || [0, 0]; pos.push(p[0] * S, p[1] * S, p[2] * S); uv.push(q[0] / w, 1 - q[1] / hgt); }
+      for (let i = 1; i + 1 < ord.length; i++) idx.push(base, base + i, base + i + 1);
+      grp.push([start, idx.length - start, mi]);
+    }
+    if (!pos.length) return null;
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+    g.setIndex(idx);
+    for (const [st, cnt, mi] of grp) g.addGroup(st, cnt, mi);
+    g.computeVertexNormals();
+    const mesh = new THREE.Mesh(g, mats.length === 1 ? mats[0] : mats);
+    mesh.name = e.name || 'mesh';
+    const holder = new THREE.Group();
+    holder.position.copy(o).sub(pivot);
+    const r = e.rotation || [0, 0, 0];
+    holder.rotation.set(rad(r[0] || 0), rad(r[1] || 0), rad(r[2] || 0), BB_ORDER);
+    // a mesh element's vertices are relative to its origin, which the holder already stands on
+    holder.add(mesh);
+    return holder;
+  }
+  const element = (e, pivot) => (e.type === 'mesh' ? polyMesh(e, pivot) : e.from && e.to ? cube(e, pivot) : null);
+  const used = new Set();
+  // the outliner: groups (bones) with their own pivots and rotations; format 5 keeps group data in j.groups
+  function node(n, parent, pivot) {
+    if (typeof n === 'string') {
+      const e = byId.get(n);
+      if (!e) return;
+      used.add(n);
+      if (!shown(e)) return;
+      const x = element(e, pivot);
+      if (x) parent.add(x);
+      return;
+    }
+    const g = { ...(groups.get(n.uuid) || {}), ...n };
+    if (g.export === false || (anyVisible && g.visibility === false)) { markUsed(n); return; }
+    const o = v3(g.origin);
+    const obj = new THREE.Group();
+    obj.name = g.name || 'group';
+    obj.position.copy(o).sub(pivot);
+    const r = g.rotation || [0, 0, 0];
+    obj.rotation.set(rad(r[0] || 0), rad(r[1] || 0), rad(r[2] || 0), BB_ORDER);
+    parent.add(obj);
+    for (const c of n.children || []) node(c, obj, o);
+  }
+  function markUsed(n) { if (typeof n === 'string') used.add(n); else for (const c of n.children || []) markUsed(c); }
+  const root = new THREE.Group();
+  root.name = j.name || 'bbmodel';
+  const zero = new THREE.Vector3();
+  for (const n of j.outliner || []) node(n, root, zero);
+  for (const e of els) if (!used.has(e.uuid) && shown(e)) { const x = element(e, zero); if (x) root.add(x); } // elements outside the outliner
+  return root;
+}
+
+
 /* ---------- Materiały: Jozz's own models and textures, kept in this browser (v6) ----------
    What he makes in Blockbench or Blender comes in by dropping the files anywhere in Jaskinia (.glb, .gltf with its .bin
    and pictures, .obj with its .mtl and pictures, or pictures alone). Each file is kept once, by the SHA-256 of its bytes,
@@ -13837,7 +14010,7 @@ function swWalk(stage, o = {}) {
    same name makes a new version of that material, never a silent replacement. Orientation and scale are the material's
    defaults (non-destructive), checked against a body 1.8 m tall. Nothing here enters layout undo; deleting is soft. */
 const MDB = 'jaskinia-materialy';
-const MAT_MODEL = /\.(glb|gltf|obj)$/i, MAT_PIC = /\.(png|jpe?g|webp|gif|bmp|tga)$/i, MAT_SIDE = /\.(bin|mtl|png|jpe?g|webp|gif|bmp|tga|ktx2)$/i;
+const MAT_MODEL = /\.(glb|gltf|obj|bbmodel)$/i, MAT_PIC = /\.(png|jpe?g|webp|gif|bmp|tga)$/i, MAT_SIDE = /\.(bin|mtl|png|jpe?g|webp|gif|bmp|tga|ktx2)$/i;
 let mdbP = null;
 function mdb() {
   if (!mdbP) mdbP = new Promise((res, rej) => {
@@ -13931,7 +14104,9 @@ async function matLoad(m) {
       const g = new THREE.Group(); g.add(obj); obj = g;
     } else {
       const ext = extOf(m.main.name), bl = await fileBlob(m.main.sha);
-      if (ext === 'glb' || ext === 'gltf') {
+      if (ext === 'bbmodel') {
+        obj = bbModel(JSON.parse(await bl.text()), mgr, missing);
+      } else if (ext === 'glb' || ext === 'gltf') {
         const data = ext === 'glb' ? await bl.arrayBuffer() : await bl.text();
         const loader = new GLTFLoader(mgr);
         // in claude.ai a page may not fetch() its own blob: URLs, which GLTFLoader's ImageBitmapLoader does for every
@@ -14019,7 +14194,7 @@ async function matThumb(obj) {
 
 /* ---------- import ---------- */
 /* files: File objects (or {name, blob}); from: where they came from ('plik' or 'repo:Owner/Repo/path') */
-async function matImport(files, from = 'plik', label) {
+async function matImport(files, from = 'plik', label, onStep) {
   const list = [...files].map(f => ({ name: f.name, blob: f.blob || f })).filter(f => f.name);
   const mains = list.filter(f => MAT_MODEL.test(f.name));
   const side = list.filter(f => !MAT_MODEL.test(f.name) && MAT_SIDE.test(f.name));
@@ -14030,7 +14205,18 @@ async function matImport(files, from = 'plik', label) {
   const all = await matAll();
   const used = new Set();
   const jobs = mains.length ? mains.map(f => ({ main: f, kind: 'model' })) : pics.map(f => ({ main: f, kind: 'tekstura' }));
+  // names: a file's stem, but "model.gltf" in hull/ and in fuel/ are two things, not two versions of one
+  const GENERIC = /^(model|scene|untitled|mesh|object|export|texture|new|test)$/i;
+  const stems = new Map();
+  for (const job of jobs) { const k = stem(job.main.name).toLowerCase(); stems.set(k, (stems.get(k) || 0) + 1); }
+  const nameOf = job => {
+    const st0 = stem(job.main.name), rel = job.main.blob?.webkitRelativePath || '';
+    const parent = rel.split('/').slice(-2, -1)[0] || '';
+    return parent && rel.includes('/') && (GENERIC.test(st0) || stems.get(st0.toLowerCase()) > 1) ? parent + ' · ' + st0 : st0;
+  };
+  let step = 0;
   for (const job of jobs) {
+    onStep?.(++step, jobs.length, job.main.name);
     const main = await store(job.main);
     // the main file's companions: for a .gltf its buffers and pictures, for an .obj its .mtl and pictures (by name)
     let deps = [];
@@ -14044,7 +14230,7 @@ async function matImport(files, from = 'plik', label) {
     deps.sort((a, b) => a.name.localeCompare(b.name));
     const id = 'm' + (deps.length ? (await sha256(new Blob([main.sha + deps.map(d => d.name + d.sha).join('')]))) : main.sha).slice(0, 20);
     if (all.has(id) && !all.get(id).gone) { out.push({ id, again: true }); continue; }
-    const name = (jobs.length === 1 && label) || stem(main.name);
+    const name = (jobs.length === 1 && label) || nameOf(job);
     const prev = [...all.values()].filter(x => !x.gone && x.kind === job.kind && x.name.toLowerCase() === name.toLowerCase()).sort((a, b) => (b.ver || 1) - (a.ver || 1))[0];
     const m = all.get(id) || { id, name, kind: job.kind, main, deps, added: Date.now(), from, rot: prev ? prev.rot : [0, 0, 0], scale: prev ? prev.scale : 1,
       root: prev ? (prev.root || prev.id) : id, ver: prev ? (prev.ver || 1) + 1 : 1 };
@@ -14114,14 +14300,17 @@ function renderMaterialy(box, c) {
   const bar = h('div', { class: 'mt-bar' });
   const msg = h('div', { class: 'mt-msg', hidden: true });
   const empty = h('div', { class: 'mt-empty', hidden: true });
-  const dropHint = h('div', { class: 'mt-drophint', hidden: true }, h('b', { text: t('Upuść tutaj') }), h('span', { text: t('modele .glb, .gltf, .obj (z plikami obok) albo obrazki') }));
+  const dropHint = h('div', { class: 'mt-drophint', hidden: true }, h('b', { text: t('Upuść tutaj') }), h('span', { text: t('pliki .bbmodel, modele .glb, .gltf, .obj (z plikami obok) albo obrazki') }));
   view.append(cap, vers, bar, msg, empty, dropHint);
   const grid = h('div', { class: 'mt-grid', role: 'listbox', 'aria-label': t('Materiały') });
   const count = h('span', { class: 'mt-count' });
-  const input = h('input', { type: 'file', multiple: true, hidden: true, accept: '.glb,.gltf,.obj,.mtl,.bin,.png,.jpg,.jpeg,.webp,.gif' });
+  const input = h('input', { type: 'file', multiple: true, hidden: true, accept: '.bbmodel,.glb,.gltf,.obj,.mtl,.bin,.png,.jpg,.jpeg,.webp,.gif' });
   const addB = h('button', { class: 'jk-tb mt-add', type: 'button', title: t('Dodaj pliki z dysku (albo upuść je gdziekolwiek w Jaskini)'), onclick: () => input.click() }, icon('plus', 12), h('span', { text: t('Dodaj') }));
+  // a whole folder at once (Blockbench's saves): its models with their pictures; other files, .vox included, are left alone
+  const dirIn = h('input', { type: 'file', multiple: true, hidden: true, webkitdirectory: '', class: 'mt-dirin' });
+  const dirB = h('button', { class: 'jk-tb mt-add', type: 'button', title: t('Dodaj cały folder: modele z ich teksturami, reszta plików zostaje nietknięta'), onclick: () => dirIn.click() }, icon('t_folder', 12), h('span', { text: t('Folder') }));
   const repoBox = h('section', { class: 'mt-repo' });
-  const side = h('div', { class: 'mt-side' }, h('div', { class: 'mt-head' }, h('b', { text: t('Materiały') }), count, addB, input), grid, repoBox,
+  const side = h('div', { class: 'mt-side' }, h('div', { class: 'mt-head' }, h('b', { text: t('Materiały') }), count, dirB, addB, input, dirIn), grid, repoBox,
     h('p', { class: 'mt-note', text: t('Pliki zostają w tej przeglądarce. Upuść model w dowolne miejsce Jaskini, a trafi tutaj. Ten sam plik z nową treścią to nowa wersja, nie podmiana.') }));
   const root = h('div', { class: 'mt' }, view, side);
   box.append(h('div', { class: 'mt-c' }, root));
@@ -14155,7 +14344,7 @@ function renderMaterialy(box, c) {
   function drawEmpty() {
     empty.replaceChildren(h('div', { class: 'mt-empty-in' },
       h('b', { text: t('Przynieś swoje modele') }),
-      h('p', { text: t('Upuść tu pliki z Blockbencha albo Blendera: .glb, .gltf (z .bin i teksturami obok), .obj (z .mtl). Zobaczysz je w świetle, przy człowieku 1,8 m, i wejdziesz do środka.') }),
+      h('p', { text: t('Upuść tu pliki z Blockbencha (.bbmodel, prosto z zapisu) albo eksporty z Blockbencha i Blendera: .glb, .gltf (z .bin i teksturami obok), .obj (z .mtl). Zobaczysz je w świetle, przy człowieku 1,8 m, i wejdziesz do środka.') }),
       h('button', { class: 'btn', type: 'button', onclick: () => input.click() }, icon('plus', 14), t('Wybierz pliki'))));
   }
   function drawRepo(items) {
@@ -14271,7 +14460,7 @@ function renderMaterialy(box, c) {
         actions[0].play();
         untickMixer = S.tick(dt => { mixer.update(dt); return actions.some(a => a.isRunning()); });
       }
-      S.human(human);
+      S.human(human, !!keepView);
       drawBar(cur);
       say('');
     } catch (err) { say(t('Nie dało się pokazać {0}: {1}', cur.name, err.message), 'err'); }
@@ -14287,6 +14476,15 @@ function renderMaterialy(box, c) {
   }
   // files: the button, a drop on this window (the drop anywhere else in Jaskinia comes as an event)
   input.addEventListener('change', async () => { const fs = [...input.files]; input.value = ''; if (fs.length) matSay(await matImport(fs), sel); });
+  dirIn.addEventListener('change', async () => {
+    const all = [...dirIn.files]; dirIn.value = '';
+    const fs = all.filter(f => !/(^|\/)(node_modules|\.git)\//.test(f.webkitRelativePath || '') && (MAT_MODEL.test(f.name) || MAT_SIDE.test(f.name)));
+    if (!fs.some(f => MAT_MODEL.test(f.name))) { jtoast(t('W tym folderze nie ma modeli (.bbmodel, .glb, .gltf, .obj).')); return; }
+    say(t('Wczytuję folder…'));
+    const res = await matImport(fs, 'folder', null, (i, n, name) => say(t('Wczytuję {0} z {1}: {2}', i, n, name)));
+    say('');
+    matSay(res, sel);
+  });
   let dragN = 0;
   const hasFiles = e => [...(e.dataTransfer?.types || [])].includes('Files');
   root.addEventListener('dragenter', e => { if (!hasFiles(e)) return; e.preventDefault(); dragN++; dropHint.hidden = false; });
@@ -14341,7 +14539,7 @@ function matDropAnywhere() {
     if (!hasFiles(e) || e.defaultPrevented) return;
     e.preventDefault(); // a dropped file never navigates away from Jaskinia
     const fs = [...e.dataTransfer.files];
-    if (!fs.some(f => MAT_MODEL.test(f.name) || MAT_PIC.test(f.name))) { jtoast(t('Tego tu nie wezmę: {0}. Materiały to .glb, .gltf, .obj i obrazki.', fs.map(f => f.name).slice(0, 3).join(', '))); return; }
+    if (!fs.some(f => MAT_MODEL.test(f.name) || MAT_PIC.test(f.name))) { jtoast(t('Tego tu nie wezmę: {0}. Materiały to .bbmodel, .glb, .gltf, .obj i obrazki.', fs.map(f => f.name).slice(0, 3).join(', '))); return; }
     const id = openWinOfType('materialy', { w: 0.7, h: 0.82 }); // the one already open comes forward, or a new one
     const res = await matImport(fs);
     const first = matSay(res, null);
@@ -14353,6 +14551,7 @@ function matDropAnywhere() {
 ICONS.t_materialy = 'M8 1.8 13.6 5v6.1L8 14.2 2.4 11.1V5z M2.4 5 8 8.1 13.6 5 M8 8.1v6.1';
 ICONS.t_wejdz = 'M9.5 2.5h4v11h-4 M2 8h7.5 M6.5 5l3 3-3 3';
 ICONS.t_czlowiek = 'M8 2a1.6 1.6 0 1 1 0 3.2A1.6 1.6 0 0 1 8 2z M5.5 14l.7-5.2-1.4-1.6 1.6-1.3h3.2l1.6 1.3-1.4 1.6.7 5.2 M8 9.5V14';
+ICONS.t_folder = 'M2 4.5h4l1.5 1.5H14v7H2z';
 ICONS.t_obrot = 'M12.8 6.2A5 5 0 1 0 13 9.5 M13.2 3v3.4H9.8';
 if (!ICONS.plus) ICONS.plus = 'M8 3v10 M3 8h10';
 if (!ICONS.trash) ICONS.trash = 'M3 4.5h10 M6.5 4.5V3h3v1.5 M4.5 4.5l.7 9h5.6l.7-9';

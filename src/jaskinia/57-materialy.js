@@ -5,7 +5,7 @@
    same name makes a new version of that material, never a silent replacement. Orientation and scale are the material's
    defaults (non-destructive), checked against a body 1.8 m tall. Nothing here enters layout undo; deleting is soft. */
 const MDB = 'jaskinia-materialy';
-const MAT_MODEL = /\.(glb|gltf|obj)$/i, MAT_PIC = /\.(png|jpe?g|webp|gif|bmp|tga)$/i, MAT_SIDE = /\.(bin|mtl|png|jpe?g|webp|gif|bmp|tga|ktx2)$/i;
+const MAT_MODEL = /\.(glb|gltf|obj|bbmodel)$/i, MAT_PIC = /\.(png|jpe?g|webp|gif|bmp|tga)$/i, MAT_SIDE = /\.(bin|mtl|png|jpe?g|webp|gif|bmp|tga|ktx2)$/i;
 let mdbP = null;
 function mdb() {
   if (!mdbP) mdbP = new Promise((res, rej) => {
@@ -99,7 +99,9 @@ async function matLoad(m) {
       const g = new THREE.Group(); g.add(obj); obj = g;
     } else {
       const ext = extOf(m.main.name), bl = await fileBlob(m.main.sha);
-      if (ext === 'glb' || ext === 'gltf') {
+      if (ext === 'bbmodel') {
+        obj = bbModel(JSON.parse(await bl.text()), mgr, missing);
+      } else if (ext === 'glb' || ext === 'gltf') {
         const data = ext === 'glb' ? await bl.arrayBuffer() : await bl.text();
         const loader = new GLTFLoader(mgr);
         // in claude.ai a page may not fetch() its own blob: URLs, which GLTFLoader's ImageBitmapLoader does for every
@@ -187,7 +189,7 @@ async function matThumb(obj) {
 
 /* ---------- import ---------- */
 /* files: File objects (or {name, blob}); from: where they came from ('plik' or 'repo:Owner/Repo/path') */
-async function matImport(files, from = 'plik', label) {
+async function matImport(files, from = 'plik', label, onStep) {
   const list = [...files].map(f => ({ name: f.name, blob: f.blob || f })).filter(f => f.name);
   const mains = list.filter(f => MAT_MODEL.test(f.name));
   const side = list.filter(f => !MAT_MODEL.test(f.name) && MAT_SIDE.test(f.name));
@@ -198,7 +200,18 @@ async function matImport(files, from = 'plik', label) {
   const all = await matAll();
   const used = new Set();
   const jobs = mains.length ? mains.map(f => ({ main: f, kind: 'model' })) : pics.map(f => ({ main: f, kind: 'tekstura' }));
+  // names: a file's stem, but "model.gltf" in hull/ and in fuel/ are two things, not two versions of one
+  const GENERIC = /^(model|scene|untitled|mesh|object|export|texture|new|test)$/i;
+  const stems = new Map();
+  for (const job of jobs) { const k = stem(job.main.name).toLowerCase(); stems.set(k, (stems.get(k) || 0) + 1); }
+  const nameOf = job => {
+    const st0 = stem(job.main.name), rel = job.main.blob?.webkitRelativePath || '';
+    const parent = rel.split('/').slice(-2, -1)[0] || '';
+    return parent && rel.includes('/') && (GENERIC.test(st0) || stems.get(st0.toLowerCase()) > 1) ? parent + ' · ' + st0 : st0;
+  };
+  let step = 0;
   for (const job of jobs) {
+    onStep?.(++step, jobs.length, job.main.name);
     const main = await store(job.main);
     // the main file's companions: for a .gltf its buffers and pictures, for an .obj its .mtl and pictures (by name)
     let deps = [];
@@ -212,7 +225,7 @@ async function matImport(files, from = 'plik', label) {
     deps.sort((a, b) => a.name.localeCompare(b.name));
     const id = 'm' + (deps.length ? (await sha256(new Blob([main.sha + deps.map(d => d.name + d.sha).join('')]))) : main.sha).slice(0, 20);
     if (all.has(id) && !all.get(id).gone) { out.push({ id, again: true }); continue; }
-    const name = (jobs.length === 1 && label) || stem(main.name);
+    const name = (jobs.length === 1 && label) || nameOf(job);
     const prev = [...all.values()].filter(x => !x.gone && x.kind === job.kind && x.name.toLowerCase() === name.toLowerCase()).sort((a, b) => (b.ver || 1) - (a.ver || 1))[0];
     const m = all.get(id) || { id, name, kind: job.kind, main, deps, added: Date.now(), from, rot: prev ? prev.rot : [0, 0, 0], scale: prev ? prev.scale : 1,
       root: prev ? (prev.root || prev.id) : id, ver: prev ? (prev.ver || 1) + 1 : 1 };
@@ -282,14 +295,17 @@ function renderMaterialy(box, c) {
   const bar = h('div', { class: 'mt-bar' });
   const msg = h('div', { class: 'mt-msg', hidden: true });
   const empty = h('div', { class: 'mt-empty', hidden: true });
-  const dropHint = h('div', { class: 'mt-drophint', hidden: true }, h('b', { text: t('Upuść tutaj') }), h('span', { text: t('modele .glb, .gltf, .obj (z plikami obok) albo obrazki') }));
+  const dropHint = h('div', { class: 'mt-drophint', hidden: true }, h('b', { text: t('Upuść tutaj') }), h('span', { text: t('pliki .bbmodel, modele .glb, .gltf, .obj (z plikami obok) albo obrazki') }));
   view.append(cap, vers, bar, msg, empty, dropHint);
   const grid = h('div', { class: 'mt-grid', role: 'listbox', 'aria-label': t('Materiały') });
   const count = h('span', { class: 'mt-count' });
-  const input = h('input', { type: 'file', multiple: true, hidden: true, accept: '.glb,.gltf,.obj,.mtl,.bin,.png,.jpg,.jpeg,.webp,.gif' });
+  const input = h('input', { type: 'file', multiple: true, hidden: true, accept: '.bbmodel,.glb,.gltf,.obj,.mtl,.bin,.png,.jpg,.jpeg,.webp,.gif' });
   const addB = h('button', { class: 'jk-tb mt-add', type: 'button', title: t('Dodaj pliki z dysku (albo upuść je gdziekolwiek w Jaskini)'), onclick: () => input.click() }, icon('plus', 12), h('span', { text: t('Dodaj') }));
+  // a whole folder at once (Blockbench's saves): its models with their pictures; other files, .vox included, are left alone
+  const dirIn = h('input', { type: 'file', multiple: true, hidden: true, webkitdirectory: '', class: 'mt-dirin' });
+  const dirB = h('button', { class: 'jk-tb mt-add', type: 'button', title: t('Dodaj cały folder: modele z ich teksturami, reszta plików zostaje nietknięta'), onclick: () => dirIn.click() }, icon('t_folder', 12), h('span', { text: t('Folder') }));
   const repoBox = h('section', { class: 'mt-repo' });
-  const side = h('div', { class: 'mt-side' }, h('div', { class: 'mt-head' }, h('b', { text: t('Materiały') }), count, addB, input), grid, repoBox,
+  const side = h('div', { class: 'mt-side' }, h('div', { class: 'mt-head' }, h('b', { text: t('Materiały') }), count, dirB, addB, input, dirIn), grid, repoBox,
     h('p', { class: 'mt-note', text: t('Pliki zostają w tej przeglądarce. Upuść model w dowolne miejsce Jaskini, a trafi tutaj. Ten sam plik z nową treścią to nowa wersja, nie podmiana.') }));
   const root = h('div', { class: 'mt' }, view, side);
   box.append(h('div', { class: 'mt-c' }, root));
@@ -323,7 +339,7 @@ function renderMaterialy(box, c) {
   function drawEmpty() {
     empty.replaceChildren(h('div', { class: 'mt-empty-in' },
       h('b', { text: t('Przynieś swoje modele') }),
-      h('p', { text: t('Upuść tu pliki z Blockbencha albo Blendera: .glb, .gltf (z .bin i teksturami obok), .obj (z .mtl). Zobaczysz je w świetle, przy człowieku 1,8 m, i wejdziesz do środka.') }),
+      h('p', { text: t('Upuść tu pliki z Blockbencha (.bbmodel, prosto z zapisu) albo eksporty z Blockbencha i Blendera: .glb, .gltf (z .bin i teksturami obok), .obj (z .mtl). Zobaczysz je w świetle, przy człowieku 1,8 m, i wejdziesz do środka.') }),
       h('button', { class: 'btn', type: 'button', onclick: () => input.click() }, icon('plus', 14), t('Wybierz pliki'))));
   }
   function drawRepo(items) {
@@ -439,7 +455,7 @@ function renderMaterialy(box, c) {
         actions[0].play();
         untickMixer = S.tick(dt => { mixer.update(dt); return actions.some(a => a.isRunning()); });
       }
-      S.human(human);
+      S.human(human, !!keepView);
       drawBar(cur);
       say('');
     } catch (err) { say(t('Nie dało się pokazać {0}: {1}', cur.name, err.message), 'err'); }
@@ -455,6 +471,15 @@ function renderMaterialy(box, c) {
   }
   // files: the button, a drop on this window (the drop anywhere else in Jaskinia comes as an event)
   input.addEventListener('change', async () => { const fs = [...input.files]; input.value = ''; if (fs.length) matSay(await matImport(fs), sel); });
+  dirIn.addEventListener('change', async () => {
+    const all = [...dirIn.files]; dirIn.value = '';
+    const fs = all.filter(f => !/(^|\/)(node_modules|\.git)\//.test(f.webkitRelativePath || '') && (MAT_MODEL.test(f.name) || MAT_SIDE.test(f.name)));
+    if (!fs.some(f => MAT_MODEL.test(f.name))) { jtoast(t('W tym folderze nie ma modeli (.bbmodel, .glb, .gltf, .obj).')); return; }
+    say(t('Wczytuję folder…'));
+    const res = await matImport(fs, 'folder', null, (i, n, name) => say(t('Wczytuję {0} z {1}: {2}', i, n, name)));
+    say('');
+    matSay(res, sel);
+  });
   let dragN = 0;
   const hasFiles = e => [...(e.dataTransfer?.types || [])].includes('Files');
   root.addEventListener('dragenter', e => { if (!hasFiles(e)) return; e.preventDefault(); dragN++; dropHint.hidden = false; });
@@ -509,7 +534,7 @@ function matDropAnywhere() {
     if (!hasFiles(e) || e.defaultPrevented) return;
     e.preventDefault(); // a dropped file never navigates away from Jaskinia
     const fs = [...e.dataTransfer.files];
-    if (!fs.some(f => MAT_MODEL.test(f.name) || MAT_PIC.test(f.name))) { jtoast(t('Tego tu nie wezmę: {0}. Materiały to .glb, .gltf, .obj i obrazki.', fs.map(f => f.name).slice(0, 3).join(', '))); return; }
+    if (!fs.some(f => MAT_MODEL.test(f.name) || MAT_PIC.test(f.name))) { jtoast(t('Tego tu nie wezmę: {0}. Materiały to .bbmodel, .glb, .gltf, .obj i obrazki.', fs.map(f => f.name).slice(0, 3).join(', '))); return; }
     const id = openWinOfType('materialy', { w: 0.7, h: 0.82 }); // the one already open comes forward, or a new one
     const res = await matImport(fs);
     const first = matSay(res, null);
@@ -521,6 +546,7 @@ function matDropAnywhere() {
 ICONS.t_materialy = 'M8 1.8 13.6 5v6.1L8 14.2 2.4 11.1V5z M2.4 5 8 8.1 13.6 5 M8 8.1v6.1';
 ICONS.t_wejdz = 'M9.5 2.5h4v11h-4 M2 8h7.5 M6.5 5l3 3-3 3';
 ICONS.t_czlowiek = 'M8 2a1.6 1.6 0 1 1 0 3.2A1.6 1.6 0 0 1 8 2z M5.5 14l.7-5.2-1.4-1.6 1.6-1.3h3.2l1.6 1.3-1.4 1.6.7 5.2 M8 9.5V14';
+ICONS.t_folder = 'M2 4.5h4l1.5 1.5H14v7H2z';
 ICONS.t_obrot = 'M12.8 6.2A5 5 0 1 0 13 9.5 M13.2 3v3.4H9.8';
 if (!ICONS.plus) ICONS.plus = 'M8 3v10 M3 8h10';
 if (!ICONS.trash) ICONS.trash = 'M3 4.5h10 M6.5 4.5V3h3v1.5 M4.5 4.5l.7 9h5.6l.7-9';

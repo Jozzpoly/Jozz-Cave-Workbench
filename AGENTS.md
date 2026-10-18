@@ -53,6 +53,7 @@ Jozz, a solo game developer and graphic designer, writes in Polish and casually.
 | `50-shell.js` | the shell: top bar, workspaces (tabs), windows, dividers, drag and drop, menus and sheets, phone mode (Back closes a sheet, two fingers zoom a window), undo/redo, trash, reset, toasts |
 | `52-przyrzady.js` | instruments: the owner's labs and games running in `przyrzad` and `gra` windows, the instrument contract (hello, state, signals, events, remarks back), the live "Sygnały" window, the picker of what to run, and the demo lab carried inside (`LAB_DEMO`) |
 | `56-swiat.js` | the 3D runtime every 3D window shares: `swStage` (light, theme colours, metre grid, framing, the 1.8 m person, adaptive resolution, renders only on change) and `swWalk` (first person at 1:1, a capsule against a BVH, step-up, jump, fly, phone sticks) |
+| `56b-blockbench.js` | Blockbench's `.bbmodel` read directly into three.js (cubes, meshes, pivots, ZYX rotations, embedded pictures; 16 px = 1 m) |
 | `57-materialy.js` | Materiały: the owner's models and pictures in IndexedDB (files by SHA-256, materials with versions, orientation and scale defaults), the window, file drops anywhere in Jaskinia, his models from his public repositories |
 | `58-api.js` | `window.Jaskinia` v1, the surface other tools may use: `ext.type/icon/strings/open`, `materialy.*`, `swiat.*` (see the v6 doc) |
 | `../vendor/swiat3d.js` | three.js 0.180.0 + addons + three-mesh-bvh 0.9.2, bundled by `tools/swiat/build.mjs`; `render.py` puts it before Jaskinia's script; it only defines a factory until a 3D window asks |
@@ -99,6 +100,6 @@ Interface strings are written in Polish in the source and wrapped in `t('…')`.
     - Backup dedupe ignores views.
     - The trash silently stops at 200 items.
     - The "Cała Jaskinia" export is not disaster recovery.
-15. **Materials (v6).** One browser only, no sync; on GitHub Pages the storage is shared with every page of `jozzpoly.github.io`. Draco/meshopt glTF, KTX2 and FBX are not read; several models in one file are one material. Skinned meshes collide in their rest pose.
+15. **Materials (v6).** One browser only, no sync; on GitHub Pages the storage is shared with every page of `jozzpoly.github.io`. Draco/meshopt glTF, KTX2 and FBX are not read; several models in one file are one material; Blockbench animations are not played. Skinned meshes collide in their rest pose. A folder import never opens files that are not models or their pictures (the owner's `.vox` files hold work that is not his to share).
 
 The order in which to tackle these is in [docs/2026-10-16-szwy.md](docs/2026-10-16-szwy.md), which replaces the order in the view from above.

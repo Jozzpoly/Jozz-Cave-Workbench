@@ -131,18 +131,28 @@ function swStage(host, o = {}) {
     sc.updateProjectionMatrix();
     camera.near = Math.max(0.01, r / 200); camera.far = r * 60 + 50;
     scene.fog.near = r * 4; scene.fog.far = r * 4 + Math.max(30, r * 14);
-    if (!keepView) {
-      const fov = camera.fov * Math.PI / 180, dist = r / Math.sin(fov / 2) * 1.08;
-      const dir = new THREE.Vector3(0.95, 0.55, 1.25).normalize();
-      camera.position.copy(bounds.center).addScaledVector(dir, dist);
-      controls.target.copy(bounds.center);
-    }
+    if (body) placeBody();
+    if (!keepView) look();
     camera.updateProjectionMatrix();
     controls.minDistance = r * 0.05; controls.maxDistance = r * 20 + 20;
     controls.update();
     need = true;
     return bounds;
   };
+  /* the camera frames what is shown, and the body beside it when it is there (a 1 m wheel must not hide behind a giant) */
+  function look() {
+    const vb = bounds.box.clone();
+    if (body) vb.union(new THREE.Box3().setFromObject(body));
+    const sp = vb.getBoundingSphere(new THREE.Sphere()), rr = Math.max(sp.radius, 0.05);
+    const fov = camera.fov * Math.PI / 180, dist = rr / Math.sin(fov / 2) * 1.08;
+    const dir = new THREE.Vector3(0.95, 0.55, 1.25).normalize();
+    camera.position.copy(sp.center).addScaledVector(dir, dist);
+    controls.target.copy(sp.center);
+    camera.far = Math.max(camera.far, dist * 4);
+    camera.updateProjectionMatrix();
+    controls.update();
+  }
+  function placeBody() { const b = bounds; body.position.set(b.box.max.x + 0.45 + Math.min(1, b.size * 0.08), b.box.min.y, b.center.z); }
   st.set = obj => {
     for (const ch of root.children.splice(0)) { ch.parent = null; swDispose(ch); }
     if (obj) { obj.traverse(x => { if (x.isMesh) { x.castShadow = true; x.receiveShadow = true; } }); root.add(obj); }
@@ -150,7 +160,7 @@ function swStage(host, o = {}) {
   };
   /* the body: 1.8 m, beside the thing, so its size is felt and not only read */
   let body = null;
-  st.human = on => {
+  st.human = (on, keep) => {
     if (!on) { if (body) { extra.remove(body); swDispose(body); body = null; } need = true; return; }
     if (!body) {
       // a plain mannequin, 1.8 m: legs, body, arms, head (made of capsules, so it reads as a person from any side)
@@ -166,8 +176,9 @@ function swStage(host, o = {}) {
       body.name = 'człowiek 1,8 m';
       extra.add(body);
     }
-    const b = bounds || st.frame(true);
-    body.position.set(b.box.max.x + 0.45 + Math.min(1, b.size * 0.08), b.box.min.y, b.center.z);
+    if (!bounds) st.frame(true);
+    placeBody();
+    if (!keep) look();
     need = true;
   };
   const ro = new ResizeObserver(() => {
