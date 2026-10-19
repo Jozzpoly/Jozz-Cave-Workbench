@@ -355,10 +355,27 @@ if (!ONLY || ONLY === 'games') {
   const g = await J(() => { const R = __BIB.R, ty = R['Tysi-c-The-Game'], vaw = R['voxel-aeronautics-workshop']; return { ty: ty && { pages: ty.pages, tab: ty.tab }, vaw: vaw && { pages: vaw.pages, tab: vaw.tab }, inWin: __BIB.HOOK.play(ty) }; });
   ok(g.ty && /workers\.dev/.test(g.ty.pages) && g.ty.tab === true && g.inWin === false, 'a game with a verified address that works only in its own tab gets that address and opens there', JSON.stringify(g));
   ok(g.vaw && g.vaw.pages === 'https://jozzpoly.github.io/voxel-aeronautics-workshop/' && !g.vaw.tab, 'VAW keeps its Pages entry from fresh data, not from a hand edit of the published page', JSON.stringify(g.vaw));
+  const multi = await J(() => {
+    const m = __BIB.R['cloudflare-multiplayer-lab'];
+    return m ? {
+      url: m.pages, tab: m.tab, why: m.wejscie?.dlaczego,
+      inWin: __BIB.HOOK.play(m),
+    } : null;
+  });
+  ok(multi?.url === 'https://cloudflare-multiplayer-lab-staging.jozzpoly.workers.dev/world-v0/' &&
+     multi.tab === true && multi.inWin === false &&
+     /2P/.test(multi.why || '') && /Inspect solo/.test(multi.why || ''),
+     'Multi_World candidate 2P Worker entry uses existing verified-entry tab-only path', JSON.stringify(multi));
   ok(await J(() => __BIB.R['Jozz-Cave-Workbench'] && !__BIB.R['Jozz-Cave-Workbench'].pages), 'Jaskinia\'s own preview is not offered as a game (no Jaskinia inside Jaskinia)');
   await J(() => { __JASK.select('Tysi-c-The-Game'); Jaskinia.ext.open('gra'); }); await wait(800);
   ok(await J(() => [...document.querySelectorAll('.win[data-type="gra"]')].some(w => /działa tylko w osobnej karcie/.test(w.textContent) && !w.querySelector('iframe'))), 'its game window explains why it opens in a tab instead of framing it');
   await shot('05-tab-only');
+  await J(() => __JASK.select('cloudflare-multiplayer-lab')); await wait(450);
+  ok(await J(() => [...document.querySelectorAll('.win[data-type="gra"]')].some(w =>
+      /osobnej karcie/.test(w.textContent) && !w.querySelector('iframe') &&
+      /MultiWorld/.test(w.textContent))),
+      'MultiWorld game window explains top-level tab without embedding its Cloudflare origin');
+  await shot('05-multi-2p');
   await ctx.close();
 }
 
