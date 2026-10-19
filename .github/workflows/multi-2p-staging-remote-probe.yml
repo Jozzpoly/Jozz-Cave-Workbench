@@ -1,0 +1,21 @@
+name: Isolated Multi_World 2P live staging probe
+on:
+  push:
+    branches:
+      - experiment/multi-2p-jaskinia-entry-2026-10-20
+permissions:
+  contents: read
+jobs:
+  staging-two-browser:
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Test live Worker in unique private test room
+        run: node tools/probes/multi-2p-staging-live.mjs
