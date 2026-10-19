@@ -1011,7 +1011,7 @@ function findingsFeed(opts = {}) {
 function mixBar(r) {
   const m = r.mix || {}, tot = Math.max(1, r.branches.length);
   const parts = [['aktywne', 'var(--h4)'], ['swieze', 'var(--h2)'], ['stare', 'var(--cold)'], ['wchloniete', 'repeating-linear-gradient(135deg, var(--hatch-strong) 0 2px, transparent 2px 5px), var(--ash)'], ['domyslna', 'var(--ink-3)']];
-  return h('span', { class: 'kmix', title: `${pl(r.branches.length, 'gałąź', 'gałęzie', 'gałęzi')}: ${m.aktywne || 0} aktywnych (≤7 dni), ${m.swieze || 0} świeżych (≤21 dni), ${m.stare || 0} starych i niewchłoniętych, ${m.wchloniete || 0} w całości w ${r.default || 'main'}` },
+  return h('span', { class: 'kmix', 'data-tip': `${pl(r.branches.length, 'gałąź', 'gałęzie', 'gałęzi')}: ${m.aktywne || 0} aktywnych (≤7 dni), ${m.swieze || 0} świeżych (≤21 dni), ${m.stare || 0} starych i niewchłoniętych, ${m.wchloniete || 0} w całości w ${r.default || 'main'}` },
     h('span', { class: 'mbar' }, parts.map(([k, bg]) => m[k] ? h('i', { style: { width: (100 * m[k] / tot).toFixed(2) + '%', background: bg } }) : null)),
     h('span', { class: 'mlab', text: r.branches.length ? pl(r.branches.length, 'gałąź', 'gałęzie', 'gałęzi') : 'bez gałęzi' }));
 }
@@ -1066,7 +1066,7 @@ function kRow(r, open, onOpen) {
         r.state?.status ? h('span', { class: 'kstate', text: r.state.status }) : (r.readme?.lead ? h('span', { class: 'kstate readme', text: r.readme.lead }) : null))),
     mixBar(r),
     h('span', { class: 'kbadges', 'aria-label': counts.map(([s0, n]) => `${n} ${SEV[s0]}`).join(', ') || 'bez ustaleń' },
-      counts.length ? counts.map(([s0, n]) => h('span', { class: 'kb s-' + s0, title: `${n} ${SEV[s0]}`, text: n })) : h('span', { class: 'kb none', text: '·' })),
+      counts.length ? counts.map(([s0, n]) => h('span', { class: 'kb s-' + s0, 'data-tip': `${n} ${SEV[s0]}`, text: n })) : h('span', { class: 'kb none', text: '·' })),
     spark(r, 63, 96, 26),
     h('span', { class: 'kchev', 'aria-hidden': 'true' }));
   const row = h('article', { class: 'krow l-' + (LIFE[r.life]?.cls || 'x') + (isOpen ? ' open' : ''), role: 'listitem', 'data-repo': r.name }, head, det);

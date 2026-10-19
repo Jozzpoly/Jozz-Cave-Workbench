@@ -121,7 +121,7 @@ for g in G["repos"]:
         "private": bool(meta.get("private")) if meta else VIS.get(name) == "private", "desc": meta.get("description"), "api": api_ok,
         "identity": K["identity"].get(name), "stated": K["stated"].get(name, []),
         "readme": {**(g.get("readme") or {}), "lead": clean_lead((g.get("readme") or {}).get("lead"))}, "url": f"{GHB}/{name}",
-        "pages": (WEJ[name]["url"] if name in WEJ else f"https://jozzpoly.github.io/{name}/" if has_pages else None),
+        "pages": (WEJ[name].get("url") if name in WEJ else f"https://jozzpoly.github.io/{name}/" if has_pages else None),
         "tab": bool(name in WEJ and WEJ[name].get("okno") is False),
         "wejscie": ({k: WEJ[name].get(k) for k in ("dlaczego", "sprawdzil", "kiedy")} if name in WEJ else None),
         "created": meta.get("created_at"), "pushed": meta.get("pushed_at"),

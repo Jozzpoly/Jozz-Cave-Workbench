@@ -1,8 +1,8 @@
 {
  "estate": {
-  "generated": "2026-10-19T01:04+00:00",
-  "generated_ts": 1792371857,
-  "gh_collected_ts": 1792371886,
+  "generated": "2026-10-19T01:26+00:00",
+  "generated_ts": 1792373207,
+  "gh_collected_ts": 1792373231,
   "account": {
    "login": "Jozzpoly",
    "created": "2022-02-21T01:52:35Z",
@@ -10,17 +10,17 @@
    "created_ts": 1645408355
   },
   "coverage": {
-   "expected": 24,
-   "collected": 24,
-   "public": 24,
+   "expected": 26,
+   "collected": 26,
+   "public": 26,
    "private": 0,
    "empty": [
     "MinecraftLike-Fun-Project"
    ],
    "missing": [],
    "unlisted": [],
-   "checked_at": "2026-10-14T06:16:16Z",
-   "method": "Lista repo: Claude Code Remote · list_repos(limit=200) (24, sprawdzona 14.10, 08:16). Pełne klony gita: wszystkie gałęzie i cała historia. API GitHuba: metadane, języki, wszystkie PR-y, ostatnie przebiegi CI, otwarte issues.",
+   "checked_at": "2026-10-19T01:24:57Z",
+   "method": "Lista repo: Claude Code Remote · list_repos(limit=200) (26, sprawdzona 19.10, 03:24). Pełne klony gita: wszystkie gałęzie i cała historia. API GitHuba: metadane, języki, wszystkie PR-y, ostatnie przebiegi CI, otwarte issues.",
    "limits": [
     "Repo założone po chwili zrzutu pokaże dopiero przycisk „Sprawdź na żywo” (tak wyszedł przypadek C16).",
     "Kod nie był czytany ani uruchamiany; README i dokumenty wejścia tylko na gałęzi domyślnej (oraz wskazanej, gdzie to zaznaczono).",
@@ -30,21 +30,21 @@
    ]
   },
   "totals": {
-   "repos": 24,
-   "commits": 18042,
-   "branches": 572,
+   "repos": 26,
+   "commits": 18055,
+   "branches": 576,
    "prs": 647,
    "prs_open": 89,
    "prs_merged": 319,
    "ci_runs": 23741,
-   "pages": 11,
-   "active_days": 121,
+   "pages": 10,
+   "active_days": 122,
    "first_ts": 1748036978,
    "busiest_day": [
     "2026-09-15",
     1472
    ],
-   "feniks": 12
+   "feniks": 14
   },
   "estate_days": {
    "2025-05-23": 1,
@@ -163,21 +163,25 @@
    "2026-10-11": 617,
    "2026-10-12": 51,
    "2026-10-13": 8,
-   "2026-10-14": 4,
-   "2026-10-16": 88,
+   "2026-10-14": 5,
+   "2026-10-15": 1,
+   "2026-10-16": 89,
    "2026-10-17": 37,
-   "2026-10-18": 77,
-   "2026-10-19": 23
+   "2026-10-18": 85,
+   "2026-10-19": 25
   },
   "changes": {
    "since": "2026-10-14T06:21+00:00",
    "since_ts": 1791958872,
-   "repos_new": [],
+   "repos_new": [
+    "Feniks-Studio",
+    "Splot"
+   ],
    "repos_gone": [],
    "moved": [
     {
      "repo": "Jozz-Cave-Workbench",
-     "commits": 132,
+     "commits": 133,
      "new_branches": [
       "experiment/gpt-live-comparison-2026-10-17",
       "experiment/gpt-multi-game-isolation-2026-10-16",
@@ -198,7 +202,7 @@
      "moved_tips": 0,
      "life_from": "puste",
      "life_to": "żywe",
-     "last_ts": 1792370700
+     "last_ts": 1792372297
     },
     {
      "repo": "voxel-aeronautics-workshop",
@@ -348,7 +352,11 @@
     }
    ],
    "findings_new": [
+    "Feniks-Studio:bez-api",
+    "Feniks-Studio:main-bez-kodu",
     "Shared-Work-Medium-Lab:stan-wstrzymane",
+    "Splot:bez-api",
+    "Splot:wiele-wejsc",
     "Tysi-c-The-Game:notatka-starsza",
     "cloudflare-multiplayer-lab:praca-poza-main",
     "voxel-aeronautics-workshop:praca-poza-main"
@@ -426,11 +434,12 @@
    "question": "Z czego jest zrobiony świat: edytowalna materia, cała planeta, skan, który można dotknąć?",
    "repos": [
     "FrameMatter-Lab",
-    "Jozz-Splat-Game-Lab"
+    "Jozz-Splat-Game-Lab",
+    "Splot"
    ],
-   "commits": 980,
-   "last_ts": 1791688624,
-   "branches": 25
+   "commits": 987,
+   "last_ts": 1792368400,
+   "branches": 27
   },
   {
    "id": "maszyny",
@@ -469,8 +478,8 @@
     "Shared-Work-Medium-Lab",
     "Jozz-Cave-Workbench"
    ],
-   "commits": 913,
-   "last_ts": 1792370700,
+   "commits": 914,
+   "last_ts": 1792372297,
    "branches": 46
   },
   {
@@ -478,11 +487,12 @@
    "name": "Feniks",
    "question": "Czy da się złożyć całość: żywą krainę, w której mieszkańcy żyją z własnych powodów, a Ty ją tworzysz i przekształcasz?",
    "repos": [
-    "Mini_Feniks"
+    "Mini_Feniks",
+    "Feniks-Studio"
    ],
-   "commits": 18,
-   "last_ts": 1792162880,
-   "branches": 1
+   "commits": 23,
+   "last_ts": 1792338731,
+   "branches": 3
   },
   {
    "id": "poczatki",
@@ -505,7 +515,7 @@
    "private": false,
    "desc": "Jaskinia Joza - a może kiedyś więcej ;>",
    "api": true,
-   "identity": "Przyszły dom Jaskini, Twojego warsztatu nad wszystkimi projektami. Na razie bez commitów.",
+   "identity": "Dom Jaskini, Twojego okna na wszystkie projekty: kod, testy, kompas i publiczny podgląd. Twoja prywatna Jaskinia żyje jako artefakt.",
    "stated": [],
    "readme": {
     "path": "README.md",
@@ -514,18 +524,22 @@
     "upstream_box3d": false
    },
    "url": "https://github.com/Jozzpoly/Jozz-Cave-Workbench",
-   "pages": "https://jozzpoly.github.io/Jozz-Cave-Workbench/",
+   "pages": null,
    "tab": false,
-   "wejscie": null,
+   "wejscie": {
+    "dlaczego": "Jego strona to publiczny podgląd samej Jaskini, nie gra: „Zagraj” otwierałoby Jaskinię w Jaskini.",
+    "sprawdzil": "Claude (Opus), linia Jaskini",
+    "kiedy": "2026-10-19"
+   },
    "created": "2026-10-13T22:45:31Z",
-   "pushed": "2026-10-19T00:51:47Z",
+   "pushed": "2026-10-19T01:11:40Z",
    "default": "main",
    "empty": false,
-   "last_ts": 1792370700,
+   "last_ts": 1792372297,
    "age": 0.01,
    "heat": 5,
    "feniks": true,
-   "commits": 132,
+   "commits": 133,
    "merges": 0,
    "first_ts": 1792119186,
    "active_days": 4,
@@ -533,13 +547,13 @@
     "2026-10-16": 82,
     "2026-10-17": 37,
     "2026-10-18": 11,
-    "2026-10-19": 2
+    "2026-10-19": 3
    },
    "hours": [
     4,
     0,
     2,
-    0,
+    1,
     2,
     0,
     6,
@@ -562,7 +576,7 @@
     0
    ],
    "weekdays": [
-    2,
+    3,
     0,
     0,
     0,
@@ -577,7 +591,7 @@
     ],
     [
      "Claude",
-     15
+     16
     ],
     [
      "Claude (Opus)",
@@ -591,7 +605,7 @@
    "coauthors": [
     [
      "Claude Opus 5.5",
-     16
+     17
     ]
    ],
    "max_day": [
@@ -601,12 +615,12 @@
    "branches": [
     {
      "n": "v6-materialy",
-     "sha": "6e6b8f38a1",
-     "ts": 1792370700,
+     "sha": "32c25d451b",
+     "ts": 1792372297,
      "fork": 1792119232,
-     "a": 12,
+     "a": 13,
      "b": 0,
-     "s": "Jaskinia v6.2: the owner's ten remarks from using v6, answered by behaviour",
+     "s": "Jaskinia v6.3: a release older tabs cannot undo; the GPT lines' findings answered",
      "au": "Claude",
      "decl": [],
      "alias": [],
@@ -889,7 +903,7 @@
       "t": "Jaskinia v6 + v6.1: Materiały, Wejdź, window.Jaskinia, and the foundation (tabs, addresses)",
       "draft": false,
       "head": "v6-materialy",
-      "upd": "2026-10-19T00:52:05Z",
+      "upd": "2026-10-19T01:15:22Z",
       "body": "## Jaskinia v6.1 (on top of v6): the foundation\n\nAfter the owner's look from above on 18 Oct, the agents work from **[the compass (issue #5)](https://github.com/Jozzpoly/Jozz-Cave-Workbench/issues/5)**. v6.1 adds nothing new on top. It makes what exists trustworthy ([docs/2026-10-18-v61-fundament.md](https://github.com/Jozzpoly/Jozz-Cave-Workbench/blob/v6-materialy/docs/2026-10-18-v61-fundament.md)):\n\n- **Several tab"
      },
      {
@@ -1023,7 +1037,7 @@
    "default": "main",
    "empty": false,
    "last_ts": 1792370472,
-   "age": 0.02,
+   "age": 0.03,
    "heat": 5,
    "feniks": true,
    "commits": 425,
@@ -1418,7 +1432,7 @@
    "default": "main",
    "empty": false,
    "last_ts": 1792370241,
-   "age": 0.02,
+   "age": 0.03,
    "heat": 5,
    "feniks": true,
    "commits": 1964,
@@ -1774,7 +1788,7 @@
    "default": "main",
    "empty": false,
    "last_ts": 1792369673,
-   "age": 0.03,
+   "age": 0.04,
    "heat": 5,
    "feniks": true,
    "commits": 1078,
@@ -4106,6 +4120,248 @@
    "score": 12
   },
   {
+   "name": "Splot",
+   "short": "Splot",
+   "family": "materia",
+   "private": false,
+   "desc": null,
+   "api": false,
+   "identity": "Mały żywy świat 2.5D: materia, którą można przekształcać, kilka poziomów i zachowania, które reagują na zmiany. Grywalny punkt wyjścia, a geometria K3 jako osobny dawca.",
+   "stated": [],
+   "readme": {
+    "path": "README.md",
+    "title": "Splot — living-world research, playable baseline and 2.5D donors",
+    "lead": "Status (2026-10-18): experimental / Owner review pending. This public repository holds a reproducible playable baseline and a separate, non-promoted construction-geometry research donor. It is not a validated game engine, not the canonical geometry system for Feniks Studio, and not a replacement for Jaskinia.",
+    "upstream_box3d": false
+   },
+   "url": "https://github.com/Jozzpoly/Splot",
+   "pages": null,
+   "tab": false,
+   "wejscie": null,
+   "created": null,
+   "pushed": null,
+   "default": "main",
+   "empty": false,
+   "last_ts": 1792368400,
+   "age": 0.06,
+   "heat": 5,
+   "feniks": true,
+   "commits": 7,
+   "merges": 0,
+   "first_ts": 1792361524,
+   "active_days": 2,
+   "days": {
+    "2026-10-18": 6,
+    "2026-10-19": 1
+   },
+   "hours": [
+    4,
+    2,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "weekdays": [
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    6
+   ],
+   "authors": [
+    [
+     "Jozzpoly",
+     7
+    ]
+   ],
+   "coauthors": [],
+   "max_day": [
+    "2026-10-18",
+    6
+   ],
+   "branches": [
+    {
+     "n": "research/spatial-truth-2026-10-19",
+     "sha": "b60ecce503",
+     "ts": 1792368400,
+     "fork": 1792361671,
+     "a": 4,
+     "b": 0,
+     "s": "research(feniks): enforce 3D food-contact truth; record multi-level navigation and body pressures",
+     "au": "Jozzpoly",
+     "decl": [],
+     "alias": [],
+     "pr": null,
+     "pre": "research",
+     "stem": "spatial truth",
+     "roles": [
+      "świeża"
+     ],
+     "empty": false
+    },
+    {
+     "n": "main",
+     "sha": "cd9e5d0a18",
+     "ts": 1792361671,
+     "fork": null,
+     "a": 0,
+     "b": 0,
+     "s": "docs: define next falsification-driven Splot campaign and product release gates",
+     "au": "Jozzpoly",
+     "decl": [],
+     "alias": [],
+     "pr": null,
+     "pre": "(bez prefiksu)",
+     "stem": "main",
+     "roles": [
+      "domyślna",
+      "świeża"
+     ],
+     "empty": false
+    }
+   ],
+   "alias_groups": [],
+   "stems": [],
+   "prs": {
+    "total": 0,
+    "open": 0,
+    "draft": 0,
+    "merged": 0,
+    "closed": 0,
+    "first": null,
+    "open_list": []
+   },
+   "ci": {
+    "runs": 0,
+    "def": null,
+    "any": null
+   },
+   "issues": [],
+   "tree": {
+    "files": 39,
+    "md": 10,
+    "dated_md": 0,
+    "code_kb": 219,
+    "md_kb": 31,
+    "workflows": 0,
+    "root_index_html": true,
+    "big_files": [],
+    "junk": [],
+    "has_license": false
+   },
+   "state": {
+    "title": "Splot / stan roboczy — 18.10.2026",
+    "date": null,
+    "status": null,
+    "status_line": null,
+    "phase": null,
+    "phase_words": null,
+    "phase_line": null,
+    "next": [],
+    "next_kind": null,
+    "next_head": null,
+    "lead": null,
+    "lead_line": null,
+    "path": "docs/CURRENT_STATE.md",
+    "last_ts": 1792361573,
+    "sha": "cd9e5d0a18216f45ec65f5f8515f0d4c57f827bd"
+   },
+   "head_sha": "cd9e5d0a18216f45ec65f5f8515f0d4c57f827bd",
+   "stack": [],
+   "langs": [],
+   "docs": [
+    {
+     "p": "AGENTS.md",
+     "t": "Splot — kontrakt pracy agentów",
+     "ts": 1792361573
+    },
+    {
+     "p": "README.md",
+     "t": "Splot — living-world research, playable baseline and 2.5D donors",
+     "ts": 1792361524
+    },
+    {
+     "p": "docs/CURRENT_STATE.md",
+     "t": "Splot / stan roboczy — 18.10.2026",
+     "ts": 1792361573
+    },
+    {
+     "p": "donors/k3-geometry/README.md",
+     "t": "K3 geometry donor — research-only",
+     "ts": 1792361573
+    }
+   ],
+   "pkg": null,
+   "lessons_out": [],
+   "lessons_in": [],
+   "life": "żywe",
+   "mix": {
+    "aktywne": 1,
+    "swieze": 0,
+    "stare": 0,
+    "wchloniete": 0,
+    "domyslna": 1
+   },
+   "findings": [
+    {
+     "id": "Splot:wiele-wejsc",
+     "repo": "Splot",
+     "rule": "wiele-wejsc",
+     "sev": "mid",
+     "title": "4 dokumenty wejścia na `main`: `AGENTS.md`, `README.md`, `docs/CURRENT_STATE.md`, `donors/k3-geometry/README.md`.",
+     "detail": "Nowy agent nie wie, od którego zacząć i który jest prawdą. Jeden dokument powinien wskazywać pozostałe.",
+     "links": [
+      [
+       "drzewo",
+       "https://github.com/Jozzpoly/Splot/tree/main"
+      ]
+     ],
+     "who": "agent",
+     "facts": {
+      "n": 4
+     }
+    },
+    {
+     "id": "Splot:bez-api",
+     "repo": "Splot",
+     "rule": "bez-api",
+     "sev": "info",
+     "title": "Ten zrzut nie ma danych z API GitHuba dla tego repo: opis, pull requesty i przebiegi CI są nieznane, nie zerowe.",
+     "detail": "Git (gałęzie, commity, README) jest pełny. Przy następnym odświeżeniu z dostępem do tego repo luka zniknie.",
+     "links": [
+      [
+       "repo",
+       "https://github.com/Jozzpoly/Splot"
+      ]
+     ],
+     "who": null,
+     "facts": {}
+    }
+   ],
+   "score": 2
+  },
+  {
    "name": "Shared-Work-Medium-Lab",
    "short": "Medium",
    "family": "medium",
@@ -4129,7 +4385,7 @@
    "default": "main",
    "empty": false,
    "last_ts": 1792366218,
-   "age": 0.07,
+   "age": 0.08,
    "heat": 5,
    "feniks": true,
    "commits": 781,
@@ -5201,6 +5457,227 @@
    "score": 5
   },
   {
+   "name": "Feniks-Studio",
+   "short": "Feniks Studio",
+   "family": "feniks",
+   "private": false,
+   "desc": null,
+   "api": false,
+   "identity": "Warsztat do tworzenia miejsc, rzeczy i eksperymentów przyszłego Feniksa. Dziś badania i plan bez aplikacji: budowę wstrzymałeś, a Jaskinia jest jednym z kandydatów na jego dom.",
+   "stated": [],
+   "readme": {
+    "path": "README.md",
+    "title": "Feniks Studio",
+    "lead": "Warsztat do samodzielnego tworzenia miejsc, rzeczy, sytuacji i eksperymentów przyszłego Feniksa. Autor komponuje świat oraz własne środowisko pracy. Agenci rozwijają narzędzia i mechanizmy, dzięki którym kolejne pomysły można realizować samemu.",
+    "upstream_box3d": false
+   },
+   "url": "https://github.com/Jozzpoly/Feniks-Studio",
+   "pages": null,
+   "tab": false,
+   "wejscie": null,
+   "created": null,
+   "pushed": null,
+   "default": "main",
+   "empty": false,
+   "last_ts": 1792338731,
+   "age": 0.4,
+   "heat": 5,
+   "feniks": true,
+   "commits": 5,
+   "merges": 0,
+   "first_ts": 1792014931,
+   "active_days": 4,
+   "days": {
+    "2026-10-14": 1,
+    "2026-10-15": 1,
+    "2026-10-16": 1,
+    "2026-10-18": 2
+   },
+   "hours": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0,
+    1,
+    0,
+    0,
+    1,
+    1
+   ],
+   "weekdays": [
+    0,
+    0,
+    1,
+    1,
+    1,
+    0,
+    2
+   ],
+   "authors": [
+    [
+     "Jozzpoly",
+     5
+    ]
+   ],
+   "coauthors": [],
+   "max_day": [
+    "2026-10-18",
+    2
+   ],
+   "branches": [
+    {
+     "n": "checkpoint/astra-v5-core-2026-10-18",
+     "sha": "3be7a663a0",
+     "ts": 1792338731,
+     "fork": 1792181649,
+     "a": 2,
+     "b": 0,
+     "s": "docs: align Studio handoff with Opus-led development",
+     "au": "Jozzpoly",
+     "decl": [],
+     "alias": [],
+     "pr": null,
+     "pre": "checkpoint",
+     "stem": "astra core",
+     "roles": [
+      "świeża"
+     ],
+     "empty": false
+    },
+    {
+     "n": "main",
+     "sha": "f650d24287",
+     "ts": 1792181649,
+     "fork": null,
+     "a": 0,
+     "b": 0,
+     "s": "docs: reassess Studio against the evolving creative workshop",
+     "au": "Jozzpoly",
+     "decl": [],
+     "alias": [],
+     "pr": null,
+     "pre": "(bez prefiksu)",
+     "stem": "main",
+     "roles": [
+      "domyślna",
+      "świeża"
+     ],
+     "empty": false
+    }
+   ],
+   "alias_groups": [],
+   "stems": [],
+   "prs": {
+    "total": 0,
+    "open": 0,
+    "draft": 0,
+    "merged": 0,
+    "closed": 0,
+    "first": null,
+    "open_list": []
+   },
+   "ci": {
+    "runs": 0,
+    "def": null,
+    "any": null
+   },
+   "issues": [],
+   "tree": {
+    "files": 6,
+    "md": 5,
+    "dated_md": 3,
+    "code_kb": 0,
+    "md_kb": 75,
+    "workflows": 0,
+    "root_index_html": false,
+    "big_files": [],
+    "junk": [],
+    "has_license": false
+   },
+   "state": null,
+   "head_sha": "f650d24287e7362ebe921720b6b2125855cd8e9c",
+   "stack": [
+    "Three.js",
+    "esbuild"
+   ],
+   "langs": [],
+   "docs": [
+    {
+     "p": "AGENTS.md",
+     "t": "Praca nad Feniks Studio",
+     "ts": 1792181649
+    },
+    {
+     "p": "README.md",
+     "t": "Feniks Studio",
+     "ts": 1792181649
+    }
+   ],
+   "pkg": null,
+   "lessons_out": [],
+   "lessons_in": [],
+   "life": "żywe",
+   "mix": {
+    "aktywne": 1,
+    "swieze": 0,
+    "stare": 0,
+    "wchloniete": 0,
+    "domyslna": 1
+   },
+   "findings": [
+    {
+     "id": "Feniks-Studio:main-bez-kodu",
+     "repo": "Feniks-Studio",
+     "rule": "main-bez-kodu",
+     "sev": "mid",
+     "title": "Na `main` nie ma kodu: 6 plików, same dokumenty i konfiguracja.",
+     "detail": "Kto otworzy repo, zobaczy opisy zamiast projektu. Jeśli to świadoma decyzja (kod żyje na gałęziach), warto, żeby README to mówiło w pierwszym zdaniu.",
+     "links": [
+      [
+       "drzewo",
+       "https://github.com/Jozzpoly/Feniks-Studio/tree/main"
+      ]
+     ],
+     "who": "ty+agent",
+     "facts": {
+      "files": 6
+     }
+    },
+    {
+     "id": "Feniks-Studio:bez-api",
+     "repo": "Feniks-Studio",
+     "rule": "bez-api",
+     "sev": "info",
+     "title": "Ten zrzut nie ma danych z API GitHuba dla tego repo: opis, pull requesty i przebiegi CI są nieznane, nie zerowe.",
+     "detail": "Git (gałęzie, commity, README) jest pełny. Przy następnym odświeżeniu z dostępem do tego repo luka zniknie.",
+     "links": [
+      [
+       "repo",
+       "https://github.com/Jozzpoly/Feniks-Studio"
+      ]
+     ],
+     "who": null,
+     "facts": {}
+    }
+   ],
+   "score": 2
+  },
+  {
    "name": "Mini_Feniks",
    "short": "MiniFeniks",
    "family": "feniks",
@@ -5224,7 +5701,7 @@
    "default": "main",
    "empty": false,
    "last_ts": 1792162880,
-   "age": 2.42,
+   "age": 2.43,
    "heat": 4,
    "feniks": true,
    "commits": 18,
@@ -5421,7 +5898,7 @@
    "default": "main",
    "empty": false,
    "last_ts": 1791821668,
-   "age": 6.37,
+   "age": 6.38,
    "heat": 3,
    "feniks": true,
    "commits": 2622,
@@ -7666,7 +8143,7 @@
    "default": "main",
    "empty": false,
    "last_ts": 1791746527,
-   "age": 7.24,
+   "age": 7.25,
    "heat": 2,
    "feniks": true,
    "commits": 1263,
@@ -10123,7 +10600,7 @@
    "default": "main",
    "empty": false,
    "last_ts": 1791743471,
-   "age": 7.27,
+   "age": 7.29,
    "heat": 2,
    "feniks": true,
    "commits": 1973,
@@ -11514,7 +11991,7 @@
    "default": "main",
    "empty": false,
    "last_ts": 1791688624,
-   "age": 7.91,
+   "age": 7.92,
    "heat": 2,
    "feniks": true,
    "commits": 796,
@@ -11998,7 +12475,7 @@
    "default": "main",
    "empty": false,
    "last_ts": 1791675169,
-   "age": 8.06,
+   "age": 8.08,
    "heat": 2,
    "feniks": true,
    "commits": 2000,
@@ -12404,7 +12881,7 @@
    "default": "main",
    "empty": false,
    "last_ts": 1791575590,
-   "age": 9.22,
+   "age": 9.23,
    "heat": 2,
    "feniks": true,
    "commits": 72,
@@ -12674,7 +13151,7 @@
    "default": "main",
    "empty": false,
    "last_ts": 1790641071,
-   "age": 20.03,
+   "age": 20.05,
    "heat": 1,
    "feniks": false,
    "commits": 1409,
@@ -12953,7 +13430,7 @@
    "default": "main",
    "empty": false,
    "last_ts": 1789492149,
-   "age": 33.33,
+   "age": 33.35,
    "heat": 0,
    "feniks": false,
    "commits": 300,
@@ -13245,7 +13722,7 @@
    "default": "main",
    "empty": false,
    "last_ts": 1789092626,
-   "age": 37.95,
+   "age": 37.97,
    "heat": 0,
    "feniks": false,
    "commits": 372,
@@ -14665,7 +15142,7 @@
    "default": "main",
    "empty": false,
    "last_ts": 1789090688,
-   "age": 37.98,
+   "age": 37.99,
    "heat": 0,
    "feniks": false,
    "commits": 974,
@@ -15342,7 +15819,7 @@
    "default": "main",
    "empty": false,
    "last_ts": 1789056492,
-   "age": 38.37,
+   "age": 38.39,
    "heat": 0,
    "feniks": false,
    "commits": 179,
@@ -16126,7 +16603,7 @@
    "default": "main",
    "empty": false,
    "last_ts": 1788695453,
-   "age": 42.55,
+   "age": 42.57,
    "heat": 0,
    "feniks": false,
    "commits": 257,
@@ -17300,7 +17777,7 @@
    "default": "main",
    "empty": false,
    "last_ts": 1788526964,
-   "age": 44.5,
+   "age": 44.52,
    "heat": 0,
    "feniks": false,
    "commits": 581,
@@ -17775,7 +18252,7 @@
    "default": "main",
    "empty": false,
    "last_ts": 1788216250,
-   "age": 48.1,
+   "age": 48.11,
    "heat": 0,
    "feniks": false,
    "commits": 602,
@@ -19500,7 +19977,7 @@
    "default": "main",
    "empty": false,
    "last_ts": 1787394127,
-   "age": 57.61,
+   "age": 57.63,
    "heat": 0,
    "feniks": false,
    "commits": 50,
@@ -19787,7 +20264,7 @@
    "default": "main",
    "empty": false,
    "last_ts": 1786829907,
-   "age": 64.14,
+   "age": 64.16,
    "heat": 0,
    "feniks": false,
    "commits": 184,
@@ -20392,7 +20869,7 @@
    "default": "master",
    "empty": false,
    "last_ts": 1753532362,
-   "age": 449.53,
+   "age": 449.55,
    "heat": 0,
    "feniks": false,
    "commits": 10,
@@ -21331,7 +21808,7 @@
   }
  ],
  "open": [
-  "Feniks nie ma jeszcze repo na GitHubie. Jego dokumentacja Studio i biblioteka donorów leżą lokalnie, poza zasięgiem tej Biblioteki: widzi ona tylko GitHub.",
+  "Feniks jako całość nie ma jednego repo. Studio ma swoje (Feniks-Studio: badania i plan, bez aplikacji), a reszta dokumentacji i biblioteka donorów leżą lokalnie, poza zasięgiem tej Biblioteki: widzi ona tylko GitHub.",
   "Mapy JURE z Twojej rozmowy z GPT nie ruszamy na razie.",
   "Wspólne konto we wszystkich kanałach: dowodem jest diff i odczyt źródła, nie podpis wiadomości.",
   "Wkład Medium w odkrycie nie jest jeszcze wykazany. Do sprawdzenia: późniejszy czytelnik i ramię bez biblioteki."

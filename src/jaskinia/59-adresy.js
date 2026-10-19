@@ -49,10 +49,15 @@ function setAddress(hash) {
   try { history.replaceState(history.state, '', hash); } catch { /* a host that forbids it keeps its own address */ }
 }
 addEventListener('hashchange', () => { route(location.hash); });
-/* called at the end of boot(): the address the page was opened with */
+/* called at the end of boot(): the address the page was opened with. The address of the selected project is one this
+   Jaskinia wrote itself before a reload (setAddress): it puts nothing on screen again (chaos, 19 Oct: every reload added
+   a card). Any other address is acted on once, then the address goes back to the selected project, so a reload does not
+   open the same window again. */
 function routeStart() {
-  const h0 = location.hash;
-  if (h0 && h0.length > 1) setTimeout(() => route(h0), 0);
+  const h0 = location.hash, v = readHash(h0);
+  if (!v) return;
+  if (/^repo~/i.test(v) && v.slice(5).toLowerCase() === String(store.sel || '').toLowerCase()) return;
+  setTimeout(() => { route(h0); if (!/^repo~/i.test(v)) setAddress('#repo~' + store.sel); }, 0);
 }
 
 /* ---------- "Dla agentów": the same Jaskinia as plain text ----------

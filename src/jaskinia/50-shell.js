@@ -1033,6 +1033,7 @@ function askReset(anchor) {
 }
 function resetAll() {
   const b = makeBackup('przed resetem');
+  if (storageOK && !b) return noCopy();
   const f = freshStore();
   store.spaces = f.spaces; store.cur = f.cur;
   rebuildAll();
@@ -1108,6 +1109,7 @@ function restoreBackup(id, quiet) {
   const b = readBackups().find(x => x.id === id);
   if (!b) { jtoast(t('Tej kopii już nie ma.')); return; }
   const before = makeBackup('przed przywróceniem kopii');
+  if (storageOK && !before) return noCopy();
   const d = clone(b.data);
   store.spaces = arr(d.spaces); store.cur = d.cur; store.sel = d.sel;
   for (const [k, n] of Object.entries(obj(d.notes))) if (!store.notes[k] || (n.upd || 0) > (store.notes[k].upd || 0)) store.notes[k] = n;
@@ -1284,6 +1286,7 @@ function openSaved(savedId) {
 }
 function restoreSavedAll(x) {
   const before = makeBackup('przed wczytaniem zapisu');
+  if (storageOK && !before) return noCopy();
   const d = clone(x.data);
   for (const [k, text] of Object.entries(obj(d.notes))) if (!store.notes[k]) store.notes[k] = { text: typeof text === 'string' ? text : text.text || '', upd: Date.now() };
   store.spaces = arr(d.spaces); store.cur = d.cur; if (R[d.sel]) store.sel = d.sel;
@@ -1376,7 +1379,7 @@ function forgetTrash(trId) {
 }
 function forgetNote(noteId) {
   if (notesReferenced().has(noteId)) return;
-  makeBackup('przed usunięciem notatki na zawsze');
+  if (storageOK && !makeBackup('przed usunięciem notatki na zawsze')) { jtoast(t('Nie udało się zrobić kopii przed usunięciem, więc nic nie usunąłem. Pamięć przeglądarki jest pełna: wyeksportuj Jaskinię albo usuń stare kopie.')); return; }
   delete store.notes[noteId];
   persist();
 }
@@ -1553,6 +1556,6 @@ function boot() {
   v6Hint();
   routeStart();
   handleLegacy(); // what older builds wrote while this one was closed
-  window.__JASK = { get L() { return L; }, get store() { return store; }, get phone() { return phone; }, RT, WALLS, apply, select, commit, undo, redo, setSpace, layoutRects, leafIds, rects: () => rects, prefs, openSettings, readBackups, persistNow, get log() { return jlog; }, get uwagi() { return uwagi; }, packageData, packageText, deleteSpace, restoreTrash, forgetTrash, restoreBackup, setPref, signalsBeside, uwagaPop, noteSet, noteNew, persist, route, matImport, matSweep, matApplySettings, handleLegacy, get dirty() { return dirty; }, get lastText() { return lastText; },
+  window.__JASK = { get L() { return L; }, get store() { return store; }, get phone() { return phone; }, RT, WALLS, apply, select, commit, undo, redo, setSpace, layoutRects, leafIds, rects: () => rects, prefs, openSettings, readBackups, persistNow, get log() { return jlog; }, get uwagi() { return uwagi; }, packageData, packageText, deleteSpace, restoreTrash, forgetTrash, restoreBackup, resetAll, setPref, signalsBeside, uwagaPop, noteSet, noteNew, persist, route, matImport, matSweep, matApplySettings, handleLegacy, get dirty() { return dirty; }, get lastText() { return lastText; },
     live: () => [...LIVE.values()].map(e => ({ id: e.id, url: e.url, hello: e.hello, state: e.state, sigs: [...e.sigs.keys()], n: Object.fromEntries([...e.sigs].map(([k, v]) => [k, v.v.length])), evs: e.evs.map(x => x.text), marks: e.marks.length, last: e.last, vis: e.vis })) };
 }

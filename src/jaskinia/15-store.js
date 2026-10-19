@@ -39,7 +39,7 @@ function presetLayout(key) {
   else tree = w('wybor');
   return { tree, wins, floats: [], max: null, focus: null, stats: {} };
 }
-const defaultSel = () => (FRESH.find(r => r.pages && r.life !== 'zakończone') || FRESH[0]).name;
+const defaultSel = () => (FRESH.find(r => r.pages && !r.tab && r.life !== 'zakończone') || FRESH.find(r => r.pages && r.life !== 'zakończone') || FRESH[0]).name; // a game that can run in the game window
 function freshStore() {
   const st = { v: 2, cur: 'przeglad', sel: defaultSel(), spaces: [], notes: {}, saved: [], trash: [], views: {} };
   const prev = store; store = st; // newWinId looks at the store being built
@@ -278,6 +278,24 @@ function mergeStores(b0, ours, theirs) {
    kept whole in an automatic copy (nothing it holds is lost), and a note that is newer there than here comes in; nothing
    else from it is taken, because its layouts may be a day old. Jozz is told once, so he can close the old tab. */
 function v2Seen() { try { return obj(JSON.parse(lsGet(KEY_V2SEEN) || '{}')); } catch { return {}; } }
+/* A copy of what an older tab wrote. Every different state is kept: two older tabs may each hold a layout the other does
+   not, and replacing the previous copy lost the first one (GPT-6 on PR #4, 19 Oct). The same state written again on
+   the next hide adds nothing, and only the newest LEGACY_MAX such copies stay, so an old tab left open cannot push
+   Jozz's own copies out of the ten. */
+const LEGACY_MAX = 4;
+function legacyCopy(from) {
+  const why = t('ze starszej wersji Jaskini'), data = snapshotAll(from);
+  const s0 = sig({ s: data.spaces, n: data.notes, z: data.saved.map(x => x.id) });
+  const had = readBackups().find(b => b.sig === s0); // already kept, as this kind of copy or any other
+  if (had) return had;
+  const b = makeBackup(why, null, from);
+  if (!b) return null;
+  const list = readBackups();
+  let n = 0;
+  const trimmed = list.filter(x => x.why !== why || ++n <= LEGACY_MAX);
+  if (trimmed.length !== list.length) writeBackups(trimmed);
+  return b;
+}
 /* returns null when nothing new was written there, else { notes: [names taken in], kept: the copy or null } */
 function legacyWrite() {
   const now = lsGet(KEY_V2), seen = v2Seen();
@@ -287,10 +305,7 @@ function legacyWrite() {
   const since = seen.at || 0;
   lsSet(KEY_V2SEEN, JSON.stringify({ text: now, at: Date.now() }));
   if (!theirs || typeof theirs !== 'object' || !Array.isArray(theirs.spaces)) { rescue(now); return { notes: [], kept: null, broken: true }; }
-  // an old tab writes on every hide: its newest state replaces its previous copy instead of pushing Jozz's own copies out
-  const why = t('ze starszej wersji Jaskini'), bl = readBackups();
-  if (bl[0] && bl[0].why === why) writeBackups(bl.slice(1));
-  const kept = makeBackup(why, null, { ...fromSnapshot(theirs), saved: arr(theirs.saved) });
+  const kept = legacyCopy({ ...fromSnapshot(theirs), saved: arr(theirs.saved) });
   // newer there than here: written in the old tab after we last looked (or after this note changed here)
   const newer = Object.entries(obj(theirs.notes)).filter(([id, n]) => n && typeof n.text === 'string' && (store.notes[id] ? (n.upd || 0) > (store.notes[id].upd || 0) && n.text !== store.notes[id].text : (n.upd || 0) > since));
   if (newer.some(([id]) => store.notes[id])) makeBackup(t('z tej karty, przed notatkami ze starszej wersji'), null, store); // the text it replaces stays too
@@ -330,8 +345,10 @@ const sig = o => { const t0 = JSON.stringify(o); let x = 2166136261; for (let i 
 /* ---------- automatic copies ---------- */
 function readBackups() { try { return arr(JSON.parse(lsGet(KEY_BAK) || '[]')).filter(b => b && b.data && b.at); } catch { return []; } }
 function writeBackups(list) {
+  if (!list.length) return lsSet(KEY_BAK, '[]') === true; // asked to clear: cleared
+  // when the browser's storage is full the oldest copies go first; if not even the newest one fits, the copies stored
+  // before stay as they were (Feniks GPT on PR #4, 19 Oct: this then wrote "[]", and every earlier copy was gone)
   while (list.length) { if (lsSet(KEY_BAK, JSON.stringify(list)) === true) return true; list.pop(); }
-  lsSet(KEY_BAK, '[]');
   return false;
 }
 function trimBackups(n) { const l = readBackups(); writeBackups(l.slice(0, Math.max(0, l.length - n))); }
@@ -339,6 +356,10 @@ function trimBackups(n) { const l = readBackups(); writeBackups(l.slice(0, Math.
    the things deleted for good ride along in it; restoring that copy puts them back in the trash (GPT's review of v3
    found that the promise "it stays in the copy made now" was not true for layouts and saved states).
    Returns null when the copy could not be written: the caller must not delete then. */
+/* A risky step makes its copy first, and does not happen when the copy cannot be written (the browser's storage is full):
+   the rule deleting from the trash already followed (Feniks GPT on PR #4, 19 Oct: reset, import and restoring went on
+   without a copy and without Cofnij). With no storage at all nothing could be kept anyway, so the step goes on. */
+const noCopy = () => { jtoast(t('Nie udało się zrobić kopii, więc niczego nie zmieniłem. Pamięć przeglądarki jest pełna: wyeksportuj Jaskinię albo usuń stare kopie.')); return false; };
 function makeBackup(why, forgotten, from = store) {
   if (!storageOK || !from) return null;
   const data = snapshotAll(from), list = readBackups(), s0 = sig({ s: data.spaces, n: data.notes, z: data.saved.map(x => x.id) });

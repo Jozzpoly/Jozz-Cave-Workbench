@@ -167,7 +167,7 @@ const SET_SECTIONS = {
     return h('div', { class: 'set-body' },
       setCard(t('Kopie automatyczne'),
         h('p', { class: 'set-note', text: t('Jaskinia robi kopię co kilka godzin (przy otwarciu) i zawsze przed resetem, importem, wczytaniem całości i usuwaniem na zawsze. Trzyma {0} ostatnich. Żyją w tej przeglądarce, obok samej Jaskini.', BAK_MAX) }),
-        h('div', { class: 'set-acts' }, h('button', { class: 'btn', type: 'button', onclick: () => { makeBackup('ręczna'); draw(); jtoast(t('Kopia zrobiona.')); } }, icon('archive', 14), t('Zrób kopię teraz')),
+        h('div', { class: 'set-acts' }, h('button', { class: 'btn', type: 'button', onclick: () => { const b = makeBackup('ręczna'); draw(); jtoast(b ? t('Kopia zrobiona.') : storageOK ? t('Nie udało się zrobić kopii. Pamięć przeglądarki jest pełna: wyeksportuj Jaskinię albo usuń stare kopie.') : t('Ta przeglądarka nie pozwala tej stronie zapisywać, więc kopii nie ma. Eksportuj Jaskinię (Menu → Eksport), żeby ją zachować.')); } }, icon('archive', 14), t('Zrób kopię teraz')),
           h('button', { class: 'btn warn', type: 'button', onclick: e => askReset(e.currentTarget) }, icon('reset', 14), t('Zresetuj całą Jaskinię…'))),
         list.length ? h('ul', { class: 'set-list' }, list.map(b => h('li', null,
           h('div', { class: 'sl-main' }, h('b', { text: when2(b.at) }), h('small', { text: why(b.why) + ' · ' + tn(b.n || arr(b.data.spaces).length, 'układ', 'układy', 'układów') + ' · ' + arr(b.data.spaces).map(sp => sp.name).slice(0, 5).join(', ') })),
@@ -316,6 +316,7 @@ function importAdd(o) {
 }
 function importReplace(o) {
   const before = makeBackup('przed importem');
+  if (storageOK && !before) return noCopy();
   const d = o.data;
   for (const [id, n] of Object.entries(obj(d.notes))) store.notes[id] = typeof n === 'string' ? { text: n, upd: Date.now() } : n;
   store.spaces = arr(d.spaces); store.cur = d.cur; if (R[d.sel]) store.sel = d.sel;

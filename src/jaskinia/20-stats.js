@@ -229,7 +229,7 @@ function statHours(m) {
   for (const p of m.P) { (p.r.hours || []).forEach((v, i) => { H[i] += v; }); (p.r.weekdays || []).forEach((v, i) => { Wd[i] += v; }); }
   const hm = Math.max(1, ...H), wm = Math.max(1, ...Wd), tot = sum(H) || 1;
   const night = [22, 23, 0, 1, 2, 3, 4, 5].reduce((a, i) => a + H[i], 0);
-  const bars = (vals, mx, lab, cls) => h('div', { class: 'st-mb ' + cls }, vals.map((v, i) => h('div', { class: 'mb' + (v === mx ? ' peak' : '') + (cls === 'hrs' && (i >= 22 || i < 6) ? ' night' : ''), title: `${lab(i)}: ${tn(v, 'commit', 'commity', 'commitów')}` },
+  const bars = (vals, mx, lab, cls) => h('div', { class: 'st-mb ' + cls }, vals.map((v, i) => h('div', { class: 'mb' + (v === mx ? ' peak' : '') + (cls === 'hrs' && (i >= 22 || i < 6) ? ' night' : ''), 'data-tip': `${lab(i)}: ${tn(v, 'commit', 'commity', 'commitów')}` },
     h('i', { style: { height: Math.max(v ? 2 : 0, 100 * v / mx).toFixed(1) + '%' } }), h('em', { text: cls === 'hrs' ? (i % 3 === 0 ? String(i) : '') : WDN[i] }))));
   return h('div', { class: 'st-hours' },
     h('p', { class: 'st-cap', text: t('Godzina zapisana w commicie (prawie zawsze polski czas). Ciemniejsze tło: noc, 22:00–6:00.') }),

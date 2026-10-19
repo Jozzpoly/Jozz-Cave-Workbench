@@ -852,6 +852,9 @@ const EN = {
   'przyrząd też ją dostanie': 'the instrument gets it too',
   'Tu było okno „{0}”, którego ta wersja Jaskini ({1}) nie zna. Jego dane czekają: w nowszej Jaskini wróci samo. Wybierz coś innego, a je zastąpisz.': 'There was a “{0}” window here, which this version of Jaskinia ({1}) does not know. Its data is waiting: in a newer Jaskinia it comes back by itself. Choose something else and you replace it.',
   'Nie udało się zrobić kopii przed usunięciem, więc nic nie usunąłem. Pamięć przeglądarki jest pełna: wyeksportuj Jaskinię albo usuń stare kopie.': 'The copy before deleting could not be made, so nothing was deleted. The browser storage is full: export Jaskinia or delete old copies.',
+  'Nie udało się zrobić kopii, więc niczego nie zmieniłem. Pamięć przeglądarki jest pełna: wyeksportuj Jaskinię albo usuń stare kopie.': 'The copy could not be made, so nothing was changed. The browser storage is full: export Jaskinia or delete old copies.',
+  'Nie udało się zrobić kopii. Pamięć przeglądarki jest pełna: wyeksportuj Jaskinię albo usuń stare kopie.': 'The copy could not be made. The browser storage is full: export Jaskinia or delete old copies.',
+  'Ta przeglądarka nie pozwala tej stronie zapisywać, więc kopii nie ma. Eksportuj Jaskinię (Menu → Eksport), żeby ją zachować.': 'This browser does not let this page save, so there is no copy. Export Jaskinia (Menu → Export) to keep it.',
   'Usunięte na zawsze wróciło do kosza: {0}.': 'What was deleted for good is back in the trash: {0}.',
   // v6: Zagraj obok, materiały, świat 3D, wejdź
   'gra zostaje: {0}': 'the game stays: {0}', 'gra obok: {0}': 'a game beside: {0}',

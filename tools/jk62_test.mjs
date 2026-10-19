@@ -75,14 +75,22 @@ if (!ONLY || ONLY === 'charts') {
   await page.mouse.move(5, 890); await wait(450);
   ok(!(await tipNow(J)) && await J(() => !document.querySelector('.tip-on')), 'leaving it the note goes and the light fades back');
   await closeTop(J, wait, 'rok');
-  // the clock
+  // "Kiedy i jak": its hour bars (they had only the browser's tooltip until v6.3)
   await openOnTop(J, wait, 'zegar');
-  c = await onIt(J, '.clock .wedge.peak');
+  await J(() => document.querySelectorAll('.jk-toast').forEach(x => x.remove()));
+  c = await onIt(J, '.win[data-type="zegar"] .st-mb.hrs .mb.peak');
   if (c?.x) { await page.mouse.move(c.x - 40, c.y); await page.mouse.move(c.x, c.y, { steps: 3 }); await wait(150); }
   tp = await tipNow(J);
-  ok(tp && /commit/.test(tp.tt) && /:00/.test(tp.ts), 'an hour on the clock answers with the same note', JSON.stringify(tp || c));
+  ok(tp && /commit/.test(tp.tt) && /:00/.test(tp.ts) && await J(() => !!document.querySelector('.st-mb .mb.tip-on')), 'an hour in "Kiedy i jak" answers with the same note and lights up', JSON.stringify(tp || c));
   await page.mouse.move(5, 890); await wait(300);
   await closeTop(J, wait, 'zegar');
+  // the work clock on the project card (its wedges)
+  await J(() => document.querySelectorAll('.jk-toast').forEach(x => x.remove()));
+  c = await onIt(J, '.win[data-type="karta"] .clock .wedge.peak');
+  if (c?.x) { await page.mouse.move(c.x - 40, c.y); await page.mouse.move(c.x, c.y, { steps: 3 }); await wait(150); }
+  tp = await tipNow(J);
+  ok(tp && /commit/.test(tp.tt) && /:00/.test(tp.ts), 'an hour on the work clock answers with the same note', JSON.stringify(tp || c));
+  await page.mouse.move(5, 890); await wait(300);
   // Puls (in the first layout)
   await onIt(J, '.seismo');
   await J(() => document.querySelectorAll('.jk-toast').forEach(x => x.remove())); // a toast over the chart would take the pointer
@@ -248,8 +256,12 @@ if (!ONLY || ONLY === 'chrome') {
   const q = await J(() => { const b = document.querySelector('.win .wtools > :not(.b-more)'); return b ? getComputedStyle(b).opacity : null; });
   ok(q === '0', 'window tools stay quiet until the header is pointed at', String(q));
   const hb = await center(page, '.win .whead');
-  await page.mouse.move(hb.x, hb.y); await wait(350);
-  ok(await J(() => getComputedStyle(document.querySelector('.win .wtools > :not(.b-more)')).opacity) === '1', 'pointing at the header shows them');
+  await page.mouse.move(hb.x, hb.y);
+  // polled, not a fixed pause: right after start the first drawing of 31 repositories can hold the page for a moment
+  // (a fixed 350 ms failed once under load, 19 Oct)
+  const shown = async () => (await J(() => getComputedStyle(document.querySelector('.win .wtools > :not(.b-more)')).opacity)) === '1';
+  for (let i = 0; i < 20 && !(await shown()); i++) await wait(150);
+  ok(await shown(), 'pointing at the header shows them');
   await shot('20-chrome');
   await ctx.close();
 }

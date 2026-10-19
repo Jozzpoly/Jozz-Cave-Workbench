@@ -341,12 +341,13 @@ function swWalk(stage, o = {}) {
   const isFull = () => document.fullscreenElement === host;
   const fullB = !touch && host.requestFullscreen ? h('button', { class: 'jk-tb sw-full', type: 'button', title: t('Pełny ekran: skróty przeglądarki (Ctrl+W, Ctrl+T) nie zamkną karty. Przytrzymaj Esc, żeby wyjść.'), onclick: () => fullToggle() }, h('span', { text: t('Pełny ekran') })) : null;
   async function fullToggle() {
-    try {
-      if (isFull()) { await document.exitFullscreen(); return; }
-      await host.requestFullscreen({ navigationUI: 'hide' });
-      try { await navigator.keyboard?.lock?.(); } catch { /* not in this browser or embedding */ }
-      lock();
-    } catch { /* fullscreen refused: nothing changes */ }
+    if (isFull()) { try { await document.exitFullscreen(); } catch { /* already out */ } return; }
+    // the keyboard is asked for inside the click, before anything is awaited: Keyboard Lock wants the click's own user
+    // activation, which entering fullscreen may use up; the lock holds once the page is fullscreen. Outside a top-level
+    // page (the claude.ai artifact) it is refused and fullscreen alone stays.
+    try { navigator.keyboard?.lock?.()?.catch?.(() => {}); } catch { /* not in this browser or embedding */ }
+    try { await host.requestFullscreen({ navigationUI: 'hide' }); lock(); }
+    catch { try { navigator.keyboard?.unlock?.(); } catch { /* fine */ } } // fullscreen refused: nothing changes
   }
   const hud = h('div', { class: 'sw-hud' }, cross, hint, h('div', { class: 'sw-top' }, fullB, flyB, exitB), stick, jumpB, touch ? null : veil);
   host.append(hud);

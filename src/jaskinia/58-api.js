@@ -33,7 +33,8 @@ const JASKINIA_API = {
      versions(id), settings(id).
      An id is "m" + the start of the SHA-256 of the material's bytes: the same bytes are the same material, everywhere.
      Settings (turns and scale) have numbered revisions (v6.1): object(id, {set: n}) gives the look a place was built
-     with, object(id) the newest; userData.set says which one it is. Changing the settings never changes an old revision. */
+     with, object(id) the newest; userData.set says which one it is. Changing the settings never changes an old revision.
+     on(fn) hears every change as { added, changed, removed } ids, with other: true when another tab of this Jaskinia made it. */
   materialy: {
     list: () => matList(),
     get: async id => (await matAll()).get(id) || null,

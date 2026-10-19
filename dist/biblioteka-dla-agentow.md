@@ -1,6 +1,6 @@
 # Biblioteka Jozzpoly — brief dla agentów
 
-Zrzut: 2026-10-19 01:04 UTC. Pokrycie: 24/24 repo (24 publicznych, 0 prywatnych). To migawka, nie żywa prawda: przed działaniem sprawdź żywy branch, PR i CI.
+Zrzut: 2026-10-19 01:26 UTC. Pokrycie: 26/26 repo (26 publicznych, 0 prywatnych). To migawka, nie żywa prawda: przed działaniem sprawdź żywy branch, PR i CI.
 
 ## Zasady pracy
 - Zdania „po co jest to repo” i przypisanie do rodzin to hipotezy Claude; Owner je zatwierdza, poprawia albo odrzuca w Bibliotece.
@@ -102,6 +102,14 @@ _Jak dać graczowi i aktorowi fizyczne ciało, które słucha intencji, zamiast 
 
 ## Materia i świat
 _Z czego jest zrobiony świat: edytowalna materia, cała planeta, skan, który można dotknąć?_ (hipoteza)
+
+### Splot
+- Po co (hipoteza): Mały żywy świat 2.5D: materia, którą można przekształcać, kilka poziomów i zachowania, które reagują na zmiany. Grywalny punkt wyjścia, a geometria K3 jako osobny dawca.
+- README: Status (2026-10-18): experimental / Owner review pending. This public repository holds a reproducible playable baseline and a separate, non-promoted construction-geometry research donor. It is not a validated game engine, not the canonical geometry system for Feniks Studio, and not a replacement for
+- Życie: żywe · ostatnia aktywność: dziś · commitów 7 · gałęzi 2 · PR otwartych: nieznane (API nie widziało tego repo)
+- [średnie] 4 dokumenty wejścia na main: AGENTS.md, README.md, docs/CURRENT_STATE.md, donors/k3-geometry/README.md.
+- Dokumenty wejścia: `AGENTS.md`, `README.md`, `docs/CURRENT_STATE.md`, `donors/k3-geometry/README.md`
+- Repo: https://github.com/Jozzpoly/Splot
 
 ### FrameMatter-Lab
 - Po co (hipoteza): Edytowalna materia świata, która bywa statyczna albo dynamiczna i nie traci przy tym tożsamości (Godot).
@@ -233,11 +241,10 @@ _Grać razem: karty przy wspólnym stole, wspólny fizyczny świat, kooperacja w
 _Jak Ty i agenci dzielicie rzeczywistość projektów, żebyś nie był kurierem między nimi?_ (hipoteza)
 
 ### Jozz-Cave-Workbench
-- Po co (hipoteza): Przyszły dom Jaskini, Twojego warsztatu nad wszystkimi projektami. Na razie bez commitów.
+- Po co (hipoteza): Dom Jaskini, Twojego okna na wszystkie projekty: kod, testy, kompas i publiczny podgląd. Twoja prywatna Jaskinia żyje jako artefakt.
 - README: Jaskinia ("the cave") is Jozz's workbench over all of his repositories. It is one full-screen page of windows that he arranges himself, the way Blender lets you compose editors into workspaces. The windows can show: a map of projects as parcels grouped by family · a wall of project cards to move, zo
-- Życie: żywe · ostatnia aktywność: dziś · commitów 132 · gałęzi 13 · PR otwartych 3
+- Życie: żywe · ostatnia aktywność: dziś · commitów 133 · gałęzi 13 · PR otwartych 3
 - Dokumenty wejścia: `AGENTS.md`, `README.md`
-- Pages: https://jozzpoly.github.io/Jozz-Cave-Workbench/
 - Repo: https://github.com/Jozzpoly/Jozz-Cave-Workbench
 
 ### Shared-Work-Medium-Lab
@@ -254,6 +261,14 @@ _Jak Ty i agenci dzielicie rzeczywistość projektów, żebyś nie był kurierem
 
 ## Feniks
 _Czy da się złożyć całość: żywą krainę, w której mieszkańcy żyją z własnych powodów, a Ty ją tworzysz i przekształcasz?_ (hipoteza)
+
+### Feniks-Studio
+- Po co (hipoteza): Warsztat do tworzenia miejsc, rzeczy i eksperymentów przyszłego Feniksa. Dziś badania i plan bez aplikacji: budowę wstrzymałeś, a Jaskinia jest jednym z kandydatów na jego dom.
+- README: Warsztat do samodzielnego tworzenia miejsc, rzeczy, sytuacji i eksperymentów przyszłego Feniksa. Autor komponuje świat oraz własne środowisko pracy. Agenci rozwijają narzędzia i mechanizmy, dzięki którym kolejne pomysły można realizować samemu.
+- Życie: żywe · ostatnia aktywność: dziś · commitów 5 · gałęzi 2 · PR otwartych: nieznane (API nie widziało tego repo)
+- [średnie] Na main nie ma kodu: 6 plików, same dokumenty i konfiguracja.
+- Dokumenty wejścia: `AGENTS.md`, `README.md`
+- Repo: https://github.com/Jozzpoly/Feniks-Studio
 
 ### Mini_Feniks
 - Po co (hipoteza): Poważna próba złożenia jak największej części marzenia o Feniksie w jedną żywą krainę; po pierwszym graniu budowa wstrzymana, trwa ocena fundamentu.
@@ -278,7 +293,9 @@ _Od czego zaczęło się na GitHubie: mod do Minecrafta, vibe-coding, pusty pomy
 - Repo: https://github.com/Jozzpoly/MinecraftLike-Fun-Project
 
 ## Zmiany od poprzedniego zrzutu (2026-10-14 06:21 UTC)
-- Jozz-Cave-Workbench: +132 commity, +13 gałęzi, życie: puste → żywe
+- nowe repo: Feniks-Studio
+- nowe repo: Splot
+- Jozz-Cave-Workbench: +133 commity, +13 gałęzi, życie: puste → żywe
 - voxel-aeronautics-workshop: +16 commitów, +1 gałąź, −12 gałęzi (usunięte), życie: uśpione → żywe
 - cloudflare-multiplayer-lab: +4 commity, życie: stygnące → żywe
 - Tysi-c-The-Game: +12 commitów, +5 gałęzi, życie: stygnące → żywe
@@ -289,7 +306,7 @@ _Od czego zaczęło się na GitHubie: mod do Minecrafta, vibe-coding, pusty pomy
 - FrameMatter-Lab: życie: żywe → stygnące
 - JV-Box3D-Web-experiment: życie: żywe → stygnące
 - WebXR-Lab: życie: stygnące → uśpione
-- nowe ustalenia: Shared-Work-Medium-Lab:stan-wstrzymane, Tysi-c-The-Game:notatka-starsza, cloudflare-multiplayer-lab:praca-poza-main, voxel-aeronautics-workshop:praca-poza-main
+- nowe ustalenia: Feniks-Studio:bez-api, Feniks-Studio:main-bez-kodu, Shared-Work-Medium-Lab:stan-wstrzymane, Splot:bez-api, Splot:wiele-wejsc, Tysi-c-The-Game:notatka-starsza, cloudflare-multiplayer-lab:praca-poza-main, voxel-aeronautics-workshop:praca-poza-main
 - ustalenie zniknęło: Jozz-Cave-Workbench: Repo nie ma ani jednego commita.
 - ustalenie zniknęło: voxel-aeronautics-workshop: 14 gałęzi na remote; 13 z nich nie ruszało się od ponad 3 tygodni i nie mieści się w main.
 

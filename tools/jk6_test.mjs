@@ -98,21 +98,29 @@ if (!ONLY || ONLY === 'desk') {
   const house = (await lib(J)).find(m => m.name === 'Box3d___building');
   await pick(page, J, 'Box3d___building');
   await page.locator('.mt-bar .jk-tb', { hasText: /Skala/ }).click(); await wait(200);
-  await page.locator('.jk-menu button, .jk-menu .mi, [role=menuitem]', { hasText: '×1/100' }).first().click(); await wait(1500);
+  // A new setting is saved once the model is measured again and its picture redrawn, which takes a moment under load:
+  // wait for the record itself instead of a fixed pause (a 1.5 s pause failed once on a busy machine, 19 Oct).
+  const settled = (fn, ms = 20000) => waitFor(J, fn, house.id, ms);
+  await page.locator('.jk-menu button, .jk-menu .mi, [role=menuitem]', { hasText: '×1/100' }).first().click();
+  await settled(id => Jaskinia.materialy.get(id).then(m => !!m && Math.abs((m.scale || 1) - 0.01) < 1e-9 && !!m.facts && m.facts.size[1] < 1));
   let h2 = (await lib(J)).find(m => m.id === house.id);
-  ok(h2 && Math.abs(h2.scale - 0.01) < 1e-9 && Math.abs(h2.size[1] - 0.0759) < 0.002, 'scale ×1/100 makes the house 7.6 cm', JSON.stringify(h2 && dims(h2)));
+  ok(h2 && Math.abs(h2.scale - 0.01) < 1e-9 && Math.abs(h2.size[1] - 0.0759) < 0.002, 'scale ×1/100 makes the house 7.6 cm', JSON.stringify(h2 && { size: dims(h2), scale: h2.scale }));
+  await waitFor(J, () => /Bardzo mały/.test(document.querySelector('.mt-cap')?.textContent || ''), null, 5000);
   ok(await J(() => /Bardzo mały/.test(document.querySelector('.mt-cap')?.textContent || '')), 'a tiny model gets a hint about the scale');
   await page.locator('.mt-bar .jk-tb', { hasText: /Skala/ }).click(); await wait(200);
   await page.locator('.jk-menu button, .jk-menu .mi, [role=menuitem]', { hasText: /^×1\b|^×1jednostka/ }).first().click().catch(() => {});
-  await wait(1200);
-  h2 = (await lib(J)).find(m => m.id === house.id);
-  if (Math.abs(h2.scale - 1) > 1e-9) { await J(async id => { const m = await Jaskinia.materialy.get(id); m.scale = 1; }, house.id); }
+  await settled(id => Jaskinia.materialy.get(id).then(m => !!m && Math.abs((m.scale || 1) - 1) < 1e-9 && !!m.facts && m.facts.size[1] > 1));
+  await waitFor(J, () => !!document.querySelector('.mt-go'), null, 15000);
   await page.locator('.mt-bar .jk-tb', { hasText: /Obrót/ }).click(); await wait(200);
-  await page.locator('.jk-menu button, .jk-menu .mi, [role=menuitem]', { hasText: 'Postaw: X +90°' }).first().click(); await wait(1500);
+  await page.locator('.jk-menu button, .jk-menu .mi, [role=menuitem]', { hasText: 'Postaw: X +90°' }).first().click();
+  await settled(id => Jaskinia.materialy.get(id).then(m => !!m && !!m.rot && m.rot[0] === 1 && !!m.facts && m.facts.size[2] > 7));
   const h3 = (await lib(J)).find(m => m.id === house.id);
   ok(h3 && h3.rot[0] === 1 && Math.abs(h3.size[2] - 7.59 * (h3.scale || 1)) < 0.06 * (h3.scale || 1), 'a quarter turn about X lays the house down (its height becomes its depth)', JSON.stringify(h3 && { rot: h3.rot, size: dims(h3), scale: h3.scale }));
+  await waitFor(J, () => !!document.querySelector('.mt-go'), null, 15000);
   await page.locator('.mt-bar .jk-tb', { hasText: /Obrót/ }).click(); await wait(200);
-  await page.locator('.jk-menu button, .jk-menu .mi, [role=menuitem]', { hasText: 'Jak w pliku' }).first().click(); await wait(1300);
+  await page.locator('.jk-menu button, .jk-menu .mi, [role=menuitem]', { hasText: 'Jak w pliku' }).first().click();
+  await settled(id => Jaskinia.materialy.get(id).then(m => !!m && !!m.rot && m.rot.every(v => v === 0) && !!m.facts && m.facts.size[1] > 7));
+  await waitFor(J, () => !!document.querySelector('.mt-go'), null, 15000);
   // the API gives another tool a fresh copy with the defaults applied
   const objInfo = await J(async id => { const o = await Jaskinia.materialy.object(id); const { THREE } = Jaskinia.swiat.three(); const s = new THREE.Box3().setFromObject(o).getSize(new THREE.Vector3()); return { name: o.name, mat: o.userData.material, size: [s.x, s.y, s.z].map(v => +v.toFixed(2)), isObj: o.isObject3D }; }, house.id);
   ok(objInfo.isObj && objInfo.mat === house.id, 'Jaskinia.materialy.object(id) gives a three.js object of the material', JSON.stringify(objInfo));
@@ -196,7 +204,7 @@ if (!ONLY || ONLY === 'desk') {
   await shot('10-reload');
   /* ---------- Zagraj (the owner's note of 18 Oct): the plain click changes the game in the game window; Shift opens one beside ---------- */
   await page.route('https://jozzpoly.github.io/**', r => r.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><title>gra</title><body style="background:#123">gra</body>' }));
-  const three = await J(() => Object.values(__BIB.R).filter(r => r.pages).slice(0, 3).map(r => r.name));
+  const three = await J(() => Object.values(__BIB.R).filter(r => r.pages && !r.tab).slice(0, 3).map(r => r.name)); // games that may run in a window (data/wejscia.json can say "tab only")
   const games = () => J(() => { const ws = Object.entries(__JASK.L.wins).filter(([, w]) => w.type === 'gra'); return { n: ws.length, pins: ws.map(([, w]) => w.pin), rects: ws.map(([id]) => { const r = document.querySelector(`.win[data-id="${id}"]`).getBoundingClientRect(); return [Math.round(r.x), Math.round(r.y), Math.round(r.width), Math.round(r.height)]; }) }; });
   await J(n => __BIB.HOOK.play(__BIB.R[n]), three[0]); await wait(500);
   await J(n => __BIB.HOOK.play(__BIB.R[n]), three[1]); await wait(500);

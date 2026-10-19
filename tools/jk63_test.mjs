@@ -1,12 +1,16 @@
 // Jaskinia v6.3 checks: a release that older tabs cannot undo, and merges that keep both losing sides.
 // Each check answers a finding of the GPT lines on PR #4 (18 Oct), most of them reproduced in a real browser by GPT-6.
 //   oldtab     a published v6 tab, still open on the same address, writes its old state on hide: the new state stays,
-//              the old one waits in a copy, a note newer in the old tab comes in (and the replaced text is kept too)
+//              the old one waits in a copy, a note newer in the old tab comes in (and the replaced text is kept too);
+//              the same for a v6.2 tab, the build the owner's artifact ran before v6.3
 //   merge      two tabs that each lose something in one merge keep both losers; a conflict inside one window and a rename
 //              are conflicts too
-//   materials  revisions survive an older build rewriting the record, two tabs never take one revision number, two
+//   materials  revisions survive an older build rewriting the record, two tabs never take one revision number (and the
+//              record ends on the newest), a tab reading while another applies a change adds nothing, two
 //              "texture.png" inside one glTF stay two pictures, leftovers of a failed import are swept only when old
-//   agents     an open "Dla agentów" window follows changes and says when and from where it reads
+//   agents     an open "Dla agentów" window follows changes and says when and from where it reads; reloads add nothing
+//   games      verified play entries (data/wejscia.json): Tysiąc in its own tab, VAW framed, Jaskinia never offered
+//              as a game of itself, a fresh Granie layout frames a real game
 // node tools/jk63_test.mjs [shotdir]     (old builds come from git: 2fde987 = published v6, 6e6b8f3 = v6.2)
 import { chromium } from 'playwright';
 import { serve } from './serve.mjs';
@@ -77,6 +81,50 @@ if ((!ONLY || ONLY === 'oldtab') && OLD6) {
   await C.shot('01-old-tab');
   await ctx.close();
 } else if (!OLD6) console.log('   (no published v6 build at hand: the old-tab checks are skipped)');
+// Two older tabs with different layouts each write their state: both are kept (GPT-6 on PR #4, 19 Oct: replacing the
+// previous copy lost the first tab's layout). The same state again adds nothing, and at most four such copies stay.
+if ((!ONLY || ONLY === 'oldtab') && OLD6) {
+  const ctx = await context();
+  const A = await tab(ctx, OLD6);
+  await A.J(() => __JASK.persistNow());
+  const C = await tab(ctx); // v6.3 takes the state over
+  const B = await tab(ctx, OLD6);
+  const WHY = 'ze starszej wersji Jaskini';
+  const legacy = J => J(w => __JASK.readBackups().filter(b => b.why === w).map(b => (b.data.spaces || [])[0]?.name), WHY);
+  const kept = n => waitFor(C.J, n => __JASK.readBackups().some(b => (b.data.spaces || []).some(s => s.name === n)), n);
+  await B.J(() => { __JASK.store.spaces[0].name = 'UKŁAD B'; __JASK.persistNow(); }); await kept('UKŁAD B');
+  await A.J(() => { __JASK.store.spaces[0].name = 'UKŁAD A'; __JASK.persistNow(); }); await kept('UKŁAD A');
+  const both = await legacy(C.J);
+  ok(both.includes('UKŁAD A') && both.includes('UKŁAD B'), 'two older tabs with different layouts: both wait in copies (GPT-6: the second one replaced the first)', JSON.stringify(both));
+  await A.J(() => __JASK.persistNow()); await C.wait(700);
+  const again = await legacy(C.J);
+  ok(again.length === both.length, 'the same state written again adds no copy', JSON.stringify(again));
+  for (let i = 1; i <= 5; i++) { await A.J(i => { __JASK.store.spaces[0].name = 'UKŁAD A' + i; __JASK.persistNow(); }, i); await kept('UKŁAD A' + i); }
+  const capped = await C.J(w => { const l = __JASK.readBackups(); return { legacy: l.filter(b => b.why === w).map(b => (b.data.spaces || [])[0]?.name), own: l.filter(b => b.why !== w).map(b => b.why) }; }, WHY);
+  ok(capped.legacy.length === 4 && capped.legacy[0] === 'UKŁAD A5' && capped.own.length >= 1, 'an older tab writing again and again keeps its newest four copies, and Jozz\'s own copies stay', JSON.stringify(capped));
+  await ctx.close();
+}
+// The owner's own way up: his artifact ran v6.2, and its tab may still be open when v6.3 arrives on the same origin.
+// v6.2 writes only after a change, so the risk is a change made in that old tab after v6.3 took over.
+const OLD62 = oldBuild('6e6b8f3', '_old_v62.html');
+if ((!ONLY || ONLY === 'oldtab') && OLD62) {
+  const ctx = await context();
+  const A = await tab(ctx, OLD62);
+  const nid = await A.J(() => { const id = Object.keys(__JASK.store.notes)[0] || 'n_v62'; __JASK.store.notes[id] = { text: 'STARA (v6.2)', upd: Date.now() }; __JASK.persist(); return id; });
+  await A.wait(600);
+  const B = await tab(ctx);
+  ok(await B.J(id => __JASK.store.notes[id]?.text === 'STARA (v6.2)', nid), 'v6.3 takes over the state of the v6.2 artifact tab on its first start');
+  await B.J(id => __JASK.noteSet(id, 'NOWA (v6.3)'), nid); await B.wait(600);
+  // the v6.2 tab, still open, gets a new note and writes its state (with its old copy of the first note)
+  const id2 = await A.J(() => { const id = 'n_v62_' + Date.now(); __JASK.store.notes[id] = { text: 'NOTATKA Z KARTY v6.2', upd: Date.now() }; __JASK.persist(); return id; });
+  const took = await waitFor(B.J, id => __JASK.store.notes[id]?.text === 'NOTATKA Z KARTY v6.2', id2);
+  ok(await B.J(id => __JASK.store.notes[id]?.text === 'NOWA (v6.3)', nid) && !!took, 'a change in the still-open v6.2 tab comes in without undoing the newer note', JSON.stringify(await B.J(([a, b]) => [__JASK.store.notes[a]?.text, __JASK.store.notes[b]?.text], [nid, id2])));
+  await A.page.goto('about:blank'); await new Promise(r => setTimeout(r, 300));
+  const C = await tab(ctx);
+  const cs = await copies(C.J);
+  ok(await C.J(id => __JASK.store.notes[id]?.text === 'NOWA (v6.3)', nid) && cs.some(b => b.why === 'ze starszej wersji Jaskini'), 'after the v6.2 tab is gone, the newer note stays and its state waits in a copy', JSON.stringify(cs.map(b => b.why)));
+  await ctx.close();
+}
 
 /* ---------- 2. merges keep both losing sides ---------- */
 if (!ONLY || ONLY === 'merge') {
@@ -111,6 +159,33 @@ if (!ONLY || ONLY === 'merge') {
   await ctx.close();
 }
 
+/* ---------- 2b. a risky step without its copy does not happen (Feniks GPT on PR #4, 19 Oct) ---------- */
+if (!ONLY || ONLY === 'merge' || ONLY === 'copies') {
+  const ctx = await context();
+  const { J, wait, page } = await tab(ctx);
+  await J(() => { __JASK.store.spaces[0].name = 'MÓJ UKŁAD'; __JASK.persist(); }); await wait(500);
+  const autoId = await J(() => __JASK.readBackups()[0]?.id || null);
+  // a long note makes the next copy bigger than anything stored, and the browser's storage has room only for what the
+  // copies take now: a new copy cannot fit even alone, while a short write such as "[]" still could
+  await J(() => { __JASK.store.notes.n_dluga = { text: 'x'.repeat(20000), upd: Date.now() }; __JASK.persist(); }); await wait(500);
+  const n0 = await J(() => __JASK.readBackups().length);
+  await J(() => { const set = Storage.prototype.setItem, room = (localStorage.getItem('jaskinia:kopie') || '').length; window.__unfull = () => { Storage.prototype.setItem = set; }; Storage.prototype.setItem = function (k, v) { if (k === 'jaskinia:kopie' && String(v).length > room) throw new DOMException('full', 'QuotaExceededError'); return set.call(this, k, v); }; });
+  await J(() => __JASK.resetAll());
+  const afterReset = await J(() => ({ name: __JASK.store.spaces[0]?.name, copies: __JASK.readBackups().length, told: [...document.querySelectorAll('.jk-toast')].some(x => /Nie udało się zrobić kopii, więc niczego nie zmieniłem/.test(x.textContent)) }));
+  ok(n0 >= 1 && afterReset.copies === n0, 'a copy that does not fit leaves the earlier copies as they were (Feniks GPT: it wrote "[]")', JSON.stringify({ n0, after: afterReset.copies }));
+  if (autoId) await J(id => __JASK.restoreBackup(id, true), autoId);
+  const afterRestore = await J(() => __JASK.store.spaces[0]?.name);
+  await J(() => __JASK.openSettings('kopie')); await wait(400);
+  await page.locator('button', { hasText: 'Zrób kopię teraz' }).first().click(); await wait(300);
+  const manual = await J(() => [...document.querySelectorAll('.jk-toast')].map(x => x.textContent).filter(x => /kopi/i.test(x)).pop() || '');
+  ok(afterReset.name === 'MÓJ UKŁAD' && afterReset.told && afterRestore === 'MÓJ UKŁAD' && !/Kopia zrobiona/.test(manual) && /Nie udało się zrobić kopii/.test(manual),
+    'with no room for a copy, reset and restoring a copy change nothing and say why; "Zrób kopię teraz" does not claim a copy', JSON.stringify({ afterReset, afterRestore, manual }));
+  await page.keyboard.press('Escape');
+  await J(() => { window.__unfull(); delete __JASK.store.notes.n_dluga; __JASK.resetAll(); });
+  ok(await J(() => __JASK.store.spaces[0]?.name !== 'MÓJ UKŁAD' && __JASK.readBackups()[0]?.why === 'przed resetem'), 'with room again, reset makes its copy first and goes on');
+  await ctx.close();
+}
+
 /* ---------- 3. materials ---------- */
 const png = (r, g, b) => { const c = document.createElement('canvas'); c.width = c.height = 4; const x = c.getContext('2d'); x.fillStyle = `rgb(${r},${g},${b})`; x.fillRect(0, 0, 4, 4); return new Promise(res => c.toBlob(res, 'image/png')); };
 if (!ONLY || ONLY === 'materials') {
@@ -134,6 +209,76 @@ if (!ONLY || ONLY === 'materials') {
   const [ra, rb] = await Promise.all([A.J(id => __JASK.matApplySettings(id, { scale: 4 }).then(r => r.n), id), C.J(id => __JASK.matApplySettings(id, { scale: 8 }).then(r => r.n), id)]);
   const after = await C.J(async id => { const db = await new Promise(r => { const q = indexedDB.open('jaskinia-materialy-ustawienia', 1); q.onsuccess = () => r(q.result); }); const v = await new Promise(r => { const q = db.transaction('sets').objectStore('sets').get(id); q.onsuccess = () => r(q.result); }); db.close(); return v.sets.map(s => [s.n, s.scale]); }, id);
   ok(ra !== rb && after.length === 5 && new Set(after.map(x => x[0])).size === 5, 'two tabs changing one material at once get two revision numbers', JSON.stringify({ ra, rb, after }));
+  const rec = await C.J(async id => { const db = await new Promise(r => { const q = indexedDB.open('jaskinia-materialy', 1); q.onsuccess = () => r(q.result); }); const m = await new Promise(r => { const q = db.transaction('materialy').objectStore('materialy').get(id); q.onsuccess = () => r(q.result); }); db.close(); return { set: m.set, scale: m.scale }; }, id);
+  ok(rec.set === after[4][0] && rec.scale === after[4][1], 'after both, the record shows the newest of the two (the one numbered later)', JSON.stringify(rec));
+  // a tab that reads while another is applying a change (its revision numbered, the record not written yet) adds nothing:
+  // GPT's material script showed the in-place case; this is the moment between the two writes of v6.3 itself (19 Oct)
+  const before = await C.J(id => Jaskinia.materialy.settings(id).then(l => l.map(s => [s.n, s.scale, s.by || ''])), id);
+  const tagged = l => l.filter(s => s[2]).map(s => s[0]).join();
+  const mid = await A.J(async id => {
+    const db = await new Promise(r => { const q = indexedDB.open('jaskinia-materialy-ustawienia', 1); q.onsuccess = () => r(q.result); });
+    const k = await new Promise(r => { const tx = db.transaction('sets', 'readwrite'), os = tx.objectStore('sets'); let k = 0; const q = os.get(id); q.onsuccess = () => { const v = q.result; k = v.sets[v.sets.length - 1].n + 1; v.sets.push({ n: k, rot: [0, 1, 0], scale: 3, at: Date.now() }); os.put(v); }; tx.oncomplete = () => r(k); });
+    db.close();
+    return k;
+  }, id);
+  const D = await tab(ctx);
+  const seenMid = await D.J(id => Jaskinia.materialy.settings(id).then(l => l.map(s => [s.n, s.scale, s.by || ''])), id);
+  await A.J(async ([id, k]) => { // the apply finishes: the record takes the look of its revision
+    const db = await new Promise(r => { const q = indexedDB.open('jaskinia-materialy', 1); q.onsuccess = () => r(q.result); });
+    await new Promise(r => { const tx = db.transaction('materialy', 'readwrite'), os = tx.objectStore('materialy'); const q = os.get(id); q.onsuccess = () => { const m = q.result; m.rot = [0, 1, 0]; m.scale = 3; m.set = k; m.sets = [...(m.sets || []).filter(s => s.n !== k), { n: k, rot: [0, 1, 0], scale: 3, at: Date.now() }]; os.put(m); }; tx.oncomplete = r; });
+    db.close();
+  }, [id, mid]);
+  const E = await tab(ctx);
+  const seenAfter = await E.J(id => Jaskinia.materialy.settings(id).then(l => l.map(s => [s.n, s.scale, s.by || ''])), id);
+  ok(mid === before.length + 1 && seenMid.length === mid && tagged(seenMid) === tagged(before) && seenAfter.length === mid && tagged(seenAfter) === tagged(before) && seenAfter[mid - 1][1] === 3,
+    'a tab reading while another applies a change adds no revision of its own; the change stays the newest', JSON.stringify({ mid, before: tagged(before), seenMid, seenAfter }));
+  await D.page.close(); await E.page.close();
+  // the same moment for a material never changed before: its record names no revision at all (Astra's probe, PR #4)
+  const idF = await A.J(`(async () => { const b = await (${png})(90, 160, 40); const r = await __JASK.matImport([{ name: 'swiezy.png', blob: b }], 'plik'); return r.done[0].id; })()`);
+  await A.J(async id => {
+    const db = await new Promise(r => { const q = indexedDB.open('jaskinia-materialy-ustawienia', 1); q.onsuccess = () => r(q.result); });
+    await new Promise(r => { const tx = db.transaction('sets', 'readwrite'); tx.objectStore('sets').put({ id, sets: [{ n: 1, rot: [0, 0, 0], scale: 1, at: 1 }, { n: 2, rot: [0, 0, 0], scale: 2, at: Date.now() }] }); tx.oncomplete = r; });
+    db.close();
+  }, idF);
+  const D2 = await tab(ctx);
+  const freshMid = await D2.J(id => Promise.all([Jaskinia.materialy.settings(id), Jaskinia.materialy.object(id)]).then(([l, o]) => ({ l: l.map(s => [s.n, s.scale, s.by || '']), set: o.userData.set })), idF);
+  ok(freshMid.l.length === 2 && !freshMid.l.some(s => s[2]) && freshMid.set === 2, 'the same for a material changed for the first time (its record names no revision yet)', JSON.stringify(freshMid));
+  await D2.page.close();
+  // another tab scales the material this window shows: the window shows it as it is now, and deleting it here (then
+  // Cofnij) never undoes that change. The window used to keep its own copy of the record and write it back (19 Oct).
+  const id3 = await A.J(`(async () => {
+    const pos = new Float32Array([0,0,0, 1,0,0, 0,1,0]);
+    const g = { asset: { version: '2.0' }, buffers: [{ uri: 'data:application/octet-stream;base64,' + btoa(String.fromCharCode(...new Uint8Array(pos.buffer))), byteLength: pos.byteLength }],
+      bufferViews: [{ buffer: 0, byteOffset: 0, byteLength: pos.byteLength }], accessors: [{ bufferView: 0, componentType: 5126, count: 3, type: 'VEC3', min: [0,0,0], max: [1,1,0] }],
+      meshes: [{ primitives: [{ attributes: { POSITION: 0 } }] }], nodes: [{ mesh: 0 }], scenes: [{ nodes: [0] }], scene: 0 };
+    const r = await __JASK.matImport([{ name: 'trojkat.gltf', blob: new Blob([JSON.stringify(g)]) }], 'plik');
+    return r.done[0].id;
+  })()`);
+  const F = await tab(ctx, '_jk63_test.html#m~' + id3);
+  const capF = () => F.J(() => (document.querySelector('.mt-cap')?.textContent || '') + (document.querySelector('.mt-del') ? ' [del]' : ''));
+  await waitFor(F.J, () => /trojkat/.test(document.querySelector('.mt-cap b')?.textContent || '') && !!document.querySelector('.mt-del'), null, 30000);
+  const cap0 = await capF();
+  const n3 = await A.J(id => __JASK.matApplySettings(id, { scale: 5 }).then(r => r.n), id3);
+  const cap1 = await waitFor(F.J, () => { const c = document.querySelector('.mt-cap')?.textContent || ''; return /5,00 m/.test(c) && !!document.querySelector('.mt-del') && c; }, null, 30000);
+  ok(/1,00 m/.test(cap0) && !!cap1, 'a window showing a material follows a scale made in another tab', JSON.stringify({ cap0, cap1: cap1 || await capF() }));
+  // a third tab shows it too: it must let it go when F deletes it, and get it back on Cofnij (watched, since Cofnij
+  // has to be clicked before its toast goes)
+  const G = await tab(ctx, '_jk63_test.html#m~' + id3);
+  await waitFor(G.J, () => /trojkat/.test(document.querySelector('.mt-cap b')?.textContent || '') && !!document.querySelector('.mt-del'), null, 30000);
+  await G.J(() => { window.__left = false; const chk = () => { const c = document.querySelector('.mt-cap b')?.textContent || '', tiles = [...document.querySelectorAll('.mt-tile')].map(x => x.title); if (!/trojkat/.test(c) && !tiles.includes('trojkat')) window.__left = true; }; new MutationObserver(chk).observe(document.body, { subtree: true, childList: true, characterData: true }); });
+  await F.page.locator('.mt-del').first().click();
+  await waitFor(F.J, () => [...document.querySelectorAll('.jk-toast button')].some(b => /Cofnij/.test(b.textContent)), null, 8000);
+  const gone = await F.J(id => Jaskinia.materialy.get(id).then(m => !!m && !!m.gone), id3);
+  await waitFor(G.J, () => window.__left, null, 3000);
+  await F.page.locator('.jk-toast button', { hasText: 'Cofnij' }).first().click();
+  const gBack = await waitFor(G.J, () => [...document.querySelectorAll('.mt-tile')].some(x => x.title === 'trojkat'), null, 15000);
+  ok(await G.J(() => window.__left) && !!gBack, 'a window showing it in a third tab lets it go when it is deleted, and gets it back on Cofnij', JSON.stringify({ left: await G.J(() => window.__left), back: !!gBack }));
+  await G.page.close();
+  const back = await waitFor(F.J, id => Jaskinia.materialy.get(id).then(m => !!m && !m.gone && m), id3, 8000);
+  const rec3 = await F.J(async id => { const db = await new Promise(r => { const q = indexedDB.open('jaskinia-materialy', 1); q.onsuccess = () => r(q.result); }); const m = await new Promise(r => { const q = db.transaction('materialy').objectStore('materialy').get(id); q.onsuccess = () => r(q.result); }); db.close(); return { scale: m.scale, set: m.set, gone: !!m.gone }; }, id3);
+  const sets3 = await F.J(id => Jaskinia.materialy.settings(id).then(l => l.map(s => [s.n, s.scale, s.by || ''])), id3);
+  ok(gone && !!back && rec3.scale === 5 && rec3.set === n3 && !rec3.gone && sets3.length === 2 && !sets3.some(s => s[2]), 'deleting it there and Cofnij keep the other tab\'s scale (no revision added)', JSON.stringify({ gone, rec3, sets3 }));
+  await F.page.close();
   // one glTF with red/texture.png and blue/texture.png: two pictures
   const two = await A.J(`(async () => {
     const red = await (${png})(255, 0, 0), blue = await (${png})(0, 0, 255);
@@ -184,15 +329,33 @@ if (!ONLY || ONLY === 'agents') {
   const seen = await waitFor(A.J, () => (document.querySelector('.agents-jk')?.textContent || '').includes('Notatka dopisana w drugiej karcie'), null, 6000);
   ok(!!seen, 'an open "Dla agentów" shows a note written in another tab, without reopening (Medium: freshness)');
   await ctx.close();
+  // an address is acted on once: a reload does not open the same window again (chaos seed 11)
+  const ctx2 = await context();
+  const P = await tab(ctx2, '_jk63_test.html#agenci');
+  await P.wait(500);
+  const n1 = await P.J(() => Object.values(__JASK.L.wins).filter(w => w.type === 'agenci').length);
+  await P.page.reload(); await P.wait(1200);
+  const n2 = await P.J(() => Object.values(__JASK.L.wins).filter(w => w.type === 'agenci').length);
+  const cards1 = await P.J(() => Object.values(__JASK.L.wins).filter(w => w.type === 'karta').length);
+  await P.page.reload(); await P.wait(1200);
+  const cards2 = await P.J(() => Object.values(__JASK.L.wins).filter(w => w.type === 'karta').length);
+  ok(n1 === 1 && n2 === 1 && cards2 === cards1 && /^#repo~/.test(await P.J(() => location.hash)), 'an address opens its window once; reloads add nothing', JSON.stringify({ n1, n2, cards1, cards2 }));
+  await ctx2.close();
 }
 
 /* ---------- 5. games open where they work (data/wejscia.json) ---------- */
 if (!ONLY || ONLY === 'games') {
   const ctx = await context();
   const { J, wait, shot } = await tab(ctx);
+  // Medium/GPT-6 (PR #4, 19 Oct): a fresh workspace's Granie layout framed the freshest repository with Pages, Jaskinia itself
+  await J(() => __JASK.setSpace('granie')); await wait(1200);
+  const gr = await J(() => { const f = document.querySelector('.win[data-type="gra"] iframe'), z = [...document.querySelectorAll('.win[data-type="zagraj"]')].map(w => w.textContent).join(' ');
+    return { sel: __JASK.store.sel, src: f ? f.getAttribute('src') : null, shelf: z.length, vaw: /Voxel/.test(z), self: /Cave Workbench|Jozz-Cave-Workbench/.test(z) }; });
+  ok(gr.sel !== 'Jozz-Cave-Workbench' && !!gr.src && !/Jozz-Cave-Workbench/.test(gr.src) && gr.vaw && !gr.self, 'a fresh Granie frames a real game, and its Zagraj shelf does not offer Jaskinia', JSON.stringify(gr));
   const g = await J(() => { const R = __BIB.R, ty = R['Tysi-c-The-Game'], vaw = R['voxel-aeronautics-workshop']; return { ty: ty && { pages: ty.pages, tab: ty.tab }, vaw: vaw && { pages: vaw.pages, tab: vaw.tab }, inWin: __BIB.HOOK.play(ty) }; });
   ok(g.ty && /workers\.dev/.test(g.ty.pages) && g.ty.tab === true && g.inWin === false, 'a game with a verified address that works only in its own tab gets that address and opens there', JSON.stringify(g));
   ok(g.vaw && g.vaw.pages === 'https://jozzpoly.github.io/voxel-aeronautics-workshop/' && !g.vaw.tab, 'VAW keeps its Pages entry from fresh data, not from a hand edit of the published page', JSON.stringify(g.vaw));
+  ok(await J(() => __BIB.R['Jozz-Cave-Workbench'] && !__BIB.R['Jozz-Cave-Workbench'].pages), 'Jaskinia\'s own preview is not offered as a game (no Jaskinia inside Jaskinia)');
   await J(() => { __JASK.select('Tysi-c-The-Game'); Jaskinia.ext.open('gra'); }); await wait(800);
   ok(await J(() => [...document.querySelectorAll('.win[data-type="gra"]')].some(w => /działa tylko w osobnej karcie/.test(w.textContent) && !w.querySelector('iframe'))), 'its game window explains why it opens in a tab instead of framing it');
   await shot('05-tab-only');

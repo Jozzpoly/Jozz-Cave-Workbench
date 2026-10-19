@@ -193,7 +193,7 @@ function wallFindings(r) { return (r.findings || []).filter(f => (f.sev === 'hig
 /* the red bubble: findings waiting for a decision; it sits on the card's corner, outside the card, so it never hides the name */
 function wallAtt(r, lod) {
   const fs = wallFindings(r);
-  return fs.length && lod !== 'D' ? h('span', { class: 'wc-att' + (fs.some(f => f.sev === 'high') ? ' high' : ''), title: t('{0} do decyzji', tn(fs.length, 'ustalenie', 'ustalenia', 'ustaleń')), text: fs.length }) : null;
+  return fs.length && lod !== 'D' ? h('span', { class: 'wc-att' + (fs.some(f => f.sev === 'high') ? ' high' : ''), 'data-tip': t('{0} do decyzji', tn(fs.length, 'ustalenie', 'ustalenia', 'ustaleń')), text: fs.length }) : null;
 }
 function wallCardInner(r, lod, sw, sh) {
   const att = null;
@@ -219,7 +219,7 @@ function wallCardInner(r, lod, sw, sh) {
   const head = h('div', { class: 'wc-head' }, sigil(r, lod === 'XL' ? 46 : 32),
     h('div', { class: 'wc-tt' }, h('b', { class: 'wc-name', text: r.short }), h('span', { class: 'wc-meta' }, B.lifeBadge(r.life), ' ', r.last_ts ? ago(r.last_ts) : t('bez commitów'))));
   const foot = h('div', { class: 'wc-foot' });
-  if (big || wide) foot.append(h('span', { class: 'wc-nums', text: `${fmt(r.commits)} · ${tn(r.branches.length, 'gałąź', 'gałęzie', 'gałęzi')} · ${r.api === false ? '?' : r.prs.open} PR`, title: r.api === false ? t('Liczby PR nie znam: API GitHuba nie widziało tego repo w tym zrzucie.') : null }));
+  if (big || wide) foot.append(h('span', { class: 'wc-nums', text: `${fmt(r.commits)} · ${tn(r.branches.length, 'gałąź', 'gałęzie', 'gałęzi')} · ${r.api === false ? '?' : r.prs.open} PR`, 'data-tip': r.api === false ? t('Liczby PR nie znam: API GitHuba nie widziało tego repo w tym zrzucie.') : null }));
   if ((big || wide) && r.pages && r.life !== 'zakończone') foot.append(B.playA(r, { class: 'wc-play' }, B.playIcon(), t('Zagraj')));
   if (wide) return [h('div', { class: 'wc-in wide' }, head, sparkSvg(v28, 'wc-sp'), foot.firstChild ? foot : null), att];
   // what fits is decided by the card's real height: the bottom row first, then activity, the state quote, the next step

@@ -37,6 +37,19 @@ async function mdo(store, mode, fn) {
 const mget = (store, key) => mdo(store, 'readonly', os => os.get(key));
 const mput = (store, val) => mdo(store, 'readwrite', os => os.put(val));
 const mall = store => mdo(store, 'readonly', os => os.getAll());
+/* changes one material record inside one transaction: read and written together, so what another tab saved a moment ago
+   is changed, never replaced by an older copy held in memory. fn returns false when nothing needs writing. */
+async function mpatch(id, fn) {
+  const db = await mdb();
+  return new Promise((res, rej) => {
+    const tx = db.transaction('materialy', 'readwrite'), os = tx.objectStore('materialy');
+    let out = null;
+    const rq = os.get(id);
+    rq.onsuccess = () => { out = rq.result || null; if (out && fn(out) !== false) os.put(out); };
+    tx.oncomplete = () => res(out);
+    tx.onerror = tx.onabort = () => rej(tx.error || new Error('IndexedDB'));
+  });
+}
 async function sha256(blob) {
   const buf = await blob.arrayBuffer();
   const d = await crypto.subtle.digest('SHA-256', buf);
@@ -51,6 +64,7 @@ const extOf = n => (/\.([^.]+)$/.exec(baseName(n)) || [])[1]?.toLowerCase() || '
    The revisions now also live in a second database that older builds never open, and a new revision is numbered and
    written there in one transaction, so two tabs never take the same number. */
 const SDB = 'jaskinia-materialy-ustawienia';
+const MAT_APPLY_GRACE = 60e3; // how long a record may stay behind a revision another tab is applying (see matSets)
 let sdbP = null;
 function sdb() {
   if (!sdbP) sdbP = new Promise((res, rej) => {
@@ -98,7 +112,7 @@ function matEmit(detail, fromOther) {
   document.dispatchEvent(new CustomEvent('jk:materialy', { detail }));
   if (!fromOther && MAT_BC) { const { target, ...rest } = detail || {}; void target; try { MAT_BC.postMessage(rest); } catch { /* a closed channel: the other tabs read on their next start */ } }
 }
-if (MAT_BC) MAT_BC.onmessage = e => { MATS = null; SETS = null; matEmit(e.data || {}, true); };
+if (MAT_BC) MAT_BC.onmessage = e => { MATS = null; SETS = null; matEmit({ ...(e.data || {}), other: true }, true); };
 
 /* ---------- the library ---------- */
 let MATS = null; // id → material, read once, then kept in step with every write
@@ -112,12 +126,30 @@ async function matAll() {
     for (const m of next.values()) {
       const list = matSets(m), have = known.get(m.id) || [];
       if (list.length !== have.length || list.some((x, i) => x.n !== have[i].n)) { try { await setsWrite(m.id, list); } catch { /* read-only here: shown, not kept */ } }
+      // the record itself is healed too, so a v6.1 or v6.2 tab (which reads only the record) sees the revisions again;
+      // healed in one transaction on the record as it is now, so a turn another tab saved meanwhile is not undone
+      const ns = l => JSON.stringify(l.map(x => x.n));
+      if (ns(unionSets(m.sets)) !== ns(list)) {
+        try {
+          const fresh = await mpatch(m.id, r => { const want = unionSets(r.sets, list); if (ns(unionSets(r.sets)) === ns(want)) return false; r.sets = want; });
+          if (fresh) next.set(m.id, fresh);
+        } catch { m.sets = list; /* shown, not kept */ }
+      }
     }
     MATS = next;
   }
   return MATS;
 }
 async function matSave(m) { await mput('materialy', m); (await matAll()).set(m.id, m); }
+/* a small change to a record (deleted, back again) made on the record as it is now, never on a window's copy of it:
+   that copy may be older than a turn or scale another tab saved meanwhile (19 Oct, the same seam GPT found for settings) */
+async function matPatch(id, fn) {
+  let r = null;
+  try { r = await mpatch(id, fn); } catch { /* below */ }
+  if (!r) { const m = (await matAll()).get(id); if (!m) return null; fn(m); await matSave(m); return m; }
+  (await matAll()).set(id, r);
+  return r;
+}
 /* what the list shows: the newest version of every material that was not deleted */
 async function matList() {
   const all = [...(await matAll()).values()].filter(m => !m.gone);
@@ -227,7 +259,16 @@ function matSets(m) {
   let list = unionSets(SETS && SETS.get(m.id), m.sets);
   if (!list.length) return [{ n: 1, rot: [...(m.rot || [0, 0, 0])], scale: m.scale || 1, at: m.added || 0 }];
   const last = list[list.length - 1];
-  if (JSON.stringify(last.rot || [0, 0, 0]) !== JSON.stringify(m.rot || [0, 0, 0]) || (last.scale || 1) !== (m.scale || 1))
+  const same = s => !!s && JSON.stringify(s.rot || [0, 0, 0]) === JSON.stringify(m.rot || [0, 0, 0]) && (s.scale || 1) === (m.scale || 1);
+  // A record that still looks exactly like the revision it names (m.set), with a newer revision taken moments ago, is
+  // only behind it: a tab is applying it right now. Nothing was changed in place, so nothing is added (19 Oct: a tab
+  // reading in that moment used to add the old look as one more revision, and the newest one after it). Still behind a
+  // minute later means that apply never finished, or an older build wrote back its copy: the record's look counts again.
+  // a record that never named one (imported, never turned or scaled) shows revision 1 (Astra's probe on PR #4, 19 Oct:
+  // the first change of a fresh material still left the gap open)
+  const own = list.find(x => x.n === (m.set ?? 1));
+  const applying = same(own) && Date.now() - (last.at || 0) < MAT_APPLY_GRACE;
+  if (!same(last) && !applying)
     list = [...list, { n: last.n + 1, rot: [...(m.rot || [0, 0, 0])], scale: m.scale || 1, at: m.upd || Date.now(), by: 'starsza wersja' }];
   return list;
 }
@@ -361,7 +402,9 @@ async function matImport(files, from = 'plik', label, onStep) {
     if (all.has(id) && !all.get(id).gone) { out.push({ id, again: true }); continue; }
     const name = (jobs.length === 1 && label) || nameOf(job);
     const prev = [...all.values()].filter(x => !x.gone && x.kind === job.kind && x.name.toLowerCase() === name.toLowerCase()).sort((a, b) => (b.ver || 1) - (a.ver || 1))[0];
-    const m = all.get(id) || { id, name, kind: job.kind, main, deps, added: Date.now(), from, rot: prev ? prev.rot : [0, 0, 0], scale: prev ? prev.scale : 1,
+    // a material deleted before and dropped again comes back as it is stored now (another tab may have turned it since)
+    const old = all.has(id) ? ((await mget('materialy', id).catch(() => null)) || all.get(id)) : null;
+    const m = old || { id, name, kind: job.kind, main, deps, added: Date.now(), from, rot: prev ? prev.rot : [0, 0, 0], scale: prev ? prev.scale : 1,
       root: prev ? (prev.root || prev.id) : id, ver: prev ? (prev.ver || 1) + 1 : 1 };
     delete m.gone;
     try {
@@ -376,7 +419,8 @@ async function matImport(files, from = 'plik', label, onStep) {
       out.push({ id, error: err.message || String(err), name: main.name });
       continue;
     }
-    await matSave(m);
+    if (old) await matPatch(id, r => { delete r.gone; Object.assign(r, { missing: m.missing, facts: m.facts, thumb: m.thumb }); });
+    else await matSave(m);
     out.push({ id, name: m.name, ver: m.ver, prev: prev ? prev.id : null });
   }
   if (fresh.size && out.some(x => x.error)) setTimeout(() => matSweep(), MAT_SWEEP_AGE + 1000); // what a failed model left, later
@@ -401,30 +445,36 @@ async function matSweep() {
     }
   } catch { /* kept; harmless */ }
 }
-/* A new turn or scale of a material (v6.3): numbered once in the second database (two tabs never take one number), then
-   written onto the newest record, so what another tab wrote meanwhile stays (GPT, 18 Oct: a window kept its own copy of
-   the record and saved it over a newer one). */
+/* A new turn or scale of a material (v6.3): measured first, then numbered once in the second database (two tabs never
+   take one number) and written onto the record as it is at that moment, in one transaction, so what another tab wrote
+   meanwhile stays (GPT, 18 Oct: a window kept its own copy of the record and saved it over a newer one). */
 async function matApplySettings(id, patch) {
   const m = await mget('materialy', id);
   if (!m) throw new Error(t('Nie ma w bibliotece materiału {0}.', id));
-  await setsAll();
-  const list = matSets(m);
-  const cfg = { rot: [...(patch.rot || m.rot || [0, 0, 0])], scale: patch.scale ?? m.scale ?? 1, at: Date.now() };
-  let n, sets;
-  try { ({ n, list: sets } = await setsWrite(id, list, cfg)); }
-  catch { n = list[list.length - 1].n + 1; sets = [...list, { n, ...cfg }]; }
+  const look = { rot: [...(patch.rot || m.rot || [0, 0, 0])], scale: patch.scale ?? m.scale ?? 1 };
+  // measured and drawn first (the slow part), so the number is taken and the record written right after each other
   let facts = null, thumb = null;
   try {
-    const probe = { ...m, rot: cfg.rot, scale: cfg.scale };
+    const probe = { ...m, ...look };
     const { object, animations } = await matLoad(probe);
     const wrapped = matGround(matWrap(object, probe));
     facts = { ...matFacts(wrapped, animations), src: m.facts?.src || '' };
     thumb = await matThumb(wrapped);
     swDispose(wrapped);
   } catch { /* the old picture stays */ }
-  const now = (await mget('materialy', id)) || m;
-  Object.assign(now, { rot: cfg.rot, scale: cfg.scale, sets: unionSets(now.sets, sets), set: n, upd: Date.now() }, facts ? { facts } : {}, thumb ? { thumb } : {});
-  await matSave(now);
+  await setsAll();
+  const list = matSets((await mget('materialy', id)) || m);
+  const cfg = { ...look, at: Date.now() };
+  let n, sets;
+  try { ({ n, list: sets } = await setsWrite(id, list, cfg)); }
+  catch { n = list[list.length - 1].n + 1; sets = [...list, { n, ...cfg }]; }
+  // a tab that numbered its change later and already wrote it keeps its look: the record always shows the newest revision
+  const put = r => (r.set != null && r.set > n) ? Object.assign(r, { sets: unionSets(r.sets, sets) })
+    : Object.assign(r, { rot: cfg.rot, scale: cfg.scale, sets: unionSets(r.sets, sets), set: n, upd: Date.now() }, facts ? { facts } : {}, thumb ? { thumb } : {});
+  let now = null;
+  try { now = await mpatch(id, put); } catch { /* written below the old way */ }
+  if (now) (await matAll()).set(id, now);
+  else { now = put((await mget('materialy', id)) || m); await matSave(now); }
   matEmit({ changed: [id] });
   return { n, m: now };
 }
@@ -461,11 +511,11 @@ const MAT_NOT_HIS = /^repo:Jozzpoly\/Box3d_FunProject\/data\/meshes\//;
 async function matDropNotHis(all) {
   const bad = [...all.values()].filter(m => !m.gone && !m.keep && MAT_NOT_HIS.test(m.from || ''));
   if (!bad.length) return [];
-  for (const m of bad) { m.gone = Date.now(); m.goneWhy = 'nie-jozza'; await matSave(m); }
+  for (const m of bad) await matPatch(m.id, r => { r.gone = Date.now(); r.goneWhy = 'nie-jozza'; });
   matEmit({ removed: bad.map(m => m.id) });
   const names = [...new Set(bad.map(m => m.name))].join(', ');
   jtoast(t('Usunąłem z biblioteki modele, które nie są Twoje: {0}. Przyszły z pierwotnego Box3D, nie od Ciebie.', names), { label: t('Cofnij'), act: async () => {
-    for (const m of bad) { delete m.gone; delete m.goneWhy; m.keep = true; await matSave(m); }
+    for (const m of bad) await matPatch(m.id, r => { delete r.gone; delete r.goneWhy; r.keep = true; });
     matEmit({ changed: bad.map(m => m.id) });
   } }, 12000);
   return bad;
@@ -566,7 +616,8 @@ function renderMaterialy(box, c) {
     vers.replaceChildren(...(vs.length > 1 ? vs.map(v => h('button', { class: 'jk-tb' + (v.id === m.id ? ' on' : ''), type: 'button', title: t('wersja {0} z {1}', v.ver || 1, dshort(new Date(v.added || 0))), onclick: () => sel(v.id) }, 'v' + (v.ver || 1))) : []));
   }
   function drawBar(m) {
-    const qt = (axis, dir) => async () => { const r = [...(m.rot || [0, 0, 0])]; r[axis] = (r[axis] + dir + 4) % 4; await setDefaults(m, { rot: r }); };
+    // a quarter turn from the turn it has now (another tab may have turned it since this bar was drawn)
+    const qt = (axis, dir) => async () => { const r = [...(((await matAll()).get(m.id) || m).rot || [0, 0, 0])]; r[axis] = (r[axis] + dir + 4) % 4; await setDefaults(m, { rot: r }); };
     const sc = v => async () => { await setDefaults(m, { scale: v }); };
     const isS = v => Math.abs((m.scale || 1) - v) < 1e-9;
     bar.replaceChildren(...[
@@ -604,10 +655,9 @@ function renderMaterialy(box, c) {
     show(m.id, true);
   }
   async function remove(m) {
-    m.gone = Date.now();
-    await matSave(m);
+    await matPatch(m.id, r => { r.gone = Date.now(); });
     matEmit({ removed: [m.id] });
-    jtoast(t('Usunięto z biblioteki: {0}', m.name), { label: t('Cofnij'), act: async () => { delete m.gone; await matSave(m); matEmit({ changed: [m.id] }); sel(m.id); } });
+    jtoast(t('Usunięto z biblioteki: {0}', m.name), { label: t('Cofnij'), act: async () => { await matPatch(m.id, r => { delete r.gone; }); matEmit({ changed: [m.id] }); sel(m.id); } });
     const rest = await matList();
     sel(rest[0]?.id || null);
   }
@@ -681,7 +731,13 @@ function renderMaterialy(box, c) {
     const d = e.detail || {};
     if (d.target === c.id && d.added?.length) { sel(d.added[0]); return; }
     if (d.target === c.id && d.show) { matAll().then(all => { if (!alive) return; const m = all.get(d.show); if (m && !m.gone) sel(d.show); else jtoast(t('Nie ma w bibliotece materiału {0}.', d.show)); }); return; }
-    if (cur && (d.removed || []).includes(cur.id)) return; // remove() picks the next one itself
+    if (cur && (d.removed || []).includes(cur.id)) {
+      if (!d.other) return; // remove() picks the next one itself
+      // deleted in another tab: this window lets it go too and shows the next one (not in the middle of a walk)
+      if (!walk) { drawList(); matList().then(rest => { if (alive) sel(rest[0]?.id || null); }); return; }
+    }
+    // another tab turned, scaled or restored the one shown here: show it as it is now (a walk inside it is not broken)
+    if (d.other && cur && !walk && (d.changed || []).includes(cur.id)) show(cur.id, true);
     drawList();
   };
   document.addEventListener('jk:materialy', onLib);
