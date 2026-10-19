@@ -805,7 +805,7 @@ function renderWall(box, c) {
         { label: t('Karta projektu'), icon: 't_karta', act: () => { c.select(r.name); c.openType('karta', { free: true }); } },
         // the same "Zagraj" as everywhere (v6 opened a new browser tab from here): the game window, Shift-version beside
         r.pages && r.life !== 'zakończone' ? { label: t('Zagraj'), icon: 'play', act: () => { if (B.HOOK.play?.(r) !== true) B.openUrl(r.pages); } } : null,
-        r.pages && r.life !== 'zakończone' && gamesInWindow() ? { label: t('Zagraj w nowym oknie obok'), icon: 'play', act: () => { if (B.HOOK.play?.(r, { beside: true }) !== true) B.openUrl(r.pages); } } : null,
+        r.pages && r.life !== 'zakończone' && gamesInWindow() && !r.tab ? { label: t('Zagraj w nowym oknie obok'), icon: 'play', act: () => { if (B.HOOK.play?.(r, { beside: true }) !== true) B.openUrl(r.pages); } } : null,
         { label: t('Otwórz na GitHubie'), icon: 'ext', act: () => B.openUrl(r.url) },
         { sep: true },
         it.hand ? { label: t('Rozmiar z miary'), desc: t('oddaj rozmiar mierze „{0}”', t(WALL_DRV.find(d => d[0] === st.size)?.[1] || '')), icon: 'reset', act: () => { c.commit(t('rozmiar karty {0} z miary', r.short), () => { const c0 = st.cards[r.name]; delete c0.w; delete c0.h; }); c.save(); paint(); } } : null,

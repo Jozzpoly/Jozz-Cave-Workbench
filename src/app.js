@@ -1170,7 +1170,7 @@ function playA(r, attrs, ...kids) {
     // Jaskinia decides: the game window when self-hosted (Shift: a new window beside); otherwise the link opens a new tab
     if (JASK && HOOK.play) { if (HOOK.play(r, { beside: e.shiftKey }) === true) e.preventDefault(); return; }
     if (e.shiftKey) return;
-    if (HOSTED) { e.preventDefault(); openPlayer(r); }
+    if (HOSTED && !r.tab) { e.preventDefault(); openPlayer(r); } // a game that works only in its own tab (data/wejscia.json) keeps the link
   });
   if (JASK && !a.title) a.title = 'Zagraj w oknie gry · Shift: w nowym oknie obok · Ctrl: w nowej karcie';
   return a;

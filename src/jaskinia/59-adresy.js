@@ -60,6 +60,23 @@ function routeStart() {
    what is on screen, Jozz's notes (newest first: this is where he leaves words for agents), the materials and their
    addresses, then the Library's brief. It only reads; agents act through their own tools and ask Jozz to decide. */
 function renderAgents(box, c) {
+  /* it reads what this tab holds, so it is drawn again whenever that changes: a note, a remark, a material, another tab's
+     write (Medium, 18 Oct: an open window showed a stale state with no sign of it). It also says when and where from. */
+  let alive = true, pend = 0;
+  c.onDispose(() => { alive = false; clearTimeout(pend); document.removeEventListener('jk:stan', later); document.removeEventListener('jk:materialy', later); });
+  function later() {
+    clearTimeout(pend);
+    pend = setTimeout(() => {
+      if (!alive) return;
+      const sel = getSelection();
+      if (sel && !sel.isCollapsed && box.contains(sel.anchorNode)) { later(); return; } // someone is copying from it: wait
+      box.replaceChildren(); draw();
+    }, 900);
+  }
+  document.addEventListener('jk:stan', later);
+  document.addEventListener('jk:materialy', later);
+  draw();
+  function draw() {
   const sp = store.spaces.find(s => s.id === store.cur), sel = R[store.sel];
   const notes = Object.entries(store.notes).filter(([, n]) => n && n.text && n.text.trim()).map(([id, n]) => ({ id, text: n.text, upd: n.upd || 0 })).sort((a, b) => b.upd - a.upd);
   const used = notesReferenced();
@@ -71,6 +88,7 @@ function renderAgents(box, c) {
       h('p', { text: t('Ta sama Jaskinia jako zwykły tekst: dla GPT czytającego przez Operę, dla Codexa i dla Claude. Zasady pracy są w kompasie Jaskini (issue #5 w repo Jozz-Cave-Workbench). Ta strona tylko czyta; decyzje podejmuje Jozz.') }),
       h('ul', null,
         h('li', { text: t('Jaskinia {0}, zbudowana {1}, miejsce: {2}.', VER, BUILD.built || '?', t(PLACE_NAME[PLACE])) }),
+        h('li', { text: t('Stan z {0}, z tej karty tej przeglądarki ({1}). Inna przeglądarka, inny profil albo inny adres ma własną Jaskinię: ten tekst nie jest wspólną pamięcią.', isoLocal(Date.now()).slice(11, 19), location.origin === 'null' ? location.protocol : location.origin) }),
         h('li', { text: t('Układ na ekranie: {0} ({1}). Okna: {2}.', sp ? spaceName(sp) : '?', '#uklad~' + store.cur, winList.join(', ') || '—') }),
         h('li', { text: sel ? t('Zaznaczony projekt: {0} ({1}).', sel.name, '#repo~' + sel.name) : t('Nic nie jest zaznaczone.') }),
         h('li', { text: t('Układy: {0}.', store.spaces.map(s => `${spaceName(s)} (#uklad~${s.id})`).join(', ')) }))),
@@ -96,8 +114,6 @@ function renderAgents(box, c) {
   const mats = sec(t('Materiały'), h('p', { class: 'muted', text: t('Czytam bibliotekę…') }));
   wrap.append(mats);
   box.append(wrap);
-  let alive = true;
-  c.onDispose(() => { alive = false; });
   matList().then(list => {
     if (!alive) return;
     mats.replaceChildren(h('h2', { text: t('Materiały') }), list.length
@@ -105,6 +121,7 @@ function renderAgents(box, c) {
       : h('p', { text: t('Biblioteka materiałów jest pusta.') }));
   }).catch(err => { if (alive) mats.replaceChildren(h('h2', { text: t('Materiały') }), h('p', { text: t('Biblioteka materiałów nie działa w tej przeglądarce: {0}', err.message) })); });
   if (B.agentsView) box.append(B.agentsView());
+  }
 }
 ICONS.t_agenci = 'M3 3.5h10v7H7.5L4.5 13v-2.5H3z M5.5 6.5h5 M5.5 8.5h3';
 Object.assign(TYPES, {

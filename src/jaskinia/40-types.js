@@ -54,7 +54,7 @@ function renderGame(box, c) {
       h('div', { class: 'jk-chips' }, playable.map(x => h('button', { class: 'jk-chip', type: 'button', onclick: () => c.pickProject(x.name) }, sigil(x, 18), x.short)))));
     return;
   }
-  if (gamesInWindow()) {
+  if (gamesInWindow() && !r.tab) {
     // a downloaded file or Jozz's own server may frame the game; if a site refuses frames, the link in the bar still works.
     // The game is an instrument (52-przyrzady.js): nothing in Jaskinia restarts it, and if it speaks the contract it says what is happening.
     const frame = liveFrame(r.pages, `${r.short}: gra`);
@@ -68,7 +68,8 @@ function renderGame(box, c) {
     h('div', { class: 'jl-top' }, sigil(r, 96), h('div', null,
       h('h2', { text: r.short }), h('p', { class: 'jl-sub' }, B.lifeBadge(r.life), ' · ', t('ostatni commit'), ' ', h('b', { text: ago(r.last_ts) })),
       h('div', { class: 'jl-acts' }, B.playA(r, { class: 'btn hot jl-play' }, B.playIcon(), t('Zagraj')), h('span', { class: 'jl-url', text: r.pages.replace('https://', '') })))),
-    h('p', { class: 'jl-note', text: B.HOSTED ? t('Gra otworzy się w nowej karcie, bo tak jest ustawione (Ustawienia → Zachowanie → Gry). Może też grać w tym oknie.') : t('Gra otworzy się w nowej karcie: w claude.ai strona nie może pokazać innej strony w oknie. W Jaskini pobranej jako plik albo postawionej na własnym serwerze zagrasz w tym oknie.') }),
+    h('p', { class: 'jl-note', text: r.tab ? t('Ta gra działa tylko w osobnej karcie. {0}', r.wejscie?.dlaczego || '') : B.HOSTED ? t('Gra otworzy się w nowej karcie, bo tak jest ustawione (Ustawienia → Zachowanie → Gry). Może też grać w tym oknie.') : t('Gra otworzy się w nowej karcie: w claude.ai strona nie może pokazać innej strony w oknie. W Jaskini pobranej jako plik albo postawionej na własnym serwerze zagrasz w tym oknie.') }),
+    r.wejscie ? h('p', { class: 'jl-note', text: t('Adres sprawdzony {0}: {1}.', r.wejscie.kiedy || '?', r.wejscie.sprawdzil || '?') }) : null,
     ch ? h('p', { class: 'jl-ch' }, h('b', { text: t('Od poprzedniego zrzutu: ') }), [ch.commits ? '+' + tn(ch.commits, 'commit', 'commity', 'commitów') : null, ch.n_new_branches ? '+' + tn(ch.n_new_branches, 'gałąź', 'gałęzie', 'gałęzi') : null].filter(Boolean).join(', ') || t('przesunięte gałęzie')) : null,
     r.state?.status ? h('div', { class: 'jl-st' }, h('span', { class: 'k', text: t('Stan według repo') }), h('blockquote', { text: r.state.status })) : null,
     fresh.length ? h('div', { class: 'jl-br' }, h('span', { class: 'k', text: t('Ostatnio ruszane gałęzie') }),

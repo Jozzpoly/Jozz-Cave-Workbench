@@ -35,7 +35,7 @@ async function tab(ctx, hash = '') {
   return { page, J: (fn, a) => page.evaluate(fn, a), wait: ms => page.waitForTimeout(ms), shot: n => page.screenshot({ path: path.join(shots, n + '.png'), timeout: 120000 }) };
 }
 const waitFor = async (J, fn, a, ms = 8000) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { const v = await J(fn, a); if (v) return v; await new Promise(r => setTimeout(r, 120)); } return null; };
-const stored = J => J(() => JSON.parse(localStorage.getItem('jaskinia:v2') || 'null'));
+const stored = J => J(() => JSON.parse(localStorage.getItem('jaskinia:v3') || 'null'));
 
 /* ---------- 1. several tabs ---------- */
 if (!ONLY || ONLY === 'tabs') {
@@ -87,7 +87,7 @@ if (!ONLY || ONLY === 'tabs') {
   ok(nb1 > nb0, 'the other shape waits in an automatic copy', `${nb0} → ${nb1}`);
   // another page at this address wipes the storage: the open tab writes Jaskinia back
   await B.J(() => localStorage.clear());
-  const back = await waitFor(B.J, () => !!localStorage.getItem('jaskinia:v2'));
+  const back = await waitFor(B.J, () => !!localStorage.getItem('jaskinia:v3'));
   ok(!!back && (await stored(B.J)).notes[noteId]?.text === 'Tekst z B (nowszy)', 'a wiped storage is written back by the open tab');
   await A.page.close(); await B.page.close();
   // a reload after all this shows the same state
@@ -172,14 +172,17 @@ if (!ONLY || ONLY === 'materials') {
   // a material address that does not exist says so
   await A.J(() => { location.hash = '#m~mNIEMA'; });
   ok(!!(await waitFor(A.J, () => /Nie ma w bibliotece materiału mNIEMA/.test(document.body.textContent))), 'an unknown material address says so');
-  // a model that cannot be read leaves no bytes behind
+  // a model that cannot be read leaves no bytes behind for good: since v6.3 they are swept once they are old enough that no
+  // import running in another tab can still need them (jk63_test.mjs checks the sweep itself)
   const left = await A.J(async () => {
-    const before = await new Promise(res => { const rq = indexedDB.open('jaskinia-materialy', 1); rq.onsuccess = () => { const tx = rq.result.transaction('pliki'); const g = tx.objectStore('pliki').count(); g.onsuccess = () => res(g.result); }; });
+    const count = () => new Promise(res => { const rq = indexedDB.open('jaskinia-materialy', 1); rq.onsuccess = () => { const tx = rq.result.transaction('pliki'); const g = tx.objectStore('pliki').count(); g.onsuccess = () => res(g.result); }; });
+    const before = await count();
     const r = await Jaskinia.materialy.import([{ name: 'zepsuty.glb', blob: new Blob(['to nie jest glb ' + Math.random()]) }]);
-    const after = await new Promise(res => { const rq = indexedDB.open('jaskinia-materialy', 1); rq.onsuccess = () => { const tx = rq.result.transaction('pliki'); const g = tx.objectStore('pliki').count(); g.onsuccess = () => res(g.result); }; });
-    return { before, after, err: r.done[0]?.error || '' };
+    await new Promise(res => { const rq = indexedDB.open('jaskinia-materialy', 1); rq.onsuccess = () => { const tx = rq.result.transaction('pliki', 'readwrite'), os = tx.objectStore('pliki'); const q = os.getAll(); q.onsuccess = () => { for (const f of q.result) if (f.at) { f.at = 1; os.put(f); } }; tx.oncomplete = res; }; });
+    await __JASK.matSweep();
+    return { before, after: await count(), err: r.done[0]?.error || '' };
   });
-  ok(left.err && left.after === left.before, 'a model that could not be read leaves no bytes in the browser', JSON.stringify(left));
+  ok(left.err && left.after === left.before, 'a model that could not be read leaves no bytes in the browser (once swept)', JSON.stringify(left));
   await A.shot('materialy');
   await ctx.close();
 }

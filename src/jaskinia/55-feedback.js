@@ -77,10 +77,10 @@ function saveLog() {
   jlog = mergeLog(jlog, stored);
   if (lsSet(KEY_LOG, JSON.stringify(jlog)) !== true) { jlog = jlog.slice(-200); lsSet(KEY_LOG, JSON.stringify(jlog)); }
 }
-function saveUwagi() { uwagi = mergeUwagi(uwagi, readUw()); return lsSet(KEY_UW, JSON.stringify(uwagi)) === true; }
+function saveUwagi() { uwagi = mergeUwagi(uwagi, readUw()); const ok = lsSet(KEY_UW, JSON.stringify(uwagi)) === true; document.dispatchEvent(new CustomEvent('jk:stan')); return ok; }
 addEventListener('storage', e => {
   if (e.storageArea !== localStorage) return;
-  if (e.key === KEY_UW && e.newValue) { try { uwagi = mergeUwagi(uwagi, arr(JSON.parse(e.newValue))); } catch { /* fine */ } }
+  if (e.key === KEY_UW && e.newValue) { try { uwagi = mergeUwagi(uwagi, arr(JSON.parse(e.newValue))); document.dispatchEvent(new CustomEvent('jk:stan')); } catch { /* fine */ } }
   if (e.key === KEY_LOG && e.newValue) { try { jlog = mergeLog(jlog, arr(JSON.parse(e.newValue))); } catch { /* fine */ } }
 });
 

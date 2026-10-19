@@ -1059,13 +1059,28 @@ function takeForeign(text) {
   const mine = store, m = mergeStores(ancestorFor(theirs), store, theirs);
   synced(text, theirs);
   if (m.lost.length) {
-    // what lost a real conflict stays in an automatic copy: the other tab's state, or this tab's for a note that lost here
-    const kept = (m.lost.some(x => x.side === 'theirs') ? makeBackup(t('z innej karty'), null, theirs) : null) || (m.lost.some(x => x.side === 'ours') ? makeBackup(t('z tej karty, przed scaleniem'), null, mine) : null);
+    // what lost a real conflict stays in an automatic copy, each side on its own: the other tab's state when something of
+    // it lost, and this tab's state when something of this one lost (both can lose in one merge: GPT and Medium, 18 Oct)
+    const kT = m.lost.some(x => x.side === 'theirs') ? makeBackup(t('z innej karty'), null, theirs) : true;
+    const kO = m.lost.some(x => x.side === 'ours') ? makeBackup(t('z tej karty, przed scaleniem'), null, mine) : true;
     logEv(t('dwie karty zmieniły to samo: {0}', m.lost.map(x => x.name || (x.kind === 'note' ? t('notatka') : t('układ'))).join(', ')));
-    jtoast(t('To samo zmieniło się w dwóch kartach naraz. Nowsza notatka i układ z tej karty zostały, a druga wersja czeka w kopiach automatycznych.'), kept ? { label: t('Pokaż'), act: () => openSettings('kopie') } : null, 9000);
+    if (kT && kO) jtoast(t('To samo zmieniło się w dwóch kartach naraz. Nowsza notatka i układ z tej karty zostały, a druga wersja czeka w kopiach automatycznych.'), { label: t('Pokaż'), act: () => openSettings('kopie') }, 9000);
+    else jtoast(t('To samo zmieniło się w dwóch kartach naraz, a pamięć przeglądarki jest pełna: drugiej wersji nie dało się odłożyć do kopii. Zapisz całą Jaskinię do pliku (Ustawienia → Eksport).'), { label: t('Pokaż'), act: () => openSettings('dane') }, 15000);
   }
   adoptStore(repair(m.st));
   if (!sameParts(store, theirs)) dirty = true; // this tab still holds something the other one has not seen
+}
+/* an older build (before v6.3) wrote its own key: its whole state goes to a copy, newer notes come in (15-store.js) */
+let legacyTold = false;
+function handleLegacy() {
+  const r = legacyWrite();
+  if (!r) return;
+  logEv(t('starsza wersja Jaskini zapisała swój stan') + (r.notes.length ? ': ' + t('nowsze notatki: {0}', r.notes.length) : ''));
+  if (r.notes.length) for (const id of allIds()) { const w = L.wins[id], rt = RT.get(id); if (rt && (w.type === 'notatki' || w.type === 'sciana')) { rt.key = null; refreshWin(id); } }
+  if (legacyTold && !r.notes.length) return;
+  legacyTold = true;
+  jtoast((r.notes.length ? t('Starsza karta Jaskini zapisała swój stan, z nowszymi notatkami: {0}. Notatki wziąłem tutaj.', r.notes.join(', ')) : t('Starsza karta Jaskini zapisała swój stan.'))
+    + ' ' + t('Tej Jaskini nie nadpisała: jej stan czeka w kopiach automatycznych. Zamknij stare karty Jaskini.'), { label: t('Pokaż'), act: () => openSettings('kopie') }, 15000);
 }
 function adoptStore(next) {
   const prevNotes = store.notes;
@@ -1087,6 +1102,7 @@ function adoptStore(next) {
   renderTabs(); updateUndoUI(); updateSelStyle(); renderSelBox(); renderDock();
   apply();
   for (const id of allIds()) refreshWin(id);
+  document.dispatchEvent(new CustomEvent('jk:stan'));
 }
 function restoreBackup(id, quiet) {
   const b = readBackups().find(x => x.id === id);
@@ -1096,6 +1112,8 @@ function restoreBackup(id, quiet) {
   store.spaces = arr(d.spaces); store.cur = d.cur; store.sel = d.sel;
   for (const [k, n] of Object.entries(obj(d.notes))) if (!store.notes[k] || (n.upd || 0) > (store.notes[k].upd || 0)) store.notes[k] = n;
   Object.assign(store.views, obj(d.views));
+  for (const it of arr(d.saved)) if (it && it.id && !store.saved.some(x => x.id === it.id)) store.saved.push(it); // since v6.3 a copy holds them too
+  store.saved.sort((a, b) => (b.at || 0) - (a.at || 0));
   let back = 0; // what was deleted for good after this copy goes back to the trash, not straight into the layouts
   for (const it of arr(d.forgotten)) if (it && it.id && !store.trash.some(x => x.id === it.id)) { store.trash.unshift(it); back++; }
   rebuildAll();
@@ -1478,6 +1496,7 @@ function boot() {
       return;
     }
     if (e.key === KEY && e.newValue !== lastText) takeForeign(e.newValue);
+    if (e.key === KEY_V2) handleLegacy(); // an older build in another tab
   });
   logEv(t('start: Jaskinia {0}, {1}, okno {2}', VER, t(PLACE_NAME[PLACE]), `${innerWidth}×${innerHeight}`), { v: VER, place: PLACE });
   space = store.spaces.find(sp => sp.id === store.cur) || store.spaces[0];
@@ -1503,7 +1522,7 @@ function boot() {
     const games = inWin ? allIds().filter(id => L.wins[id].type === 'gra') : [];
     const pinOthers = keep => { const following = games.filter(id => id !== keep && !L.wins[id].pin); if (following.length && prev && prev !== r.name && R[prev]) for (const id of following) L.wins[id].pin = prev; };
     logEv(t('zagraj: {0} ({1})', r.short, !inWin ? t('w nowej karcie') : o.beside ? t('w nowym oknie obok') : t('w oknie gry')));
-    if (!inWin) { select(r.name); return false; } // the link opens the game in a new tab
+    if (!inWin || r.tab) { select(r.name); return false; } // the link opens the game in a new tab (some games work only there: data/wejscia.json)
     const shows = id => (L.wins[id].pin || store.sel) === r.name;
     const flash = id => { RT.get(id)?.el.classList.add('flash'); setTimeout(() => RT.get(id)?.el.classList.remove('flash'), 700); };
     const bring = id => { focusWin(id); if (phone) phoneSwitch(id); else if (isFloat(id)) { raiseFloat(id); apply(); } else if (L.max && L.max !== id) toggleMax(id); flash(id); focusGame(id); };
@@ -1533,6 +1552,7 @@ function boot() {
   firstHint();
   v6Hint();
   routeStart();
-  window.__JASK = { get L() { return L; }, get store() { return store; }, get phone() { return phone; }, RT, WALLS, apply, select, commit, undo, redo, setSpace, layoutRects, leafIds, rects: () => rects, prefs, openSettings, readBackups, persistNow, get log() { return jlog; }, get uwagi() { return uwagi; }, packageData, packageText, deleteSpace, restoreTrash, forgetTrash, restoreBackup, setPref, signalsBeside, uwagaPop, noteSet, noteNew, persist, route, matImport, get dirty() { return dirty; }, get lastText() { return lastText; },
+  handleLegacy(); // what older builds wrote while this one was closed
+  window.__JASK = { get L() { return L; }, get store() { return store; }, get phone() { return phone; }, RT, WALLS, apply, select, commit, undo, redo, setSpace, layoutRects, leafIds, rects: () => rects, prefs, openSettings, readBackups, persistNow, get log() { return jlog; }, get uwagi() { return uwagi; }, packageData, packageText, deleteSpace, restoreTrash, forgetTrash, restoreBackup, setPref, signalsBeside, uwagaPop, noteSet, noteNew, persist, route, matImport, matSweep, matApplySettings, handleLegacy, get dirty() { return dirty; }, get lastText() { return lastText; },
     live: () => [...LIVE.values()].map(e => ({ id: e.id, url: e.url, hello: e.hello, state: e.state, sigs: [...e.sigs.keys()], n: Object.fromEntries([...e.sigs].map(([k, v]) => [k, v.v.length])), evs: e.evs.map(x => x.text), marks: e.marks.length, last: e.last, vis: e.vis })) };
 }

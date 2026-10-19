@@ -56,6 +56,8 @@ w("prev_library.json", {"estate": {k: prev["estate"].get(k) for k in ("generated
                                   for r in prev["repos"] if r["name"] in public]})
 hist = J("history.json")
 w("history.json", [dict(e, repos={n: v for n, v in e["repos"].items() if n in public}) for e in hist])
+if os.path.exists(P("data", "wejscia.json")):  # verified play entries, for the public repositories only
+    w("wejscia.json", {k: v for k, v in J("wejscia.json").items() if k.startswith("_") or k in public})
 
 # 3. rebuild everything from the public data (fonts come from node_modules, linked, never copied)
 if not os.path.exists(D("node_modules")):

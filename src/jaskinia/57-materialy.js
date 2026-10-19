@@ -45,18 +45,76 @@ async function sha256(blob) {
 const baseName = n => String(n || '').split(/[\\/]/).pop();
 const stem = n => baseName(n).replace(/\.[^.]+$/, '');
 const extOf = n => (/\.([^.]+)$/.exec(baseName(n)) || [])[1]?.toLowerCase() || '';
+/* Settings revisions that survive older builds (v6.3). v6 and v6.1 tabs write a whole material record from memory, so an
+   editor left open in an older tab could drop the revisions a newer one had made, and a place pinned to {material, set: 2}
+   would no longer find its look (GPT's real-browser run, 18 Oct); two new tabs could also both number their change 2.
+   The revisions now also live in a second database that older builds never open, and a new revision is numbered and
+   written there in one transaction, so two tabs never take the same number. */
+const SDB = 'jaskinia-materialy-ustawienia';
+let sdbP = null;
+function sdb() {
+  if (!sdbP) sdbP = new Promise((res, rej) => {
+    let rq;
+    try { rq = indexedDB.open(SDB, 1); } catch (e) { rej(e); return; }
+    rq.onupgradeneeded = () => { const db = rq.result; if (!db.objectStoreNames.contains('sets')) db.createObjectStore('sets', { keyPath: 'id' }); };
+    rq.onsuccess = () => res(rq.result);
+    rq.onerror = () => rej(rq.error || new Error('IndexedDB'));
+  });
+  sdbP.catch(() => { sdbP = null; });
+  return sdbP;
+}
+let SETS = null; // material id → its revisions, as the second database holds them
+async function setsAll() {
+  if (SETS) return SETS;
+  const m = new Map();
+  try { const db = await sdb(); await new Promise((res, rej) => { const rq = db.transaction('sets', 'readonly').objectStore('sets').getAll(); rq.onsuccess = () => { for (const r of rq.result || []) m.set(r.id, arr(r.sets)); res(); }; rq.onerror = () => rej(rq.error); }); }
+  catch { /* no second database here: each record's own list is all there is */ }
+  SETS = m;
+  return SETS;
+}
+const unionSets = (...lists) => { const by = new Map(); for (const l of lists) for (const x of arr(l)) if (x && x.n != null && !by.has(x.n)) by.set(x.n, x); return [...by.values()].sort((a, b) => a.n - b.n); };
+/* writes the whole list of revisions (list) and, when cfg is given, appends one more numbered after everything known; one
+   transaction, so two tabs appending at once get two numbers. Resolves with { n: the new number (or the last), list }. */
+async function setsWrite(id, list, cfg) {
+  const db = await sdb();
+  return new Promise((res, rej) => {
+    const tx = db.transaction('sets', 'readwrite'), os = tx.objectStore('sets');
+    let out = [], n = 0;
+    const rq = os.get(id);
+    rq.onsuccess = () => {
+      out = unionSets(rq.result && rq.result.sets, list);
+      n = out.length ? out[out.length - 1].n : 0;
+      if (cfg) { n += 1; out.push({ n, ...cfg }); }
+      os.put({ id, sets: out });
+    };
+    tx.oncomplete = () => { if (SETS) SETS.set(id, out); res({ n, list: out }); }; // the cache may have been dropped meanwhile (another tab)
+    tx.onerror = tx.onabort = () => rej(tx.error || new Error('IndexedDB'));
+  });
+}
+
 /* every tab of this Jaskinia shares the library: a change in one tab tells the others, which read it again (v6.1) */
 const MAT_BC = (() => { try { return new BroadcastChannel('jaskinia-materialy'); } catch { return null; } })();
 function matEmit(detail, fromOther) {
   document.dispatchEvent(new CustomEvent('jk:materialy', { detail }));
   if (!fromOther && MAT_BC) { const { target, ...rest } = detail || {}; void target; try { MAT_BC.postMessage(rest); } catch { /* a closed channel: the other tabs read on their next start */ } }
 }
-if (MAT_BC) MAT_BC.onmessage = e => { MATS = null; matEmit(e.data || {}, true); };
+if (MAT_BC) MAT_BC.onmessage = e => { MATS = null; SETS = null; matEmit(e.data || {}, true); };
 
 /* ---------- the library ---------- */
 let MATS = null; // id → material, read once, then kept in step with every write
 async function matAll() {
-  if (!MATS) { MATS = new Map(); for (const m of await mall('materialy')) MATS.set(m.id, m); }
+  if (!MATS) {
+    const next = new Map();
+    for (const m of await mall('materialy')) next.set(m.id, m);
+    const known = await setsAll();
+    // a record an older build rewrote: its revisions come back from the second database, and a turn or scale it changed
+    // in place becomes one more revision (kept there, so its number never moves)
+    for (const m of next.values()) {
+      const list = matSets(m), have = known.get(m.id) || [];
+      if (list.length !== have.length || list.some((x, i) => x.n !== have[i].n)) { try { await setsWrite(m.id, list); } catch { /* read-only here: shown, not kept */ } }
+    }
+    MATS = next;
+  }
   return MATS;
 }
 async function matSave(m) { await mput('materialy', m); (await matAll()).set(m.id, m); }
@@ -74,13 +132,20 @@ async function fileBlob(sha) { const f = await mget('pliki', sha); if (!f) throw
 const CLAY = 0xb9b2a6;
 async function matLoad(m) {
   const { THREE, GLTFLoader, OBJLoader, MTLLoader } = swiat();
-  const deps = new Map();
-  for (const d of m.deps || []) deps.set(baseName(d.name).toLowerCase(), await fileBlob(d.sha));
+  /* a companion is found by the path the model names it with (two "texture.png" in red/ and blue/ inside one glTF are two
+     pictures: GPT and Feniks GPT, 18 Oct), else by its name when that name is unique among the companions */
+  const byPath = new Map(), byName = new Map();
+  for (const d of m.deps || []) {
+    const bl = await fileBlob(d.sha), k = baseName(d.name).toLowerCase();
+    byName.set(k, byName.has(k) ? null : bl);
+    if (d.uri) byPath.set(normPath(String(d.uri).replace(/\\/g, '/')), bl);
+  }
+  const depFor = u => { const p = normPath(uriOf(String(u).split('?')[0]).replace(/\\/g, '/')); return byPath.get(p) || byName.get(baseName(p).toLowerCase()) || null; };
   const urls = [], missing = new Set();
   const mgr = new THREE.LoadingManager();
   mgr.setURLModifier(u => {
     if (/^(data|blob):/.test(u)) return u;
-    const k = decodeURIComponent(baseName(u.split('?')[0])).toLowerCase(), bl = deps.get(k);
+    const bl = depFor(u);
     if (bl) { const x = URL.createObjectURL(bl); urls.push(x); return x; }
     missing.add(baseName(decodeURIComponent(u.split('?')[0])));
     return 'data:,';
@@ -117,8 +182,8 @@ async function matLoad(m) {
         const text = await bl.text(), mtl = (/^mtllib\s+(.+?)\s*$/m.exec(text) || [])[1];
         const ol = new OBJLoader(mgr);
         let mtlText = '';
-        if (mtl && deps.has(baseName(mtl).toLowerCase())) {
-          mtlText = await deps.get(baseName(mtl).toLowerCase()).text();
+        if (mtl && depFor(mtl)) {
+          mtlText = await depFor(mtl).text();
           const mats = new MTLLoader(mgr).parse(mtlText, '');
           mats.preload();
           ol.setMaterials(mats);
@@ -158,7 +223,14 @@ async function matLoad(m) {
    material's id would quietly change size and orientation (GPT-6, PR #4). Every change now adds a numbered revision
    and keeps the earlier ones: a place can pin the revision it was built with (Jaskinia.materialy.object(id, {set})) or
    follow the newest. A material from before v6.1 has one revision: its settings as they are. */
-function matSets(m) { return m.sets && m.sets.length ? m.sets : [{ n: 1, rot: [...(m.rot || [0, 0, 0])], scale: m.scale || 1, at: m.added || 0 }]; }
+function matSets(m) {
+  let list = unionSets(SETS && SETS.get(m.id), m.sets);
+  if (!list.length) return [{ n: 1, rot: [...(m.rot || [0, 0, 0])], scale: m.scale || 1, at: m.added || 0 }];
+  const last = list[list.length - 1];
+  if (JSON.stringify(last.rot || [0, 0, 0]) !== JSON.stringify(m.rot || [0, 0, 0]) || (last.scale || 1) !== (m.scale || 1))
+    list = [...list, { n: last.n + 1, rot: [...(m.rot || [0, 0, 0])], scale: m.scale || 1, at: m.upd || Date.now(), by: 'starsza wersja' }];
+  return list;
+}
 function matSetting(m, n) {
   const list = matSets(m);
   if (n == null) return list[list.length - 1];
@@ -248,8 +320,8 @@ async function matImport(files, from = 'plik', label, onStep) {
   const pics = list.filter(f => MAT_PIC.test(f.name));
   const skipped = list.filter(f => !MAT_MODEL.test(f.name) && !MAT_SIDE.test(f.name)).map(f => f.name);
   const out = [];
-  const fresh = new Set(); // bytes this import wrote: what a failed model leaves behind is removed at the end
-  const store = async f => { const sha = await sha256(f.blob); if (!(await mget('pliki', sha))) { await mput('pliki', { sha, name: baseName(f.name), size: f.blob.size, data: f.blob }); fresh.add(sha); } return { name: baseName(f.name), sha, size: f.blob.size }; };
+  const fresh = new Set(); // bytes this import wrote
+  const store = async f => { const sha = await sha256(f.blob); if (!(await mget('pliki', sha))) { await mput('pliki', { sha, name: baseName(f.name), size: f.blob.size, data: f.blob, at: Date.now() }); fresh.add(sha); } return { name: baseName(f.name), sha, size: f.blob.size }; };
   const all = await matAll();
   const used = new Set();
   const jobs = mains.length ? mains.map(f => ({ main: f, kind: 'model' })) : pics.map(f => ({ main: f, kind: 'tekstura' }));
@@ -282,7 +354,7 @@ async function matImport(files, from = 'plik', label, onStep) {
         }
       }
       const took = new Set();
-      for (const w of wanted) { const s = sideFor(side, w.from, w.uri); if (s && !took.has(s)) { took.add(s); deps.push(await store(s)); used.add(s); } }
+      for (const w of wanted) { const s = sideFor(side, w.from, w.uri); if (s && !took.has(s)) { took.add(s); deps.push({ ...(await store(s)), uri: w.uri }); used.add(s); } }
     }
     deps.sort((a, b) => a.name.localeCompare(b.name));
     const id = 'm' + (deps.length ? (await sha256(new Blob([main.sha + deps.map(d => d.name + d.sha).join('')]))) : main.sha).slice(0, 20);
@@ -307,14 +379,54 @@ async function matImport(files, from = 'plik', label, onStep) {
     await matSave(m);
     out.push({ id, name: m.name, ver: m.ver, prev: prev ? prev.id : null });
   }
-  if (fresh.size && out.some(x => x.error)) { // bytes of a model that could not be read do not stay in the browser for nothing
-    const refd = new Set();
-    for (const x of (await matAll()).values()) { refd.add(x.main?.sha); for (const d of x.deps || []) refd.add(d.sha); }
-    for (const sha of fresh) if (!refd.has(sha)) { try { await mdo('pliki', 'readwrite', os => os.delete(sha)); } catch { /* kept; harmless */ } }
-  }
+  if (fresh.size && out.some(x => x.error)) setTimeout(() => matSweep(), MAT_SWEEP_AGE + 1000); // what a failed model left, later
   const unusedSide = mains.length ? side.filter(s => !used.has(s) && !/\.(bin|mtl)$/i.test(s.name) && !MAT_PIC.test(s.name)).map(s => s.name) : [];
   if (out.some(x => !x.error && !x.again)) matEmit({ added: out.filter(x => !x.error && !x.again).map(x => x.id) });
   return { done: out, skipped: [...skipped, ...unusedSide] };
+}
+/* Bytes no material uses (a model that could not be read leaves its files) go, but only once they are old enough that no
+   import still running in any tab can be about to use them: v6.1 removed them at the end of the failed import, and a
+   second import sharing a picture could save a material whose picture had just gone (GPT, 18 Oct). Files written by an
+   older build carry no time and are never swept here. */
+const MAT_SWEEP_AGE = 10 * 60e3;
+async function matSweep() {
+  try {
+    const refd = new Set();
+    for (const x of await mall('materialy')) { refd.add(x.main?.sha); for (const d of x.deps || []) refd.add(d.sha); }
+    const old = (await mdo('pliki', 'readonly', os => os.getAllKeys())) || [];
+    for (const sha of old) {
+      if (refd.has(sha)) continue;
+      const f = await mget('pliki', sha);
+      if (f && f.at && Date.now() - f.at > MAT_SWEEP_AGE) await mdo('pliki', 'readwrite', os => os.delete(sha));
+    }
+  } catch { /* kept; harmless */ }
+}
+/* A new turn or scale of a material (v6.3): numbered once in the second database (two tabs never take one number), then
+   written onto the newest record, so what another tab wrote meanwhile stays (GPT, 18 Oct: a window kept its own copy of
+   the record and saved it over a newer one). */
+async function matApplySettings(id, patch) {
+  const m = await mget('materialy', id);
+  if (!m) throw new Error(t('Nie ma w bibliotece materiału {0}.', id));
+  await setsAll();
+  const list = matSets(m);
+  const cfg = { rot: [...(patch.rot || m.rot || [0, 0, 0])], scale: patch.scale ?? m.scale ?? 1, at: Date.now() };
+  let n, sets;
+  try { ({ n, list: sets } = await setsWrite(id, list, cfg)); }
+  catch { n = list[list.length - 1].n + 1; sets = [...list, { n, ...cfg }]; }
+  let facts = null, thumb = null;
+  try {
+    const probe = { ...m, rot: cfg.rot, scale: cfg.scale };
+    const { object, animations } = await matLoad(probe);
+    const wrapped = matGround(matWrap(object, probe));
+    facts = { ...matFacts(wrapped, animations), src: m.facts?.src || '' };
+    thumb = await matThumb(wrapped);
+    swDispose(wrapped);
+  } catch { /* the old picture stays */ }
+  const now = (await mget('materialy', id)) || m;
+  Object.assign(now, { rot: cfg.rot, scale: cfg.scale, sets: unionSets(now.sets, sets), set: n, upd: Date.now() }, facts ? { facts } : {}, thumb ? { thumb } : {});
+  await matSave(now);
+  matEmit({ changed: [id] });
+  return { n, m: now };
 }
 /* what the toast says after an import */
 function matSay(res, sel) {
@@ -487,21 +599,8 @@ function renderMaterialy(box, c) {
       h('button', { class: 'jk-tb mt-del', type: 'button', title: t('Usuń z biblioteki (da się cofnąć)'), onclick: () => remove(m) }, icon('trash', 13)),
       h('button', { class: 'mt-go', type: 'button', title: t('Stań obok w skali 1:1 i chodź (WASD, mysz). Esc wychodzi.'), onclick: () => enter() }, icon('t_wejdz', 15), h('span', { text: t('Wejdź') }))].filter(Boolean));
   }
-  async function setDefaults(m, patch) {
-    const list = matSets(m);
-    Object.assign(m, patch);
-    const n = list[list.length - 1].n + 1;
-    m.sets = [...list, { n, rot: [...(m.rot || [0, 0, 0])], scale: m.scale || 1, at: Date.now() }];
-    m.set = n;
-    try {
-      const { object, animations } = await matLoad(m);
-      const wrapped = matGround(matWrap(object, m));
-      m.facts = { ...matFacts(wrapped, animations), src: m.facts?.src || '' };
-      m.thumb = await matThumb(wrapped);
-      swDispose(wrapped);
-    } catch { /* keep the old picture */ }
-    await matSave(m);
-    matEmit({ changed: [m.id] });
+  async function setDefaults(m0, patch) {
+    const { m } = await matApplySettings(m0.id, patch);
     show(m.id, true);
   }
   async function remove(m) {
@@ -618,7 +717,7 @@ function fmtScale(v) {
 }
 
 /* one quiet word for Jozz on his first start of v6, when he comes from an older Jaskinia (a first start ever has its own hint) */
-const HAD_STORE = !!lsGet('jaskinia:v2'); // read before the shell boots and writes it
+const HAD_STORE = !!(lsGet('jaskinia:v3') || lsGet('jaskinia:v2')); // read before the shell boots and writes it
 function v6Hint() {
   if (!HAD_STORE || lsGet('jaskinia:v6') === '1') return;
   lsSet('jaskinia:v6', '1');

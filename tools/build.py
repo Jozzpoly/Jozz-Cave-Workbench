@@ -15,6 +15,9 @@ J = lambda p: json.load(open(os.path.join(HERE, p)))
 G, H, K = J("data/git.json"), J("data/gh.json"), J("data/knowledge.json")
 GH_BY = {r["name"]: r for r in H["repos"]}
 VIS = {x["name"]: x.get("visibility") for x in J("data/connector_repos.json")["repos"]}  # when the API cannot see a repo, the list still knows if it is private
+# play entries someone verified (address, window or tab only, who and when): data/wejscia.json
+_WEJ = os.path.join(HERE, "data", "wejscia.json")
+WEJ = {k: v for k, v in (json.load(open(_WEJ, encoding="utf-8")) if os.path.exists(_WEJ) else {}).items() if not k.startswith("_")}
 NOW = G["generated_ts"]
 DAY = 86400
 GHB = "https://github.com/Jozzpoly"
@@ -118,7 +121,9 @@ for g in G["repos"]:
         "private": bool(meta.get("private")) if meta else VIS.get(name) == "private", "desc": meta.get("description"), "api": api_ok,
         "identity": K["identity"].get(name), "stated": K["stated"].get(name, []),
         "readme": {**(g.get("readme") or {}), "lead": clean_lead((g.get("readme") or {}).get("lead"))}, "url": f"{GHB}/{name}",
-        "pages": f"https://jozzpoly.github.io/{name}/" if has_pages else None,
+        "pages": (WEJ[name]["url"] if name in WEJ else f"https://jozzpoly.github.io/{name}/" if has_pages else None),
+        "tab": bool(name in WEJ and WEJ[name].get("okno") is False),
+        "wejscie": ({k: WEJ[name].get(k) for k in ("dlaczego", "sprawdzil", "kiedy")} if name in WEJ else None),
         "created": meta.get("created_at"), "pushed": meta.get("pushed_at"),
         "default": default, "empty": bool(g.get("empty")),
         "last_ts": last_ts, "age": age, "heat": heat_level(age), "feniks": age is not None and age <= 14,

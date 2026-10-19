@@ -1,11 +1,12 @@
 /* ---------- the store: what Jaskinia keeps, and how none of it gets lost ----------
-   jaskinia:v2       the live state: workspaces (tabs), notes, saved layouts, the trash, per-window views
+   jaskinia:v3       the live state (v6.3): workspaces (tabs), notes, saved layouts, the trash, per-window views
+   jaskinia:v2       the live state of builds v2 to v6.2; read once, then only watched (see "older builds" below)
    jaskinia:kopie    automatic copies: before every risky step, and at most every few hours on start
    jaskinia:ratunek  a raw copy of anything that could not be read (so it can still be rescued by hand)
    jaskinia:v1       the first version's data: read once, migrated, never deleted
    Rules: loading repairs what it can and puts what it cannot into the trash; nothing is replaced silently;
    notes live outside the layouts, so undoing a layout change never rewinds what was written. */
-const KEY = 'jaskinia:v2', KEY_V1 = 'jaskinia:v1', KEY_BAK = 'jaskinia:kopie', KEY_RESCUE = 'jaskinia:ratunek';
+const KEY = 'jaskinia:v3', KEY_V2 = 'jaskinia:v2', KEY_V2SEEN = 'jaskinia:v3:z-v2', KEY_V1 = 'jaskinia:v1', KEY_BAK = 'jaskinia:kopie', KEY_RESCUE = 'jaskinia:ratunek';
 const BAK_MAX = 10, BAK_EVERY = 8 * 3600e3, TRASH_MAX = 200;
 let store = null;
 const notices = []; // what went wrong (or was done) while loading; told once, plainly
@@ -149,14 +150,22 @@ function repair(st) {
 function loadStore() {
   let st = null;
   const raw = lsGet(KEY);
-  if (raw != null) {
-    try { st = JSON.parse(raw); } catch { st = null; }
-    if (!st || typeof st !== 'object' || !Array.isArray(st.spaces)) {
-      rescue(raw);
-      const b = readBackups()[0];
-      st = b ? fromSnapshot(b.data) : null;
-      notices.push(b ? { kind: 'restored', at: b.at } : { kind: 'lost' });
-    }
+  const readRaw = r => {
+    let o = null;
+    try { o = JSON.parse(r); } catch { o = null; }
+    if (o && typeof o === 'object' && Array.isArray(o.spaces)) return o;
+    rescue(r);
+    const b = readBackups()[0];
+    notices.push(b ? { kind: 'restored', at: b.at } : { kind: 'lost' });
+    return b ? fromSnapshot(b.data) : null;
+  };
+  if (raw != null) st = readRaw(raw);
+  else if (lsGet(KEY_V2) != null) {
+    // the first start of v6.3 in this browser: the state of the older builds comes over once; from now on what they
+    // write to jaskinia:v2 is only watched (legacyWrite), never taken as the newest state
+    const r2 = lsGet(KEY_V2);
+    st = readRaw(r2);
+    lsSet(KEY_V2SEEN, JSON.stringify({ text: r2, at: Date.now() }));
   } else {
     const r1 = lsGet(KEY_V1);
     if (r1 != null) {
@@ -222,18 +231,19 @@ const newerNote = (a, b) => ((JSON.parse(b).upd || 0) > (JSON.parse(a).upd || 0)
 function mergeSpace(bv, ov, tv) {
   const sB = bv ? JSON.parse(bv) : null, sO = JSON.parse(ov), sT = JSON.parse(tv);
   const shape = s => s && JSON.stringify([s.L.tree, s.L.floats, s.L.max]);
-  const meta = s => s && JSON.stringify([s.name, s.preset, s.purpose, s.L.stats, s.L.focus]);
-  const take = (f, quiet) => { const b = f(sB), o = f(sO), t0 = f(sT); if (o === t0 || t0 === b) return { s: sO }; if (o === b) return { s: sT }; return { s: sO, clash: !quiet }; };
-  const sh = take(shape), me = take(meta, true);
-  const wins = merge3(sB ? jsonMap(sB.L.wins) : {}, jsonMap(sO.L.wins), jsonMap(sT.L.wins), a => a).out;
+  const named = s => s && JSON.stringify([s.name, s.preset, s.purpose]);
+  const quiet = s => s && JSON.stringify([s.L.stats, s.L.focus]); // filters and focus change with every click: no copy for them
+  const take = (f, q) => { const b = f(sB), o = f(sO), t0 = f(sT); if (o === t0 || t0 === b) return { s: sO }; if (o === b) return { s: sT }; return { s: sO, clash: !q }; };
+  const sh = take(shape), nm = take(named), qu = take(quiet, true);
+  const wm = merge3(sB ? jsonMap(sB.L.wins) : {}, jsonMap(sO.L.wins), jsonMap(sT.L.wins), a => a), wins = wm.out;
   const out = clone(sO);
-  out.name = me.s.name; out.preset = me.s.preset; out.purpose = me.s.purpose;
-  out.L = { ...clone(sh.s.L), stats: clone(me.s.L.stats), focus: me.s.L.focus, wins: {} };
+  out.name = nm.s.name; out.preset = nm.s.preset; out.purpose = nm.s.purpose;
+  out.L = { ...clone(sh.s.L), stats: clone(qu.s.L.stats), focus: qu.s.L.focus, wins: {} };
   const ids = new Set([...leafIds(out.L.tree), ...arr(out.L.floats).map(f => f.id)]);
   for (const id of ids) out.L.wins[id] = wins[id] ? JSON.parse(wins[id]) : (sh.s.L.wins[id] ? clone(sh.s.L.wins[id]) : { type: 'wybor', z: 1, pin: null, st: {} });
   if (out.L.focus && !ids.has(out.L.focus)) out.L.focus = null;
   if (out.L.max && !ids.has(out.L.max)) out.L.max = null;
-  return { v: JSON.stringify(out), clash: !!sh.clash };
+  return { v: JSON.stringify(out), clash: !!(sh.clash || nm.clash || wm.lost.length) };
 }
 /* returns { st, lost }: st is the merged store (this tab's cur and sel); lost lists what lost a real conflict, with the side
    it came from ('ours' or 'theirs'), so the caller can keep that side in an automatic copy */
@@ -260,6 +270,36 @@ function mergeStores(b0, ours, theirs) {
   return { st, lost };
 }
 
+/* ---------- older builds (v6.3) ----------
+   Builds before v6.1 wrote their whole state on every hide of their tab, from memory, however old. GPT's real-browser
+   runs on 18 Oct showed it: a v6 tab left open on the same address wrote its old notes over the ones a newer build had
+   saved, and v6.1 even took that write in as if the other tab had changed them. Since v6.3 the live state has its own key,
+   which older builds do not know, so they can no longer overwrite it. What an older tab still writes to its own key is
+   kept whole in an automatic copy (nothing it holds is lost), and a note that is newer there than here comes in; nothing
+   else from it is taken, because its layouts may be a day old. Jozz is told once, so he can close the old tab. */
+function v2Seen() { try { return obj(JSON.parse(lsGet(KEY_V2SEEN) || '{}')); } catch { return {}; } }
+/* returns null when nothing new was written there, else { notes: [names taken in], kept: the copy or null } */
+function legacyWrite() {
+  const now = lsGet(KEY_V2), seen = v2Seen();
+  if (now == null || now === seen.text) return null;
+  let theirs = null;
+  try { theirs = JSON.parse(now); } catch { theirs = null; }
+  const since = seen.at || 0;
+  lsSet(KEY_V2SEEN, JSON.stringify({ text: now, at: Date.now() }));
+  if (!theirs || typeof theirs !== 'object' || !Array.isArray(theirs.spaces)) { rescue(now); return { notes: [], kept: null, broken: true }; }
+  // an old tab writes on every hide: its newest state replaces its previous copy instead of pushing Jozz's own copies out
+  const why = t('ze starszej wersji Jaskini'), bl = readBackups();
+  if (bl[0] && bl[0].why === why) writeBackups(bl.slice(1));
+  const kept = makeBackup(why, null, { ...fromSnapshot(theirs), saved: arr(theirs.saved) });
+  // newer there than here: written in the old tab after we last looked (or after this note changed here)
+  const newer = Object.entries(obj(theirs.notes)).filter(([id, n]) => n && typeof n.text === 'string' && (store.notes[id] ? (n.upd || 0) > (store.notes[id].upd || 0) && n.text !== store.notes[id].text : (n.upd || 0) > since));
+  if (newer.some(([id]) => store.notes[id])) makeBackup(t('z tej karty, przed notatkami ze starszej wersji'), null, store); // the text it replaces stays too
+  const took = [];
+  for (const [id, n] of newer) { store.notes[id] = { text: n.text, upd: n.upd || Date.now() }; took.push(noteTitle(n.text) || t('notatka')); }
+  if (took.length) persist();
+  return { notes: took, kept };
+}
+
 /* ---------- writing ---------- */
 let saveT = 0, saveProblem = null, onSaveProblem = null;
 function persistNow() {
@@ -271,7 +311,7 @@ function persistNow() {
   const txt = JSON.stringify(store);
   let ok = lsSet(KEY, txt) === true;
   if (!ok) { trimBackups(Math.max(1, Math.floor(readBackups().length / 2))); ok = lsSet(KEY, txt) === true; }
-  if (ok) { synced(txt, store); dirty = false; }
+  if (ok) { synced(txt, store); dirty = false; document.dispatchEvent(new CustomEvent('jk:stan')); }
   const p = ok ? null : 'full';
   if (p !== saveProblem) { saveProblem = p; onSaveProblem?.(p); }
 }
@@ -279,11 +319,11 @@ function persist() { dirty = true; clearTimeout(saveT); saveT = setTimeout(persi
 
 /* ---------- snapshots: a whole Jaskinia in one object (copies, saved states, export) ---------- */
 function snapshotAll(st = store) {
-  return { spaces: clone(st.spaces), cur: st.cur, sel: st.sel, notes: clone(st.notes), views: clone(st.views) };
+  return { spaces: clone(st.spaces), cur: st.cur, sel: st.sel, notes: clone(st.notes), views: clone(st.views), saved: clone(arr(st.saved)) };
 }
 function fromSnapshot(d) {
   d = obj(d);
-  return { v: 2, cur: d.cur, sel: d.sel, spaces: arr(d.spaces), notes: obj(d.notes), saved: [], trash: [], views: obj(d.views) };
+  return { v: 2, cur: d.cur, sel: d.sel, spaces: arr(d.spaces), notes: obj(d.notes), saved: arr(d.saved), trash: [], views: obj(d.views) };
 }
 const sig = o => { const t0 = JSON.stringify(o); let x = 2166136261; for (let i = 0; i < t0.length; i++) { x ^= t0.charCodeAt(i); x = Math.imul(x, 16777619); } return (x >>> 0).toString(36) + ':' + t0.length; };
 
@@ -301,7 +341,7 @@ function trimBackups(n) { const l = readBackups(); writeBackups(l.slice(0, Math.
    Returns null when the copy could not be written: the caller must not delete then. */
 function makeBackup(why, forgotten, from = store) {
   if (!storageOK || !from) return null;
-  const data = snapshotAll(from), list = readBackups(), s0 = sig({ s: data.spaces, n: data.notes });
+  const data = snapshotAll(from), list = readBackups(), s0 = sig({ s: data.spaces, n: data.notes, z: data.saved.map(x => x.id) });
   const keep = arr(forgotten).filter(Boolean).map(x => clone(x));
   if (list[0] && list[0].sig === s0) {
     if (why === 'auto' && !keep.length) return list[0];
