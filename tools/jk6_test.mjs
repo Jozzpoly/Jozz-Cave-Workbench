@@ -194,15 +194,20 @@ if (!ONLY || ONLY === 'desk') {
   ok((await lib(J)).length === before, 'the library is still there after a reload');
   ok(await J(s => Object.values(__JASK.L.wins).find(w => w.type === 'materialy')?.st.sel === s, selBefore), 'the window still shows the same material');
   await shot('10-reload');
-  /* ---------- Zagraj never takes over the game being played (M1) ---------- */
+  /* ---------- Zagraj (the owner's note of 18 Oct): the plain click changes the game in the game window; Shift opens one beside ---------- */
   await page.route('https://jozzpoly.github.io/**', r => r.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><title>gra</title><body style="background:#123">gra</body>' }));
-  const two = await J(() => Object.values(__BIB.R).filter(r => r.pages).slice(0, 2).map(r => r.name));
-  await J(n => __BIB.HOOK.play(__BIB.R[n]), two[0]); await wait(500);
-  await J(n => __BIB.HOOK.play(__BIB.R[n]), two[1]); await wait(500);
-  const g = await J(() => { const ws = Object.entries(__JASK.L.wins).filter(([, w]) => w.type === 'gra'); return { n: ws.length, pins: ws.map(([, w]) => w.pin), rects: ws.map(([id]) => { const r = document.querySelector(`.win[data-id="${id}"]`).getBoundingClientRect(); return [Math.round(r.x), Math.round(r.y), Math.round(r.width), Math.round(r.height)]; }) }; });
+  const three = await J(() => Object.values(__BIB.R).filter(r => r.pages).slice(0, 3).map(r => r.name));
+  const games = () => J(() => { const ws = Object.entries(__JASK.L.wins).filter(([, w]) => w.type === 'gra'); return { n: ws.length, pins: ws.map(([, w]) => w.pin), rects: ws.map(([id]) => { const r = document.querySelector(`.win[data-id="${id}"]`).getBoundingClientRect(); return [Math.round(r.x), Math.round(r.y), Math.round(r.width), Math.round(r.height)]; }) }; });
+  await J(n => __BIB.HOOK.play(__BIB.R[n]), three[0]); await wait(500);
+  await J(n => __BIB.HOOK.play(__BIB.R[n]), three[1]); await wait(500);
+  const g1 = await games();
+  ok(g1.n === 1 && g1.pins[0] === three[1], 'a second Zagraj changes the game in the game window (one window, the new game)', JSON.stringify(g1));
+  ok(await J(() => document.activeElement?.tagName === 'IFRAME'), 'the game gets the keyboard', await J(() => document.activeElement?.tagName));
+  await J(n => __BIB.HOOK.play(__BIB.R[n], { beside: true }), three[2]); await wait(500);
+  const g = await games();
   const overlap = (a, b) => Math.max(0, Math.min(a[0] + a[2], b[0] + b[2]) - Math.max(a[0], b[0])) * Math.max(0, Math.min(a[1] + a[3], b[1] + b[3]) - Math.max(a[1], b[1]));
-  ok(g.n === 2 && g.pins[0] !== g.pins[1] && overlap(g.rects[0], g.rects[1]) < 0.2 * g.rects[0][2] * g.rects[0][3], 'a second Zagraj opens a second game beside the first, not over it', JSON.stringify(g));
-  await J(n => __BIB.HOOK.play(__BIB.R[n]), two[0]); await wait(400);
+  ok(g.n === 2 && g.pins.includes(three[1]) && g.pins.includes(three[2]) && overlap(g.rects[0], g.rects[1]) < 0.2 * g.rects[0][2] * g.rects[0][3], 'Shift+Zagraj opens a second game beside the first, not over it', JSON.stringify(g));
+  await J(n => __BIB.HOOK.play(__BIB.R[n]), three[1]); await wait(400);
   ok(await J(() => Object.values(__JASK.L.wins).filter(w => w.type === 'gra').length === 2), 'Zagraj on a game already open goes to its window');
   await ctx.close();
 }
@@ -211,10 +216,10 @@ if (!ONLY || ONLY === 'desk') {
 if (!ONLY || ONLY === 'repo') {
   const { ctx, page, J, wait, shot } = await open();
   await J(() => Jaskinia.ext.open('materialy')); await wait(700);
-  ok(await J(() => document.querySelectorAll('.mt-rchip').length >= 8), 'the empty library offers Jozz\'s own models from his repositories');
-  await page.locator('.mt-rchip', { hasText: 'Dom' }).first().click();
-  const got = await waitFor(J, () => Jaskinia.materialy.list().then(l => l.find(m => m.name === 'Dom') || null), null, 20000);
-  ok(got && /^repo:Jozzpoly\/Box3d_FunProject\//.test(got.from), 'Dom comes from Box3d_FunProject and keeps where it came from', got ? got.from : '');
+  ok(await J(() => document.querySelectorAll('.mt-rchip').length >= 7), 'the empty library offers Jozz\'s own models from his repositories');
+  await page.locator('.mt-rchip', { hasText: 'Nadwozie' }).first().click();
+  const got = await waitFor(J, () => Jaskinia.materialy.list().then(l => l.find(m => m.name === 'Nadwozie') || null), null, 20000);
+  ok(got && got.from === 'repo:Jozzpoly/Box3d_FunProject/assets/source/Nadwozie.gltf', 'Nadwozie comes from Box3d_FunProject and keeps where it came from', got ? got.from : '');
   await wait(1200);
   await shot('11-from-repo');
   await ctx.close();

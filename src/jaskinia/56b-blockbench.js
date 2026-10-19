@@ -4,6 +4,14 @@
    inflate, the embedded pictures (pixel-sharp), and only what was visible when he saved it (all of it if nothing was).
    Pixels become metres the way Blockbench's own glTF export does it: 16 pixels are 1 metre. */
 const BB_ORDER = 'ZYX';
+/* The look of a Blockbench model, as Blockbench's own glTF export defines it (alphaMode MASK with cutoff 0.05, both sides,
+   matte, clamped at the edges; pixel-sharp unless the owner chose smooth). A .bbmodel, a Blockbench .obj export and a Blockbench glTF look the same in
+   Jaskinia (the owner, 18 Oct: his .obj exports came out shiny, blurred and without their transparent pixels). */
+function bbLook(map, color) {
+  const { THREE } = swiat();
+  if (map) { map.colorSpace = THREE.SRGBColorSpace; map.wrapS = map.wrapT = THREE.ClampToEdgeWrapping; } // its pixels: swPixels()
+  return new THREE.MeshStandardMaterial({ map: map || null, color: map ? 0xffffff : (color ?? 0xb9b2a6), roughness: 1, metalness: 0, alphaTest: map ? 0.05 : 0, side: THREE.DoubleSide });
+}
 function bbModel(j, mgr, missing) {
   const { THREE } = swiat();
   const CLAY = 0xb9b2a6; // the colour of a face without a picture, as in Materiały
@@ -14,15 +22,13 @@ function bbModel(j, mgr, missing) {
   const texs = (j.textures || []).map((tx, i) => {
     const uvw = tx.uv_width || res.width || tx.width || 16, uvh = tx.uv_height || res.height || tx.height || 16;
     let map = null;
-    if (tx.source && /^data:image\//.test(tx.source)) {
-      map = tl.load(tx.source);
-      map.colorSpace = THREE.SRGBColorSpace; map.magFilter = THREE.NearestFilter; map.minFilter = THREE.NearestFilter; map.generateMipmaps = false;
-    } else if (tx.name) missing.add(tx.name);
-    const mat = new THREE.MeshStandardMaterial({ map, color: map ? 0xffffff : CLAY, roughness: 0.86, metalness: 0, alphaTest: 0.5, side: THREE.DoubleSide });
+    if (tx.source && /^data:image\//.test(tx.source)) map = tl.load(tx.source);
+    else if (tx.name) missing.add(tx.name);
+    const mat = bbLook(map, CLAY);
     mat.name = tx.name || 'texture ' + i;
     return { uuid: tx.uuid, uvw, uvh, mat };
   });
-  const noTex = new THREE.MeshStandardMaterial({ color: CLAY, roughness: 0.86, side: THREE.DoubleSide });
+  const noTex = bbLook(null, CLAY);
   const texOf = v => { if (v === null || v === undefined || v === false) return null; if (typeof v === 'number') return texs[v] || null; return texs.find(x => x.uuid === v) || null; };
   // which elements and groups count: visible and exported (when nothing is visible, everything)
   const els = (j.elements || []).filter(e => e.export !== false);

@@ -35,6 +35,23 @@ function swDispose(obj) {
   });
 }
 
+/* Pixels of a texture: sharp, as Blockbench draws them, or smoothed. The owner, 18 Oct: most Blockbench models are made
+   for sharp pixels, with no smoothing. One choice for every model (Ustawienia → Wygląd → Modele 3D, and the "Piksele"
+   button on the Materiały stage); sharp is the default. Sharp is Blockbench's own sampler: nearest, no mipmaps. */
+const SW_TEX = ['map', 'emissiveMap', 'alphaMap', 'aoMap', 'bumpMap', 'normalMap', 'roughnessMap', 'metalnessMap', 'specularMap', 'lightMap'];
+function swPixels(obj, sharp = prefs.pixels !== 'gladkie') {
+  const { THREE } = swiat();
+  const mag = sharp ? THREE.NearestFilter : THREE.LinearFilter, min = sharp ? THREE.NearestFilter : THREE.LinearMipmapLinearFilter;
+  obj?.traverse(o => {
+    for (const m of [].concat(o.material || [])) for (const k of SW_TEX) {
+      const x = m[k];
+      if (!x || !x.isTexture || (x.magFilter === mag && x.minFilter === min)) continue;
+      x.magFilter = mag; x.minFilter = min; x.generateMipmaps = !sharp;
+      if (x.image) x.needsUpdate = true; // a picture still loading takes the filters when it arrives
+    }
+  });
+  return obj;
+}
 /* a stage: canvas, light, ground, grid, an orbiting camera; renders only when something changed */
 function swStage(host, o = {}) {
   const S = swiat(), { THREE, OrbitControls, RoomEnvironment } = S;
@@ -74,6 +91,13 @@ function swStage(host, o = {}) {
   controls.enableDamping = true;
   controls.dampingFactor = 0.12;
   controls.screenSpacePanning = true;
+  /* The owner's hands (18 Oct, his loudest note): the wheel button always moves the view, turning the wheel zooms.
+     OrbitControls dollied on the wheel button. Now: left turns around, the wheel button and the right one move, turning
+     the wheel zooms toward the cursor. The wheel button never starts the browser's autoscroll over the stage. */
+  controls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.PAN, RIGHT: THREE.MOUSE.PAN };
+  controls.zoomToCursor = true;
+  canvas.addEventListener('mousedown', e => { if (e.button === 1) e.preventDefault(); });
+  canvas.addEventListener('auxclick', e => { if (e.button === 1) e.preventDefault(); });
   controls.maxPolarAngle = Math.PI * 0.495;
   let need = true, raf = 0, alive = true, bounds = null, gridKey = '';
   const ticks = new Set();
@@ -155,9 +179,14 @@ function swStage(host, o = {}) {
   function placeBody() { const b = bounds; body.position.set(b.box.max.x + 0.45 + Math.min(1, b.size * 0.08), b.box.min.y, b.center.z); }
   st.set = obj => {
     for (const ch of root.children.splice(0)) { ch.parent = null; swDispose(ch); }
-    if (obj) { obj.traverse(x => { if (x.isMesh) { x.castShadow = true; x.receiveShadow = true; } }); root.add(obj); }
+    if (obj) { obj.traverse(x => { if (x.isMesh) { x.castShadow = true; x.receiveShadow = true; } }); swPixels(obj); root.add(obj); }
     st.frame();
   };
+  /* sharp pixels also when the stage draws fewer pixels than the screen has (a slow frame, a screen scaled by 125%):
+     the picture is enlarged block by block instead of blurred */
+  const px = () => { const sharp = prefs.pixels !== 'gladkie'; canvas.style.imageRendering = sharp ? 'pixelated' : ''; swPixels(root, sharp); need = true; };
+  px();
+  document.addEventListener('jk:pixels', px);
   /* the body: 1.8 m, beside the thing, so its size is felt and not only read */
   let body = null;
   st.human = (on, keep) => {
@@ -222,7 +251,7 @@ function swStage(host, o = {}) {
   st.camera = camera;
   st.paint();
   st.dispose = () => {
-    alive = false; cancelAnimationFrame(raf); ro.disconnect(); controls.dispose();
+    alive = false; cancelAnimationFrame(raf); ro.disconnect(); controls.dispose(); document.removeEventListener('jk:pixels', px);
     swDispose(root); swDispose(extra); grid.children.forEach(g => { g.geometry.dispose(); g.material.dispose(); });
     ground.geometry.dispose(); ground.material.dispose(); env.dispose(); pmrem.dispose();
     renderer.dispose(); renderer.forceContextLoss?.(); canvas.remove();
@@ -300,16 +329,32 @@ function swWalk(stage, o = {}) {
   const hint = h('div', { class: 'sw-hint' });
   const exitB = h('button', { class: 'jk-tb sw-exit', type: 'button', onclick: () => end() }, icon('close', 12), h('span', { text: t('Wyjdź') }));
   const flyB = h('button', { class: 'jk-tb sw-fly', type: 'button', title: t('Lot: bez grawitacji i ścian (F)'), onclick: () => setFly(!fly) }, h('span', { text: t('Lot') }));
-  const veil = h('button', { class: 'sw-veil', type: 'button', onclick: () => lock() }, h('b', { text: t('Kliknij, żeby wejść') }), h('span', { text: t('mysz rozgląda się, WASD idzie, Spacja skacze, Shift biegnie, F lata, Esc puszcza mysz') }));
+  const veil = h('button', { class: 'sw-veil', type: 'button', onclick: () => lock() }, h('b', { text: t('Kliknij, żeby wejść') }), h('span', { text: t('mysz rozgląda się, WASD idzie, Spacja skacze, Shift biegnie, F lata (Spacja w górę, Shift w dół), kółko myszy zmienia prędkość, Esc puszcza mysz') }));
   const cross = h('div', { class: 'sw-cross', 'aria-hidden': 'true' });
   const touch = matchMedia('(pointer: coarse)').matches;
   const stick = h('div', { class: 'sw-stick', hidden: !touch }, h('i'));
   const jumpB = h('button', { class: 'sw-jump', type: 'button', hidden: !touch, text: t('Skok') });
-  const hud = h('div', { class: 'sw-hud' }, cross, hint, h('div', { class: 'sw-top' }, flyB, exitB), stick, jumpB, touch ? null : veil);
+  /* Fullscreen with the keyboard held (the owner, 18 Oct: the browser's own shortcuts can close the whole tab while he
+     plays, and Ctrl+W is "sprint forward" to a Minecraft hand). In fullscreen a Chromium browser lets the page keep every
+     key (Keyboard Lock), so Ctrl+W or Ctrl+T no longer reach the browser; holding Esc leaves fullscreen. Where the browser
+     or the embedding does not allow the lock, fullscreen alone still helps. */
+  const isFull = () => document.fullscreenElement === host;
+  const fullB = !touch && host.requestFullscreen ? h('button', { class: 'jk-tb sw-full', type: 'button', title: t('Pełny ekran: skróty przeglądarki (Ctrl+W, Ctrl+T) nie zamkną karty. Przytrzymaj Esc, żeby wyjść.'), onclick: () => fullToggle() }, h('span', { text: t('Pełny ekran') })) : null;
+  async function fullToggle() {
+    try {
+      if (isFull()) { await document.exitFullscreen(); return; }
+      await host.requestFullscreen({ navigationUI: 'hide' });
+      try { await navigator.keyboard?.lock?.(); } catch { /* not in this browser or embedding */ }
+      lock();
+    } catch { /* fullscreen refused: nothing changes */ }
+  }
+  const hud = h('div', { class: 'sw-hud' }, cross, hint, h('div', { class: 'sw-top' }, fullB, flyB, exitB), stick, jumpB, touch ? null : veil);
   host.append(hud);
   host.classList.add('sw-walking');
   const setFly = on => { fly = on; flyB.classList.toggle('on', fly); vel.set(0, 0, 0); };
-  const say = () => { hint.textContent = fly ? t('lot: Spacja w górę, C w dół, F wraca na ziemię') : dragLook ? t('przeciągnij myszą, żeby się rozejrzeć; WASD idzie') : ''; };
+  let speedK = 1; // the wheel's speed (Unreal's way): ×0.25 to ×8, kept for this walk
+  const kTxt = () => (speedK === 1 ? '' : ' · ' + t('prędkość ×{0}', String(Math.round(speedK * 100) / 100).replace('.', ',')));
+  const say = () => { hint.textContent = (fly ? t('lot: Spacja w górę, Shift w dół, F wraca na ziemię') : dragLook ? t('przeciągnij myszą, żeby się rozejrzeć; WASD idzie') : '') + kTxt(); };
   say();
 
   // desk: pointer lock, keys
@@ -321,9 +366,11 @@ function swWalk(stage, o = {}) {
     try { const p = cv.requestPointerLock?.(); if (!cv.requestPointerLock) noLock(); else p?.catch?.(() => noLock()); } catch { noLock(); }
   };
   const locked = () => document.pointerLockElement === cv;
-  const onLockChange = () => { veil.hidden = locked() || touch || dragLook; };
+  const onLockChange = () => { veil.hidden = locked() || touch || dragLook; if (!locked()) keys.clear(); }; // a lost lock (a browser shortcut, another window) drops held keys
   document.addEventListener('pointerlockchange', onLockChange);
   document.addEventListener('pointerlockerror', noLock);
+  const onFull = () => { fullB?.classList.toggle('on', isFull()); if (!isFull()) { try { navigator.keyboard?.unlock?.(); } catch { /* fine */ } keys.clear(); } };
+  document.addEventListener('fullscreenchange', onFull);
   // the first move after the mouse is locked can carry a jump across the whole screen (a known browser quirk): skip it,
   // and never turn more than a quarter turn from one event
   let fresh = true;
@@ -347,15 +394,29 @@ function swWalk(stage, o = {}) {
       if (locked()) { try { document.exitPointerLock(); } catch { /* fine */ } return; }
       end(); return;
     }
-    if (!active() || e.ctrlKey || e.metaKey || e.altKey) return;
+    // a key let go is always let go, whatever else is held (v6: Space released while Ctrl was down stayed pressed, and the
+    // body flew up until Space was pressed again)
+    if (e.type === 'keyup') { if (keys.delete(e.code) && active()) { e.preventDefault(); e.stopImmediatePropagation(); } return; }
+    if (!active() || e.ctrlKey || e.metaKey || e.altKey) { // a shortcut is the browser's: nothing stays held (in fullscreen the page keeps it)
+      if (e.ctrlKey || e.metaKey || e.altKey) { keys.clear(); if (isFull() && e.type === 'keydown') e.preventDefault(); }
+      return;
+    }
     if (!MOVE.has(e.code)) return;
     e.preventDefault(); e.stopImmediatePropagation();
-    if (e.type === 'keydown') {
-      if (e.code === 'KeyF' && !e.repeat) { setFly(!fly); say(); return; }
-      if (e.code === 'Space' && !fly && onGround && !e.repeat) { vel.y = 4.4; onGround = false; }
-      keys.add(e.code);
-    } else keys.delete(e.code);
+    if (e.code === 'KeyF' && !e.repeat) { setFly(!fly); say(); return; }
+    if (e.code === 'Space' && !fly && onGround && !e.repeat) { vel.y = 4.4; onGround = false; }
+    keys.add(e.code);
   };
+  const onWheel = e => {
+    if (!locked() && !host.contains(e.target)) return;
+    e.preventDefault();
+    speedK = clamp(Math.round(speedK * (e.deltaY < 0 ? 1.25 : 0.8) * 100) / 100, 0.25, 8);
+    if (Math.abs(speedK - 1) < 0.06) speedK = 1;
+    say();
+  };
+  host.addEventListener('wheel', onWheel, { passive: false }); // the canvas is inside: one notch counts once
+  const onVis = () => { if (document.hidden) keys.clear(); };
+  document.addEventListener('visibilitychange', onVis);
   window.addEventListener('keydown', onKey, true);
   window.addEventListener('keyup', onKey, true);
   const onBlur = () => keys.clear();
@@ -410,18 +471,19 @@ function swWalk(stage, o = {}) {
     if (keys.has('KeyD') || keys.has('ArrowRight')) wish.add(side);
     if (keys.has('KeyA') || keys.has('ArrowLeft')) wish.sub(side);
     if (tstate.id !== null) { wish.addScaledVector(fwd, -tstate.dy); wish.addScaledVector(side, tstate.dx); }
-    run = keys.has('ShiftLeft') || keys.has('ShiftRight');
+    const shift = keys.has('ShiftLeft') || keys.has('ShiftRight');
+    run = shift && !fly;
     if (wish.lengthSq() > 1) wish.normalize();
-    if (fly) {
-      const sp = (run ? 14 : 5) * Math.max(1, b.size / 40);
+    if (fly) { // Minecraft's flying: Space up, Shift down; the wheel sets the speed
+      const sp = 5 * Math.max(1, b.size / 40) * speedK;
       const look = new THREE.Vector3(-Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), -Math.cos(yaw) * Math.cos(pitch));
       const v = new THREE.Vector3().addScaledVector(side, wish.dot(side)).addScaledVector(look, wish.dot(fwd));
       if (keys.has('Space')) v.y += 1;
-      if (keys.has('KeyC')) v.y -= 1;
+      if (shift || keys.has('KeyC')) v.y -= 1;
       pos.addScaledVector(v, sp * dt);
       return;
     }
-    const sp = run ? 6.2 : 2.8;
+    const sp = (run ? 6.2 : 2.8) * speedK;
     // small steps (as in three-mesh-bvh's character example), so fast moves do not pass through walls
     const N = Math.max(1, Math.min(40, Math.ceil(dt * 300))), h1 = dt / N; // about 300 small steps a second, whatever the frame rate
     for (let i = 0; i < N; i++) {
@@ -481,11 +543,16 @@ function swWalk(stage, o = {}) {
     if (locked()) document.exitPointerLock?.();
     document.removeEventListener('pointerlockchange', onLockChange);
     document.removeEventListener('pointerlockerror', noLock);
+    document.removeEventListener('fullscreenchange', onFull);
+    if (isFull()) document.exitFullscreen?.().catch?.(() => {});
+    try { navigator.keyboard?.unlock?.(); } catch { /* fine */ }
     document.removeEventListener('mousemove', onMouse);
     document.removeEventListener('pointerdown', onDocDown, true);
     window.removeEventListener('keydown', onKey, true);
     window.removeEventListener('keyup', onKey, true);
     window.removeEventListener('blur', onBlur);
+    host.removeEventListener('wheel', onWheel);
+    document.removeEventListener('visibilitychange', onVis);
     host.removeEventListener('pointerdown', onTouchDown);
     host.removeEventListener('pointermove', onTouchMove);
     host.removeEventListener('pointerup', onTouchUp);

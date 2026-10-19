@@ -1,15 +1,43 @@
 # AGENTS.md: start here
 
 For any agent (Claude, GPT, Codex) working on Jaskinia. **First read the [Jaskinia compass (issue #5)](https://github.com/Jozzpoly/Jozz-Cave-Workbench/issues/5)**, in Polish: what Jaskinia is for, who holds what, and how we work with the owner. It is the one place for that; changes go there, not into new START_HERE files. Then read this file, then these, in order:
-1. [docs/2026-10-18-v61-fundament.md](docs/2026-10-18-v61-fundament.md): v6.1, the foundation after the owner's look from above (several tabs merge, addresses, the agents window, material settings revisions) and the next steps in order.
-2. [docs/2026-10-16-z-gory.md](docs/2026-10-16-z-gory.md): in Polish, what we are fighting for, the honest state and the next steps.
-3. [docs/2026-10-18-v6-materialy.md](docs/2026-10-18-v6-materialy.md): v6, the owner's own models in 3D and walking inside them; the shared goal with Feniks Studio (Astra) and the `window.Jaskinia` API.
-4. [docs/2026-10-16-szwy.md](docs/2026-10-16-szwy.md): the evening review of 16 Oct, covering the seams found with GPT, Medium and the Studio line, the measurements, and the current order of work.
-5. [docs/design/2026-10-14-jaskinia-v2-decisions.md](docs/design/2026-10-14-jaskinia-v2-decisions.md).
+1. [docs/2026-10-18-v62-uwagi.md](docs/2026-10-18-v62-uwagi.md): v6.2, the owner's ten remarks from using v6, each answered by behaviour, and **his conventions** (below).
+2. [docs/2026-10-18-v61-fundament.md](docs/2026-10-18-v61-fundament.md): v6.1, the foundation after the owner's look from above (several tabs merge, addresses, the agents window, material settings revisions) and the next steps in order.
+3. [docs/2026-10-16-z-gory.md](docs/2026-10-16-z-gory.md): in Polish, what we are fighting for, the honest state and the next steps.
+4. [docs/2026-10-18-v6-materialy.md](docs/2026-10-18-v6-materialy.md): v6, the owner's own models in 3D and walking inside them; the shared goal with Feniks Studio (Astra) and the `window.Jaskinia` API.
+5. [docs/2026-10-16-szwy.md](docs/2026-10-16-szwy.md): the evening review of 16 Oct, covering the seams found with GPT, Medium and the Studio line, the measurements, and the current order of work.
+6. [docs/design/2026-10-14-jaskinia-v2-decisions.md](docs/design/2026-10-14-jaskinia-v2-decisions.md).
 
 ## The owner
 
 Jozz, a solo game developer and graphic designer, writes in Polish and casually. He builds with several agents and judges work by using it. His screen recordings are the strongest evidence there is. Mechanical tests passing never overrule his verdict. He does not want to be the scheduler of agents or the carrier of their context. Carry your own continuity: recover the goal, the state and the last real boundary, then do the next valuable step.
+
+## The owner's hands (conventions, v6.2)
+
+He judges Jaskinia with his hands. These hold in every window, and a new window follows them from the start.
+
+- **Mouse in 3D.**
+  - Left button turns.
+  - The wheel button (and the right one) **always moves the view**.
+  - Turning the wheel zooms toward the cursor.
+  - Never give the wheel button another job.
+- **Walking and flying, as in Minecraft and Unreal.**
+  - WASD walks.
+  - Space jumps; flying, Space goes up and Shift goes down. Shift runs on foot.
+  - F flies.
+  - The wheel sets the speed.
+  - A key let go is let go. A browser shortcut or leaving the tab clears every held key.
+- **Games.** "Zagraj" switches the game in the game window. Shift opens a new window beside. Ctrl opens a browser tab. A game window taken into use gets the keyboard (`focusGame`).
+- **One answer to pointing.** Every chart mark answers with the same `tip()` note:
+  - it brightens softly;
+  - the note follows the pointer;
+  - it fades back.
+
+  Never draw a mark with only an SVG `<title>` (it is upgraded automatically, but write the note on purpose). Hover effects fade; nothing flashes. A chart with its own richer note marks itself `data-own-tip`.
+- **Pixels are sharp.** His models are Blockbench pixel art: nearest sampling, no mipmaps, by default. `prefs.pixels` is the one switch for every model (`swPixels`).
+- **Compact on a desk, large on touch.** Window tools stay quiet until the header is pointed at.
+- **Only his.** Never offer, ship or call "his" a model, asset or text without checking who made it.
+- **His remarks are the strongest signal after his recordings.** Read them in "Dla agentów" (`#agenci`) before working on Jaskinia. When you act on one, add an answer to `private/uwagi_odpowiedzi.json` (keyed by the remark's moment, private layer only), so he sees it under the remark and other agents see it is no longer open.
 
 ## Rules the code and the tests enforce
 
@@ -55,13 +83,13 @@ Jozz, a solo game developer and graphic designer, writes in Polish and casually.
 | `45-settings.js` | themes (`data-jk`), life ramps (`data-life`), density, the Settings window, export/import |
 | `50-shell.js` | the shell: top bar, workspaces (tabs), windows, dividers, drag and drop, menus and sheets, phone mode (Back closes a sheet, two fingers zoom a window), undo/redo, trash, reset, toasts |
 | `52-przyrzady.js` | instruments: the owner's labs and games running in `przyrzad` and `gra` windows, the instrument contract (hello, state, signals, events, remarks back), the live "Sygnały" window, the picker of what to run, and the demo lab carried inside (`LAB_DEMO`) |
-| `56-swiat.js` | the 3D runtime every 3D window shares: `swStage` (light, theme colours, metre grid, framing, the 1.8 m person, adaptive resolution, renders only on change) and `swWalk` (first person at 1:1, a capsule against a BVH, step-up, jump, fly, phone sticks) |
-| `56b-blockbench.js` | Blockbench's `.bbmodel` read directly into three.js (cubes, meshes, pivots, ZYX rotations, embedded pictures; 16 px = 1 m) |
+| `56-swiat.js` | the 3D runtime every 3D window shares: `swStage` (light, theme colours, metre grid, framing, the 1.8 m person, adaptive resolution, renders only on change, the owner's mouse), `swPixels` (sharp or smooth texture pixels) and `swWalk` (first person at 1:1, a capsule against a BVH, step-up, jump, fly, phone sticks) |
+| `56b-blockbench.js` | Blockbench's `.bbmodel` read directly into three.js (cubes, meshes, pivots, ZYX rotations, embedded pictures; 16 px = 1 m) and `bbLook()`, the Blockbench material that `.obj` exports get too |
 | `57-materialy.js` | Materiały: the owner's models and pictures in IndexedDB (files by SHA-256, materials with versions, orientation and scale defaults), the window, file drops anywhere in Jaskinia, his models from his public repositories |
 | `59-adresy.js` | addresses (`#repo~`, `#m~`, `#uklad~`, window names): at start, on `hashchange` and from links in windows; the address follows the selection; the "Dla agentów" window (`agenci`) |
 | `58-api.js` | `window.Jaskinia` v1, the surface other tools may use: `ext.type/icon/strings/open`, `materialy.*`, `swiat.*` (see the v6 doc) |
 | `../vendor/swiat3d.js` | three.js 0.180.0 + addons + three-mesh-bvh 0.9.2, bundled by `tools/swiat/build.mjs`; `render.py` puts it before Jaskinia's script; it only defines a factory until a 3D window asks |
-| `55-feedback.js` | the feedback loop: the log (`jaskinia:dziennik`), "To mnie uwiera" notes pinned to the moment (`jaskinia:uwagi`), "Paczka dla Claude'a" (file or text), the Settings section "Uwagi i paczka" |
+| `55-feedback.js` | the feedback loop: the log (`jaskinia:dziennik`), "To mnie uwiera" notes pinned to the moment (`jaskinia:uwagi`, correctable, merged across tabs, with agents' answers from the private layer as `UW_ODP`), "Paczka dla Claude'a" (file or text), the Settings section "Uwagi i paczka" |
 | `version.txt` | the version number the top bar shows; `render.py` stamps it with the build time into `JASK_BUILD` |
 
 Phone mode switches on when the stage is narrower than 700 px: one window at a time, a dock of window chips at the bottom, menus as bottom sheets.
@@ -72,7 +100,7 @@ Interface strings are written in Polish in the source and wrapped in `t('…')`.
 
 ## Before you propose a change
 
-- Run `node tools/jk_test.mjs`, `node tools/jk2_test.mjs`, `node tools/jk4_test.mjs`, `node tools/jk5_test.mjs`, `node tools/jk6_test.mjs [shots] [models]` and `node tools/jk2_chaos.mjs 400 <seed>`. The v6 checks run WebGL in SwiftShader and need a folder of the owner's public models (see the script's header). All must pass. They open the pages over http (`tools/serve.mjs`), because headless Chromium can drop the `localStorage` of `file://` pages across reloads, which would test the browser instead of Jaskinia.
+- Run `node tools/jk_test.mjs`, `node tools/jk2_test.mjs`, `node tools/jk4_test.mjs`, `node tools/jk5_test.mjs`, `node tools/jk6_test.mjs [shots] [models]`, `node tools/jk61_test.mjs`, `node tools/jk62_test.mjs` and `node tools/jk2_chaos.mjs 400 <seed>`. The v6 checks run WebGL in SwiftShader and need a folder of the owner's public models (see the script's header). All must pass. They open the pages over http (`tools/serve.mjs`), because headless Chromium can drop the `localStorage` of `file://` pages across reloads, which would test the browser instead of Jaskinia.
 - For anything visible, take screenshots on desktop and phone (`tools/jk4_look.mjs [dir] [scenario]` shows how) and look at them.
 - **Playwright's Chromium is not the owner's browser.** It turns storage partitioning off and changes some throttling. A claim about storage, origins, hidden frames or folder access needs a run with partitioning on (`node tools/probes/hosting.mjs` shows how), a note of the flags it ran with, and finally the owner's own browser.
 - Work on a branch and open a pull request. `main` is the owner's.
@@ -89,7 +117,7 @@ Interface strings are written in Polish in the source and wrapped in `t('…')`.
 6. In the claude.ai artifact, games open in a new tab, not in a window (a downloaded file and the owner's own server can open them in a window since v4). The demo lab is the exception: it is carried inside the page.
 7. The instrument contract reaches labs only in a window. A lab opened in a separate tab (the phone's default for games) does not talk to Jaskinia yet, and no real lab speaks the contract yet: the first adopters decide whether it is worth it.
 8. Changing the interface language rebuilds Jaskinia, so running labs start again.
-9. ~~A game window is not an instance (GPT's M1).~~ Fixed in v6: "Zagraj" pins the game being played, opens the next one beside it (sharing the width when floating), and goes to a game already open.
+9. ~~A game window is not an instance (GPT's M1).~~ Fixed in v6, and corrected in v6.2 by the owner's use. v6 opened every next game beside the last one, which he did not want. Now a plain "Zagraj" switches the game in the game window, Shift opens a new one beside it (sharing the width when floating), and a game already open is brought forward. The lesson: an audit can name a seam, but only his hands decide the default.
 10. **Origins.**
     - On GitHub Pages, Jaskinia and the games share one origin: a game can read Jaskinia's storage (M2), and copies of a game share one save.
     - Other hosting changes what a framed game sees and can do (table 2 in the evening review).
@@ -98,8 +126,8 @@ Interface strings are written in Polish in the source and wrapped in `t('…')`.
 12. **Hidden windows.** Windows of another layout are hidden with `display:none`, which stops the animation of a lab from another origin.
 13. **Keys.**
     - The shell's shortcuts ignore `defaultPrevented`, and Ctrl+S saves the layout even from a text field.
-    - A game window is never given focus.
-    - JV steering failed in the owner's test and is not diagnosed.
+    - ~~A game window is never given focus.~~ Fixed in v6.2: a game window taken into use gets the keyboard.
+    - JV steering failed in the owner's test because the game never had the keyboard. Fixed in v6.2; the owner's confirmation is pending.
 14. **Backups and trash (D7).**
     - Backup dedupe ignores views.
     - The trash silently stops at 200 items.

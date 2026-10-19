@@ -52,6 +52,10 @@ if A.app == "jaskinia":
         '<script src="jaskinia-przyrzad.js"></script>',
         "<script>\n" + open(os.path.join(demo_dir, "jaskinia-przyrzad.js"), encoding="utf-8").read().replace("</script", "<\\/script") + "\n</script>")
     lab_demo = "const LAB_DEMO = " + json.dumps(demo, ensure_ascii=False) + ";\n"
+    # answers to the owner's remarks (55-feedback.js) live in the private layer: a public build carries none
+    odp_p = P("private", "uwagi_odpowiedzi.json")
+    odp = {k: v for k, v in json.load(open(odp_p, encoding="utf-8")).items() if not k.startswith("_")} if os.path.exists(odp_p) and os.environ.get("BIB_PUBLIC") != "1" else {}
+    lab_demo += "const UW_ODP = " + json.dumps(odp, ensure_ascii=False) + ";\n"
     script = (f'const BIB_HOST = "{A.host}";\nconst BIB_MODE = "jaskinia";\nconst JASK_BUILD = {build};\n' + lab_demo + app + "\n(() => {\n'use strict';\n" + shell + "\n})();\n")
     # the 3D runtime (tools/swiat/build.mjs): three.js and a few addons; it only defines a factory, so a Jaskinia
     # without 3D windows pays the parse and nothing else (56-swiat.js starts it when a 3D window first asks)

@@ -123,6 +123,49 @@ function tip(e, content) {
   tipEl.style.left = Math.max(8, x) + 'px'; tipEl.style.top = Math.max(8, y) + 'px';
 }
 function untip() { if (tipEl) tipEl.hidden = true; }
+/* One way of answering what the pointer points at (v6.2; the owner, 18 Oct: the charts were inconsistent — some answered,
+   others only through the browser's late plain tooltip). Every chart mark drawn with an SVG <title> loses it (the
+   browser's tooltip came after a second, unstyled, on top of ours) and speaks through the same note instead: it lights
+   up softly while pointed at, the note follows the pointer, and crossing a gap does not flash. The text stays as the
+   mark's accessible name. A chart with its own richer answer marks itself data-own-tip and is left alone. */
+function upgradeTitles(root) {
+  const one = tt => {
+    const el = tt.parentElement;
+    if (!el || el.tagName.toLowerCase() === 'svg') return;
+    el.dataset.tip = tt.textContent;
+    if (!el.getAttribute('aria-label')) el.setAttribute('aria-label', tt.textContent);
+    tt.remove();
+  };
+  if (root.matches?.('svg title')) one(root);
+  else if (root.querySelectorAll) for (const tt of root.querySelectorAll('svg title')) one(tt);
+}
+/* "5 commitów" says more than "2026-10-12", so a note "head: value" or "head · value" shows the value large and the head
+   under it, the way the Puls and Statystyki notes do. A note without either is one plain line. */
+function tipBody(text) {
+  const m = /^(.*?)(?::| ·) (.+)$/s.exec(text || '');
+  return m && m[1].length <= 40 && m[2].length <= 32 ? [h('div', { class: 'tt', text: m[2] }), h('div', { class: 'ts', text: m[1] })] : [h('div', { class: 'ts0', text: text || '' })];
+}
+{
+  const mo = new MutationObserver(list => { for (const m of list) for (const n of m.addedNodes) if (n.nodeType === 1) upgradeTitles(n); });
+  const start = () => { upgradeTitles(document.body); mo.observe(document.body, { childList: true, subtree: true }); };
+  if (document.body) start(); else addEventListener('DOMContentLoaded', start);
+  let on = null, body = null, offT = 0;
+  const off = () => {
+    clearTimeout(offT); offT = 0; on?.classList.remove('tip-on'); on = null;
+    if (body && tipEl && body.includes(tipEl.firstChild)) untip(); // never hide a note another chart is showing
+    body = null;
+  };
+  document.addEventListener('pointermove', e => {
+    if (e.pointerType === 'touch') return;
+    const el = e.target.closest?.('[data-tip]');
+    if (!el || el.closest('[data-own-tip]')) { if (on && !offT) offT = setTimeout(off, 140); return; }
+    clearTimeout(offT); offT = 0;
+    if (on !== el) { on?.classList.remove('tip-on'); on = el; el.classList.add('tip-on'); body = tipBody(el.dataset.tip); }
+    tip(e, tipEl && body.includes(tipEl.firstChild) ? null : body);
+  }, true);
+  document.documentElement.addEventListener('mouseleave', off);
+  addEventListener('blur', off);
+}
 function toast(msg) { const t = h('div', { class: 'toast', role: 'status', text: msg }); document.body.append(t); setTimeout(() => t.remove(), 2700); }
 async function copyText(text, okMsg = 'Skopiowane') {
   try { await navigator.clipboard.writeText(text); toast(okMsg); }
@@ -287,7 +330,7 @@ function parcelMap(width, height) {
   const H = height ? Math.max(120, Math.round(height)) : Math.round(Math.max(360, Math.min(600, width * 0.5)));
   const fams = D.families.map(f => ({ f, v: f.repos.reduce((a, n) => a + parcelValue(R[n]), 0) })).sort((a, b) => b.v - a.v);
   const districts = squarify(fams, 0, 0, width, H);
-  const svg = s('svg', { class: 'map', viewBox: `0 0 ${width} ${H}`, width, height: H, role: 'group', 'aria-label': 'Mapa: każde repo to działka; wielkość rośnie z liczbą commitów, kolor to czas od ostatniego commita.' });
+  const svg = s('svg', { class: 'map', 'data-own-tip': '', viewBox: `0 0 ${width} ${H}`, width, height: H, role: 'group', 'aria-label': 'Mapa: każde repo to działka; wielkość rośnie z liczbą commitów, kolor to czas od ostatniego commita.' });
   const defs = s('defs');
   defs.append(s('pattern', { id: 'hatch', width: 7, height: 7, patternUnits: 'userSpaceOnUse', patternTransform: 'rotate(45)' },
     s('rect', { width: 7, height: 7, fill: 'var(--ash)' }), s('line', { x1: 0, y1: 0, x2: 0, y2: 7, stroke: 'var(--hatch)', 'stroke-width': 3 })));
@@ -314,7 +357,6 @@ function parcelMap(width, height) {
       const fsev = (r.findings || []).filter(f => (f.sev === 'high' || f.sev === 'mid') && !decision[f.id]);
       const p = s('g', { class: 'parcel' + (ash ? ' ash' : ''), tabindex: 0, role: 'link', 'data-repo': r.name,
         'aria-label': `${r.short}. ${LIFE[r.life]?.label || ''}. Ostatni commit ${ago(r.last_ts)}. ${pl(r.commits, 'commit', 'commity', 'commitów')}.${fsev.length ? ' ' + pl(fsev.length, 'ustalenie', 'ustalenia', 'ustaleń') + ' do decyzji.' : ''}` });
-      p.append(s('title', { text: `${r.short} — ${ash ? 'zakończone' : ago(r.last_ts)}` }));
       const fill = ash ? 'url(#ashx)' : lvl <= 0 ? (JASK ? (lvl === 0 ? 'var(--h0)' : 'url(#hatch)') : lvl === 0 ? 'url(#hatch)' : 'var(--ash)') : `var(${heatVar(lvl)})`;
       p.append(s('rect', { class: 'body', x, y, width: w, height: hh, rx: 2.5, fill }));
       if (lvl >= 1) p.append(s('rect', { class: 'sheen', x, y, width: w, height: hh, rx: 2.5, fill: 'url(#sheen)' }));
@@ -324,7 +366,7 @@ function parcelMap(width, height) {
       p.dataset.tc = txtCol;
       const hasNo = w > 40 && hh > 40;
       if (w > 30 && hh > 22) {
-        const fs = Math.max(11, Math.min(30, Math.max(Math.sqrt(w * hh) / 6.2, Math.min(w / 7.5, hh / 2.6))));
+        const fs = Math.max(11, Math.min(PARCEL_CAP(), Math.max(Math.sqrt(w * hh) / 6.2, Math.min(w / 7.5, hh / 2.6))));
         const t = s('text', { class: 'pname', x: x + 8, y: y + 6 + fs * 0.92, 'font-size': fs, fill: txtCol, text: r.short });
         const badge = fsev.length && w > 46 && hh > 34;
         Object.assign(t.dataset, { maxw: w - 16 - (badge ? 20 : 0), maxh: hh - 10, x0: x + 8, y0: y + 6, fs0: fs, name: r.short, bottom: y + hh, right: x + w, nob: hasNo ? 1 : 0 });
@@ -350,9 +392,14 @@ function parcelMap(width, height) {
     }
     svg.append(g);
   }
-  let tipFor = null;
+  /* Hover without a disco (the owner, 18 Oct: sweeping the mouse across the map flashed every border it crossed).
+     Crossing a gap between plots keeps the current plot lit for a moment; only resting outside the plots, or leaving the
+     map, lets the light go. The light itself fades (CSS), so a fast sweep reads as one calm movement. */
+  let tipFor = null, offT = 0;
+  const lightsOff = () => { clearTimeout(offT); offT = 0; tipFor = null; untip(); svg.classList.remove('dimmed'); $$('.parcel.on', svg).forEach(x => x.classList.remove('on')); };
   svg.addEventListener('pointermove', e => {
-    const p = e.target.closest?.('.parcel'); if (!p) { tipFor = null; untip(); svg.classList.remove('dimmed'); $$('.parcel.on', svg).forEach(x => x.classList.remove('on')); return; }
+    const p = e.target.closest?.('.parcel'); if (!p) { if (!offT && tipFor) offT = setTimeout(lightsOff, 180); return; }
+    clearTimeout(offT); offT = 0;
     const r = R[p.dataset.repo];
     if (tipFor === r.name) { tip(e, null); return; }
     tipFor = r.name;
@@ -363,12 +410,14 @@ function parcelMap(width, height) {
       h('div', { class: 'tm', text: `${FAM[r.family]?.name} · nr ${r.no} · ostatni commit ${ago(r.last_ts)} · ${pl(r.commits, 'commit', 'commity', 'commitów')} · ${pl(r.branches.length, 'gałąź', 'gałęzie', 'gałęzi')}${r.pages && r.life !== 'zakończone' ? ' · ▶ Pages' : ''}` }),
       (() => { const fs = (r.findings || []).filter(f => f.sev === 'high' || f.sev === 'mid'); return fs.length ? h('div', { class: 'tf' }, fs.slice(0, 3).map(f => h('div', null, sevTag(f.sev), ' ', ticks(f.title)))) : null; })())));
   });
-  svg.addEventListener('pointerleave', () => { tipFor = null; untip(); svg.classList.remove('dimmed'); $$('.parcel.on', svg).forEach(x => x.classList.remove('on')); });
+  svg.addEventListener('pointerleave', () => { clearTimeout(offT); offT = setTimeout(lightsOff, 120); });
   svg.addEventListener('click', e => { const p = e.target.closest?.('.parcel'); if (p) go(routeFor(p.dataset.repo)); });
   svg.addEventListener('keydown', e => { const p = e.target.closest?.('.parcel'); if (p && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); go(routeFor(p.dataset.repo)); } });
   return { svg, parcels, H };
 }
 function parcelValue(r) { return Math.sqrt(r.commits || 0) + 4; }
+/* the largest name on the map: Jaskinia's compact (desktop) size keeps the hierarchy but lowers the voice (v6.1) */
+const PARCEL_CAP = () => (JASK && document.documentElement.dataset.density === 'zwarta' ? 23 : 30);
 /* Label typesetting for a parcel: the name is set as large as the plot allows, in one line if it can stay
    reasonably wide (Anybody's width axis does the squeezing), otherwise broken onto 2–3 lines; never below 11px.
    Measured at the base size, then scaled linearly (SVG text length is linear in font-size). */
@@ -689,20 +738,43 @@ function seismo() {
   const vals = []; let mx = 1;
   for (let i = 0; i < nk; i++) { const k = new Date((start + i) * DAY * 1000).toISOString().slice(0, 10); const v0 = days[k] || 0; vals.push(v0); mx = Math.max(mx, v0); }
   const bw = W / n;
-  const svg = s('svg', { class: 'seismo', viewBox: `0 0 ${W} ${Hh + 2}`, preserveAspectRatio: 'none', role: 'img',
+  const svg = s('svg', { class: 'seismo', 'data-own-tip': '', viewBox: `0 0 ${W} ${Hh + 2}`, preserveAspectRatio: 'none', role: 'img',
     'aria-label': `Wszystkie repo razem, dzień po dniu od maja 2026 do zrzutu z ${DS.format(new Date(SNAP * 1000))}. Rekord: ${fmt(mx)} commitów jednego dnia.` });
   svg.append(s('line', { x1: 0, x2: W, y1: Hh + .5, y2: Hh + .5, stroke: 'var(--rule-2)', 'vector-effect': 'non-scaling-stroke' }));
+  const bars = [];
   vals.forEach((v0, i) => {
     if (!v0) return;
     const bh = Math.max(1.5, (Hh - 2) * Math.sqrt(v0 / mx));
     const lvl = heatOf((start + i) * DAY + DAY / 2);
-    svg.append(s('rect', { x: i * bw + bw * 0.12, y: Hh - bh, width: Math.max(0.8, bw * 0.76), height: bh, fill: lvl >= 1 ? `var(${heatVar(lvl)})` : 'var(--cold)' },
-      s('title', { text: `${new Date((start + i) * DAY * 1000).toISOString().slice(0, 10)}: ${pl(v0, 'commit', 'commity', 'commitów')}` })));
+    bars[i] = s('rect', { class: 'sbar', x: i * bw + bw * 0.12, y: Hh - bh, width: Math.max(0.8, bw * 0.76), height: bh, fill: lvl >= 1 ? `var(${heatVar(lvl)})` : 'var(--cold)' });
+    svg.append(bars[i]);
   });
+  /* Pointing at a day answers like every other day chart (the owner, 18 Oct: the Puls bars said nothing while the very
+     similar chart in Statystyki did): a guide, the bar lit, and a note with the day, its commits and who made them.
+     Clicking selects the busiest project of that day. The light fades instead of flashing (as on the map). */
+  const guide = s('line', { class: 'sguide', x1: 0, x2: 0, y1: 0, y2: Hh, 'vector-effect': 'non-scaling-stroke', visibility: 'hidden' });
+  svg.append(guide);
+  const repos = Object.values(R);
+  const dayKey = i => new Date((start + i) * DAY * 1000).toISOString().slice(0, 10);
+  const topOf = i => { const k = dayKey(i); return repos.map(r => ({ r, n: (r.days && r.days[k]) || 0 })).filter(x => x.n).sort((a, b) => b.n - a.n); };
+  const dayAt = e => { const bb = svg.getBoundingClientRect(); return Math.max(0, Math.min(nk - 1, Math.floor((e.clientX - bb.left) / bb.width * n))); };
+  let lit = null, offT = 0;
+  const off = () => { clearTimeout(offT); offT = 0; guide.setAttribute('visibility', 'hidden'); lit?.classList.remove('on'); lit = null; untip(); };
+  svg.addEventListener('pointermove', e => {
+    clearTimeout(offT); offT = 0;
+    const i = dayAt(e), x = i * bw + bw / 2;
+    guide.setAttribute('x1', x); guide.setAttribute('x2', x); guide.setAttribute('visibility', 'visible');
+    if (lit !== bars[i]) { lit?.classList.remove('on'); lit = bars[i] || null; lit?.classList.add('on'); }
+    const top = topOf(i);
+    tip(e, [h('div', { class: 'tt', text: pl(vals[i] || 0, 'commit', 'commity', 'commitów') }), h('div', { class: 'ts', text: DS.format(new Date((start + i) * DAY * 1000)) }),
+      h('div', { class: 'tm', text: top.length ? top.slice(0, 3).map(x => `${x.r.short} ${x.n}`).join(' · ') + (JASK ? ' · kliknij, żeby zaznaczyć' : '') : 'cisza' })]);
+  });
+  svg.addEventListener('pointerleave', () => { clearTimeout(offT); offT = setTimeout(off, 120); });
+  svg.addEventListener('click', e => { const top = topOf(dayAt(e)); if (top[0]) go(routeFor(top[0].r.name)); });
   const plot = h('div', { class: 'seismo-plot' }, svg);
   const after = endNow - endSnap;
   if (after >= 1) plot.append(h('div', { class: 'seismo-after', style: { left: (nk / n * 100).toFixed(3) + '%' },
-    title: `Po zrzucie z ${DS.format(new Date(SNAP * 1000))}: brak danych (${pl(after, 'dzień', 'dni', 'dni')}). To nie są dni bez commitów, tylko dni, których zrzut nie widział.` }));
+    'data-tip': `Po zrzucie z ${DS.format(new Date(SNAP * 1000))}: brak danych (${pl(after, 'dzień', 'dni', 'dni')}). To nie są dni bez commitów, tylko dni, których zrzut nie widział.` }));
   const months = h('div', { class: 'seismo-m', 'aria-hidden': 'true' });
   const MON = new Intl.DateTimeFormat('pl-PL', { month: 'long', timeZone: 'UTC' }), MSH = new Intl.DateTimeFormat('pl-PL', { month: 'short', timeZone: 'UTC' });
   for (let y = 2026, m = 4; ; m++) {
@@ -1094,11 +1166,13 @@ const HOSTED = (typeof BIB_HOST !== 'undefined' && BIB_HOST === 'web') || RUNS_L
 function playA(r, attrs, ...kids) {
   const a = h('a', Object.assign({ href: r.pages, target: '_blank', rel: 'noopener' }, attrs), ...kids);
   a.addEventListener('click', e => {
-    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button) return;
-    // Jaskinia decides: a game window when self-hosted; otherwise the link opens a new tab as usual
-    if (JASK && HOOK.play) { if (HOOK.play(r) === true) e.preventDefault(); return; }
+    if (e.metaKey || e.ctrlKey || e.altKey || e.button) return; // Ctrl+click: the browser's new tab, as everywhere
+    // Jaskinia decides: the game window when self-hosted (Shift: a new window beside); otherwise the link opens a new tab
+    if (JASK && HOOK.play) { if (HOOK.play(r, { beside: e.shiftKey }) === true) e.preventDefault(); return; }
+    if (e.shiftKey) return;
     if (HOSTED) { e.preventDefault(); openPlayer(r); }
   });
+  if (JASK && !a.title) a.title = 'Zagraj w oknie gry · Shift: w nowym oknie obok · Ctrl: w nowej karcie';
   return a;
 }
 let playerOpen = false;
@@ -1365,7 +1439,7 @@ function rhythmPanel(r) {
     if (!v0) return;
     const bh = Math.max(1.5, (Hh - 6) * Math.sqrt(v0 / mx));
     const lvl = heatOf((start + i) * DAY + DAY / 2);
-    svg.append(s('rect', { x: i * bw, y: Hh - bh, width: Math.max(1, bw - (bw > 3 ? 1 : 0)), height: bh, fill: lvl >= 1 ? `var(${heatVar(lvl)})` : 'var(--cold)' }, s('title', { text: `${new Date((start + i) * DAY * 1000).toISOString().slice(0, 10)}: ${pl(v0, 'commit', 'commity', 'commitów')}` })));
+    svg.append(s('rect', { x: i * bw, y: Hh - bh, width: Math.max(1, bw - (bw > 3 ? 1 : 0)), height: bh, fill: lvl >= 1 ? `var(${heatVar(lvl)})` : 'var(--cold)' }, s('title', { text: `${DS.format(new Date((start + i) * DAY * 1000))}: ${pl(v0, 'commit', 'commity', 'commitów')}` })));
   });
   sec.append(h('p', { class: 'hint', text: `Każdy słupek to jeden dzień od pierwszego commita. Wysokość rośnie z pierwiastkiem liczby commitów, więc widać też małe dni. Pracowało ${pl(r.active_days, 'dzień', 'dni', 'dni')} z ${fmt(life)}.` }), svg,
     h('div', { class: 'rhythm-ax' }, h('span', { text: day(start * DAY + DAY / 2) + (start < first ? ' (repo powstało ' + day(r.first_ts) + ')' : '') }), h('span', { text: 'dziś' })));
@@ -1424,7 +1498,7 @@ function clockChart(hours, size, label, center) {
 function weekStrip(wd) {
   const mx = Math.max(1, ...wd), tot = wd.reduce((a, b) => a + b, 0) || 1;
   return h('div', { class: 'week', role: 'img', 'aria-label': 'Dni tygodnia: ' + WD.map((d, i) => `${d} ${wd[i]}`).join(', ') },
-    WD.map((d, i) => h('div', { class: 'wd' + (wd[i] === mx ? ' peak' : ''), title: `${d}: ${pl(wd[i], 'commit', 'commity', 'commitów')}` },
+    WD.map((d, i) => h('div', { class: 'wd' + (wd[i] === mx ? ' peak' : ''), 'data-tip': `${d}: ${pl(wd[i], 'commit', 'commity', 'commitów')}` },
       h('div', { class: 'wbar' }, h('i', { style: { height: (100 * wd[i] / mx).toFixed(1) + '%' } })),
       h('b', { text: d }), h('small', { text: Math.round(100 * wd[i] / tot) + '%' }))));
 }

@@ -98,8 +98,6 @@ async function matLoad(m) {
       const bl = await fileBlob(m.main.sha), url = URL.createObjectURL(bl); urls.push(url);
       const tex = await new THREE.TextureLoader(mgr).loadAsync(url);
       tex.colorSpace = THREE.SRGBColorSpace;
-      const px = Math.max(tex.image?.width || 0, tex.image?.height || 0);
-      if (px && px <= 256) { tex.magFilter = THREE.NearestFilter; tex.minFilter = THREE.NearestMipmapNearestFilter; }
       obj = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.8 }));
       obj.position.y = 0.5;
       const g = new THREE.Group(); g.add(obj); obj = g;
@@ -118,17 +116,39 @@ async function matLoad(m) {
       } else {
         const text = await bl.text(), mtl = (/^mtllib\s+(.+?)\s*$/m.exec(text) || [])[1];
         const ol = new OBJLoader(mgr);
+        let mtlText = '';
         if (mtl && deps.has(baseName(mtl).toLowerCase())) {
-          const mats = new MTLLoader(mgr).parse(await deps.get(baseName(mtl).toLowerCase()).text(), '');
+          mtlText = await deps.get(baseName(mtl).toLowerCase()).text();
+          const mats = new MTLLoader(mgr).parse(mtlText, '');
           mats.preload();
           ol.setMaterials(mats);
         } else if (mtl) missing.add(baseName(mtl));
         obj = ol.parse(text);
-        // an OBJ without its own materials gets clay instead of plain white
-        obj.traverse(x => { if (x.isMesh && (!x.material || x.material.type === 'MeshPhongMaterial') && !x.material?.map) { const old = x.material; x.material = new THREE.MeshStandardMaterial({ color: old?.color && old.color.getHex() !== 0xffffff ? old.color : CLAY, roughness: 0.82 }); old?.dispose?.(); } });
+        /* An .obj's materials arrive as shiny Phong with no cut-outs (the owner, 18 Oct: his exports looked wrongly shaded
+           and lost their transparent pixels).
+           A Blockbench export (it says so in its first line) gets exactly the Blockbench look; any other .obj gets the same
+           matte material with cut-outs where its picture has transparent pixels, and clay where it has no picture.
+           Multi-material meshes keep one material per group. Sharp or smooth pixels: swPixels(), below. */
+        const fromBB = /Made in Blockbench/i.test(text.slice(0, 300) + mtlText.slice(0, 300));
+        const objMat = old => {
+          if (!old) return bbLook(null, CLAY);
+          const col = old.color && old.color.getHex() !== 0xffffff ? old.color.getHex() : null;
+          let m2;
+          if (fromBB) m2 = bbLook(old.map || null, col ?? CLAY);
+          else {
+            if (old.map) old.map.colorSpace = THREE.SRGBColorSpace;
+            m2 = new THREE.MeshStandardMaterial({ map: old.map || null, color: old.map ? (col ?? 0xffffff) : (col ?? CLAY), roughness: 0.86, metalness: 0,
+              alphaTest: old.map ? 0.05 : 0, side: THREE.DoubleSide, transparent: old.opacity < 1, opacity: old.opacity ?? 1 });
+          }
+          m2.name = old.name || '';
+          old.dispose?.();
+          return m2;
+        };
+        obj.traverse(x => { if (x.isMesh) x.material = Array.isArray(x.material) ? x.material.map(objMat) : objMat(x.material); });
       }
     }
     if (pending > 0) await Promise.race([settled, new Promise(r => setTimeout(r, 6000))]);
+    swPixels(obj); // sharp or smooth pixels: the owner's one choice for every model
   } finally { setTimeout(() => urls.forEach(u => URL.revokeObjectURL(u)), 1500); }
   obj.traverse(x => { if (x.isMesh) { x.castShadow = true; x.receiveShadow = true; } });
   return { object: obj, animations: anims, missing: [...missing].filter(n => n && n !== ',' && !/^(blob|data):/.test(n) && !/^[0-9a-f-]{36}$/i.test(n)) };
@@ -311,11 +331,11 @@ function matSay(res, sel) {
   return first ? first.id : null;
 }
 
-/* ---------- Jozz's own models from his public repositories ---------- */
+/* ---------- Jozz's own models from his public repositories ----------
+   Only what he made. Box3d_FunProject's data/meshes (a house, stairs, a test map) came with the original Box3D in its
+   first commit (Erin Catto's; the house is named like a commercial asset pack), so they were never his and are not
+   offered (the owner, 18 Oct: they are not his, and models without rights should go). */
 const MAT_REPO = [
-  ['Dom', 'Box3d_FunProject', 'data/meshes/building.obj', 'Box3D'],
-  ['Schody', 'Box3d_FunProject', 'data/meshes/stairs.obj', 'Box3D'],
-  ['Mapa testowa', 'Box3d_FunProject', 'data/meshes/test_map01.obj', 'Box3D'],
   ['Nadwozie', 'Box3d_FunProject', 'assets/source/Nadwozie.gltf', 'Box3D · Blockbench'],
   ['Koła terenowe', 'Box3d_FunProject', 'assets/source/Offroad_Big_Wheels.gltf', 'Box3D · Blockbench'],
   ['Wywrotka', 'Box3d_FunProject', 'assets/source/Asset_Dumper.gltf', 'Box3D · Blockbench'],
@@ -324,6 +344,20 @@ const MAT_REPO = [
   ['Silnik', 'voxel-aeronautics-workshop', 'assets/visual_packs/local_working_visuals/models/blocks/thruster/model.gltf', 'VAW · Blockbench'],
   ['Animacja testowa', 'voxel-aeronautics-workshop', 'tools/blockbench_import_studio/assets/real_blockbench_regression/test_anim.gltf', 'VAW · Blockbench'],
 ];
+/* A library that already holds them (brought here by v6) lets them go once, out loud and with Cofnij; after Cofnij they stay. */
+const MAT_NOT_HIS = /^repo:Jozzpoly\/Box3d_FunProject\/data\/meshes\//;
+async function matDropNotHis(all) {
+  const bad = [...all.values()].filter(m => !m.gone && !m.keep && MAT_NOT_HIS.test(m.from || ''));
+  if (!bad.length) return [];
+  for (const m of bad) { m.gone = Date.now(); m.goneWhy = 'nie-jozza'; await matSave(m); }
+  matEmit({ removed: bad.map(m => m.id) });
+  const names = [...new Set(bad.map(m => m.name))].join(', ');
+  jtoast(t('Usunąłem z biblioteki modele, które nie są Twoje: {0}. Przyszły z pierwotnego Box3D, nie od Ciebie.', names), { label: t('Cofnij'), act: async () => {
+    for (const m of bad) { delete m.gone; delete m.goneWhy; m.keep = true; await matSave(m); }
+    matEmit({ changed: bad.map(m => m.id) });
+  } }, 12000);
+  return bad;
+}
 const repoUrl = (repo, path) => `https://raw.githubusercontent.com/Jozzpoly/${repo}/main/${path}`;
 async function matFromRepo(row) {
   const [label, repo, path] = row;
@@ -446,6 +480,9 @@ function renderMaterialy(box, c) {
         ...actions.map((a, i) => ({ label: a.getClip().name || t('animacja {0}', i + 1), checked: a.isRunning(), act: () => { for (const b of actions) b.stop(); a.reset().play(); stage?.redraw(); } })),
         { label: t('Zatrzymaj'), act: () => { for (const b of actions) b.stop(); stage?.redraw(); } },
       ]) }, icon('t_gra', 13), h('span', { text: tn(actions.length, 'animacja', 'animacje', 'animacji') })) : null,
+      h('button', { class: 'jk-tb mt-px' + (prefs.pixels !== 'gladkie' ? ' on' : ''), type: 'button', 'aria-pressed': String(prefs.pixels !== 'gladkie'),
+        title: t('Ostre piksele tekstur, jak w Blockbench (wyłącz, żeby wygładzić). To samo ustawienie jest w Ustawieniach → Wygląd.'),
+        onclick: () => setPref('pixels', prefs.pixels === 'gladkie' ? 'ostre' : 'gladkie') }, icon('t_piksele', 13), h('span', { text: t('Ostre piksele') })),
       h('span', { class: 'mt-gap' }),
       h('button', { class: 'jk-tb mt-del', type: 'button', title: t('Usuń z biblioteki (da się cofnąć)'), onclick: () => remove(m) }, icon('trash', 13)),
       h('button', { class: 'mt-go', type: 'button', title: t('Stań obok w skali 1:1 i chodź (WASD, mysz). Esc wychodzi.'), onclick: () => enter() }, icon('t_wejdz', 15), h('span', { text: t('Wejdź') }))].filter(Boolean));
@@ -549,9 +586,12 @@ function renderMaterialy(box, c) {
     drawList();
   };
   document.addEventListener('jk:materialy', onLib);
+  const onPx = () => { const on = prefs.pixels !== 'gladkie'; for (const b of bar.querySelectorAll('.mt-px')) { b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); } };
+  document.addEventListener('jk:pixels', onPx);
   c.onDispose(() => {
     alive = false;
     document.removeEventListener('jk:materialy', onLib);
+    document.removeEventListener('jk:pixels', onPx);
     if (walk) walk.end();
     mixer?.stopAllAction();
     stage?.dispose();
@@ -560,11 +600,13 @@ function renderMaterialy(box, c) {
   const mo = new MutationObserver(() => { stage?.paint(); });
   mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-jk', 'data-theme', 'style'] });
   c.onDispose(() => mo.disconnect());
-  matAll().then(all => {
+  matAll().then(async all => {
+    if (!alive) return;
+    const dropped = await matDropNotHis(all);
     if (!alive) return;
     drawList();
     if (st.sel && all.get(st.sel) && !all.get(st.sel).gone) { show(st.sel); return; }
-    if (st.sel) jtoast(t('Nie ma w bibliotece materiału {0}.', st.sel));
+    if (st.sel && !dropped.some(m => m.id === st.sel)) jtoast(t('Nie ma w bibliotece materiału {0}.', st.sel));
     matList().then(items => { if (alive && items[0]) sel(items[0].id); });
   })
     .catch(err => { say(t('Biblioteka materiałów nie działa w tej przeglądarce: {0}', err.message), 'err'); });
@@ -605,6 +647,7 @@ ICONS.t_materialy = 'M8 1.8 13.6 5v6.1L8 14.2 2.4 11.1V5z M2.4 5 8 8.1 13.6 5 M8
 ICONS.t_wejdz = 'M9.5 2.5h4v11h-4 M2 8h7.5 M6.5 5l3 3-3 3';
 ICONS.t_czlowiek = 'M8 2a1.6 1.6 0 1 1 0 3.2A1.6 1.6 0 0 1 8 2z M5.5 14l.7-5.2-1.4-1.6 1.6-1.3h3.2l1.6 1.3-1.4 1.6.7 5.2 M8 9.5V14';
 ICONS.t_folder = 'M2 4.5h4l1.5 1.5H14v7H2z';
+ICONS.t_piksele = 'M2.5 2.5h5v5h-5z M8.5 8.5h5v5h-5z M8.5 2.5h5v5h-5z M2.5 8.5h5v5h-5z M5 5h.01 M11 11h.01';
 ICONS.t_obrot = 'M12.8 6.2A5 5 0 1 0 13 9.5 M13.2 3v3.4H9.8';
 if (!ICONS.plus) ICONS.plus = 'M8 3v10 M3 8h10';
 if (!ICONS.trash) ICONS.trash = 'M3 4.5h10 M6.5 4.5V3h3v1.5 M4.5 4.5l.7 9h5.6l.7-9';

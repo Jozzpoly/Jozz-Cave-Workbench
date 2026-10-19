@@ -11,7 +11,7 @@
   --bar-h: 48px; --head-h: 34px; --ui-fs: 13.5px; --ib: 28px; --tab-pad: 6px 13px; --tab-fs: 13px;
   --note-zolty: #f6e27a; --note-mieta: #b6ead0; --note-roz: #f6c3d3; --note-niebo: #bcdcf5; --note-papier: #f1ece0; --note-ink: #2a2412;
 }
-:root[data-density="zwarta"] { --bar-h: 40px; --head-h: 28px; --ui-fs: 12.5px; --ib: 24px; --tab-pad: 4px 10px; --tab-fs: 12.5px; }
+:root[data-density="zwarta"] { --bar-h: 34px; --head-h: 26px; --ui-fs: 12px; --ib: 22px; --tab-pad: 3px 9px; --tab-fs: 12px; --win-r: 6px; }
 :root[data-density="duza"] { --bar-h: 58px; --head-h: 42px; --ui-fs: 15px; --ib: 34px; --tab-pad: 9px 16px; --tab-fs: 14.5px; }
 @media (pointer: coarse) { :root { --ib: 40px; --head-h: 44px; } }
 
@@ -773,6 +773,18 @@ body:has(.jk.phone) .jk-toasts { bottom: calc(78px + env(safe-area-inset-bottom,
 .sl-main { display: grid; gap: 2px; min-width: 0; }
 .sl-main b { font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sl-main small { font-size: 11.5px; color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* an answer under a remark (v6.2): what was done about it, by whom it was done is in the version */
+.uw-ans { margin: 3px 0 0; font-size: 12px; line-height: 1.45; color: var(--ink-2); white-space: normal; }
+.uw-st { display: inline-block; padding: 0 6px; border-radius: 8px; font-size: 11px; line-height: 17px; background: var(--plate-3); color: var(--ink); }
+.uw-st[data-st="zrobione"] { background: color-mix(in srgb, var(--h4) 34%, var(--plate-3)); }
+.uw-st[data-st="częściowo"] { background: color-mix(in srgb, var(--h2) 34%, var(--plate-3)); }
+.uw-st[data-st="myśl"], .uw-st[data-st="pytanie"] { background: color-mix(in srgb, var(--cold) 30%, var(--plate-3)); }
+.agents-jk .agent-text + .agent-text { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--rule); }
+.agents-jk .agent-note { display: grid; gap: 4px; }
+.agents-jk .agent-note h3 { margin: 6px 0 0; font-size: 14px; }
+.agents-jk .agent-note p { margin: 0; }
+.agent-ans { margin: 2px 0 0; font-size: 12.5px; color: var(--ink-2); }
+.agent-ans.open { color: var(--ink-3); font-style: italic; }
 .sl-acts { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
 .set-cur { font-size: 11px; color: var(--ink-3); padding-inline: 6px; }
 .set-danger { display: flex; justify-content: flex-end; padding-top: 4px; }
@@ -1033,3 +1045,51 @@ body:has(.jk.phone) .jk-toasts { bottom: calc(78px + env(safe-area-inset-bottom,
 .sw-jump { position: absolute; right: 18px; bottom: 24px; width: 66px; height: 66px; border-radius: 50%; border: 0; background: color-mix(in srgb, var(--hand) 88%, transparent); color: var(--ground); font: inherit; font-weight: 800; font-size: 13px; touch-action: none; }
 .sw-walking { cursor: crosshair; }
 .sw-thumbhost { position: fixed; left: -10000px; top: 0; width: 384px; height: 240px; pointer-events: none; }
+
+/* ---------- quiet chrome (v6.1) ----------
+   The owner, 18 Oct: too much shouts for attention and the composition is weak; on a desk the interface should be small
+   and tight, like Blender or Unreal, so the space belongs to what is shown (the content may stay rich); big controls
+   belong on a phone. With a mouse and the compact size: window titles in the plain interface face, window tools only
+   while the pointer is on the header (the menu "…" always, the zoom while a window is zoomed), a one-line snapshot age,
+   tabs without pills, a slimmer selection and "Zagraj". Themes keep their own character (Kataster's capitals). */
+@media (pointer: fine) {
+  :root[data-density="zwarta"] .whead { gap: 4px; padding: 0 2px 0 3px; }
+  :root[data-density="zwarta"]:not([data-jk="kataster"]) .wtype { font-family: inherit; font-weight: 600; font-stretch: normal; font-size: var(--ui-fs); }
+  :root[data-density="zwarta"] .wtype { color: var(--ink-2); padding: 2px 6px; gap: 6px; }
+  :root[data-density="zwarta"] .wtype svg { width: 13px; height: 13px; }
+  :root[data-density="zwarta"] .win.focused > .whead .wtype { color: var(--ink); }
+  :root[data-density="zwarta"] .win.focused > .whead { box-shadow: inset 0 1.5px 0 color-mix(in srgb, var(--hand) 80%, transparent); }
+  :root[data-density="zwarta"] .wtools .ib { width: 20px; height: 20px; border-radius: 4px; }
+  :root[data-density="zwarta"] .wtools .ib svg { width: 13px; height: 13px; }
+  :root[data-density="zwarta"] .wzv { font-size: 10px; min-width: 32px; padding: 2px 1px; }
+  /* faded, not removed: the pointer over the header shows them before it can click, and they keep their places */
+  :root[data-density="zwarta"] .wtools > :not(.b-more) { opacity: 0; transition: opacity .12s; }
+  :root[data-density="zwarta"] .whead:hover .wtools > *, :root[data-density="zwarta"] .whead:focus-within .wtools > *,
+  :root[data-density="zwarta"] .win.zoomed .wtools > .wzoom { opacity: 1; }
+  :root[data-density="zwarta"] .wback { padding: 1px 9px 1px 6px; font-size: 11.5px; }
+  :root[data-density="zwarta"] .jk-bar { gap: 6px; padding-inline: 4px 8px; }
+  :root[data-density="zwarta"] .jk-brand { padding: 3px 6px; gap: 6px; border-radius: 6px; }
+  :root[data-density="zwarta"]:not([data-jk="kataster"]) .jk-brand b { font-size: 14px; }
+  :root[data-density="zwarta"] .jk-brand .mark { width: 10px; height: 10px; box-shadow: none; }
+  :root[data-density="zwarta"] .jk-brand .jk-ver { font-size: 9.5px; }
+  :root[data-density="zwarta"] .jk-snap { display: flex; align-items: baseline; gap: 5px; padding: 2px 6px; }
+  :root[data-density="zwarta"] .jk-snap b { font-size: 11px; font-weight: 500; color: var(--ink-3); }
+  :root[data-density="zwarta"] .jk-tabs { padding-block: 0; align-self: stretch; }
+  :root[data-density="zwarta"] .jk-tab { font-weight: 600; color: var(--ink-3); border-radius: 5px; }
+  :root[data-density="zwarta"] .jk-tab:hover { color: var(--ink-2); background: var(--plate-2); }
+  :root[data-density="zwarta"]:not([data-jk="kataster"]) .jk-tab.on { color: var(--ink); background: transparent; border-radius: 0; box-shadow: inset 0 -2px 0 var(--hand); }
+  :root[data-density="zwarta"] .jk-tab-add { width: 20px; height: 20px; margin-left: 2px; }
+  :root[data-density="zwarta"] .jk-sep { height: 16px; margin-inline: 3px; }
+  :root[data-density="zwarta"] .jk-selb { padding: 1px 8px 1px 2px; gap: 6px; }
+  :root[data-density="zwarta"] .jk-selb .sig { width: 18px !important; height: 18px !important; }
+  :root[data-density="zwarta"] .jk-selb small { display: none; }
+  :root[data-density="zwarta"] .jk-selb b { font-family: inherit; font-weight: 650; font-size: 12px; }
+  :root[data-density="zwarta"] .jk-selplay { padding: 2px 9px; font-size: 11.5px; gap: 5px; }
+  :root[data-density="zwarta"] .jk-selplay svg { width: 11px; height: 11px; }
+  :root[data-density="zwarta"] .jk-help-b { padding: 4px 6px; font-size: 11.5px; }
+  :root[data-density="zwarta"] .jk-help-b span { display: none; }
+  /* content keeps its richness, at a lower voice: the biggest headings of the card and the Kataster */
+  :root[data-density="zwarta"] .jk .view.repo .card-h h1 { font-size: clamp(24px, 5cqw, 48px); }
+  :root[data-density="zwarta"] .jk .sec-h h2 { font-size: clamp(18px, 3.2cqw, 26px); }
+  :root[data-density="zwarta"] .jk .fam-h h3 { font-size: clamp(16px, 2.6cqw, 21px); }
+}

@@ -8,7 +8,7 @@ const THEMES = {
   piwnica: { name: 'Piwnica', desc: 'Warsztat: drewno, blacha, taśma z etykieciarki, zielone diody.', fonts: 'family=Barlow+Condensed:wght@500;600;700;800&family=VT323' },
 };
 const LIFE_RAMPS = { zielen: { name: 'Zieleń', desc: 'Im żywszy projekt, tym bardziej zielony; stare uspokajają się do błękitu i tła.' }, zar: { name: 'Żar', desc: 'Jak dawna Biblioteka: świeże świeci pomarańczem.' } };
-const DENSITY = { zwarta: 'Zwarty', srednia: 'Średni', duza: 'Duży' };
+const DENSITY = { auto: 'Sam', zwarta: 'Zwarty', srednia: 'Średni', duza: 'Duży' };
 function applyLook() {
   const de = document.documentElement, th = THEMES[prefs.theme] ? prefs.theme : 'jaskinia';
   de.dataset.jk = th;
@@ -17,7 +17,7 @@ function applyLook() {
   else if (th !== 'jaskinia') de.dataset.theme = 'dark';
   else delete de.dataset.theme;
   de.dataset.life = prefs.life;
-  de.dataset.density = prefs.density;
+  de.dataset.density = prefs.density === 'auto' ? (matchMedia('(pointer: coarse)').matches ? 'srednia' : 'zwarta') : prefs.density;
   de.dataset.motion = prefs.motion;
   de.lang = prefs.lang === 'en' ? 'en' : 'pl';
   B.HOOK.noTips = !prefs.tips;
@@ -39,6 +39,7 @@ function setPref(k, v) {
   if (k === 'density') { apply(); B.HOOK.refresh(); }
   if (k === 'theme' || k === 'scheme' || k === 'life') setTimeout(() => B.HOOK.refresh(), 30);
   if (k === 'games') B.HOOK.refresh();
+  if (k === 'pixels') document.dispatchEvent(new CustomEvent('jk:pixels'));
 }
 /* rebuild the whole interface (after a language change): the store and the layouts stay as they are */
 function relaunch() {
@@ -109,8 +110,11 @@ const SET_SECTIONS = {
           h('span', { class: 'ramp-s', 'data-life': k }, ['--h5', '--h4', '--h3', '--h2', '--h1', '--h0'].map(v => h('i', { style: { background: `var(${v})` } }))),
           h('b', { text: t(X.name) }), h('small', { text: t(X.desc) }))))),
       setCard(t('Rozmiar'),
-        setRow(t('Rozmiar interfejsu'), t('Paski, przyciski i zakładki. Na dotyku przyciski i tak są duże.'), setSeg(t('Rozmiar interfejsu'), prefs.density, Object.entries(DENSITY), v => { setPref('density', v); draw(); })),
-        setRow(t('Powiększenie treści okien'), t('Ile znaczy „100%” w oknie. Każde okno możesz dalej przybliżać po swojemu (Ctrl+kółko).'), zoomSlider(draw))));
+        setRow(t('Rozmiar interfejsu'), t('Paski, przyciski i zakładki. „Sam”: zwarty przy myszy, jak w Blenderze, żeby miejsce należało do treści; na dotyku większy.'), setSeg(t('Rozmiar interfejsu'), prefs.density, Object.entries(DENSITY), v => { setPref('density', v); draw(); })),
+        setRow(t('Powiększenie treści okien'), t('Ile znaczy „100%” w oknie. Każde okno możesz dalej przybliżać po swojemu (Ctrl+kółko).'), zoomSlider(draw))),
+      setCard(t('Modele 3D'),
+        setRow(t('Piksele tekstur'), t('„Ostre”: każdy piksel tekstury widać tak, jak w Blockbench; tak są pomyślane modele pixel-art. „Gładkie”: tekstury się wygładzają, lepiej dla zdjęć i dużych tekstur.'),
+          setSeg(t('Piksele tekstur'), prefs.pixels, [['ostre', 'Ostre'], ['gladkie', 'Gładkie']], v => { setPref('pixels', v); draw(); }))));
   },
   zachowanie(c, draw) {
     return h('div', { class: 'set-body' },

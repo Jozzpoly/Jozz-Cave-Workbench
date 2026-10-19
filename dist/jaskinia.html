@@ -201,6 +201,7 @@ code, .code {
 .parcel rect.ring { fill: none; stroke: var(--ink); stroke-width: 0; transition: stroke-width .15s; }
 .parcel:hover rect.ring, .parcel:focus-visible rect.ring, .parcel.on rect.ring { stroke-width: 2; }
 .map.dimmed .parcel:not(.on) rect.body { opacity: .55; }
+.parcel rect.body { transition: opacity .24s ease, filter .2s ease; } .parcel rect.ring { transition: stroke-width .2s ease; }
 .parcel text { pointer-events: none; }
 .parcel .pname { font-family: var(--font-display); font-weight: 760; letter-spacing: .005em; }
 .parcel .pmeta { font-family: var(--font-text); font-size: 11.5px; font-weight: 500; }
@@ -229,7 +230,17 @@ code, .code {
 
 .seismo-wrap { padding-top: 16px; }
 .seismo-h { display: flex; justify-content: space-between; gap: 12px; font-size: var(--t-s); color: var(--ink-3); margin-bottom: 8px; }
-.seismo { display: block; width: 100%; height: 66px; }
+.seismo { display: block; width: 100%; height: 66px; cursor: crosshair; }
+/* Every chart mark answers the pointer the same way (the owner, 18 Oct: the charts were inconsistent): the mark under the pointer
+   brightens and fades back, never flashes, and the same note follows the pointer (tip() in app.js). */
+.seismo .sbar, .st-chart .bar, svg [data-tip] { transition: filter .2s ease, stroke-opacity .2s ease; }
+.seismo .sbar.on, .st-chart .bar.on, svg .tip-on { filter: brightness(1.35) saturate(1.1); }
+.st-year .c { stroke: var(--ink); stroke-width: 1.2; stroke-opacity: 0; }
+.st-year .c.tip-on { stroke-opacity: .75; }
+.week .wbar i, .week .wd b, .week .wd small { transition: filter .2s ease, color .2s ease; }
+.week .wd.tip-on .wbar i { filter: brightness(1.35) saturate(1.1); }
+.week .wd.tip-on b, .week .wd.tip-on small { color: var(--ink); }
+.seismo .sguide { stroke: var(--ink-3); stroke-width: 1; stroke-dasharray: 2 3; pointer-events: none; }
 .seismo-m { position: relative; height: 18px; font-size: 11px; color: var(--ink-3); margin-top: 4px; }
 .seismo-m span { position: absolute; top: 0; padding-left: 3px; border-left: 1px solid var(--rule-2); line-height: 1.2; white-space: nowrap; }
 .seismo-m span.moved { border-left: 0; }
@@ -565,7 +576,7 @@ table.t tr:hover td { background: var(--plate); }
 .clock { display: block; max-width: 100%; height: auto; overflow: visible; }
 .clock .night { fill: var(--plate-2); }
 .clock .ring { fill: none; stroke: var(--rule); stroke-width: 1; }
-.clock .wedge { fill: var(--ink-3); transition: fill .15s; }
+.clock .wedge { fill: var(--ink-3); transition: fill .2s ease, filter .2s ease; }
 .clock .wedge.peak { fill: var(--ink); }
 .clock .wedge:hover { fill: var(--ink-2); }
 .clock .tick { stroke: var(--rule-2); stroke-width: 1; }
@@ -835,7 +846,7 @@ footer.foot ul { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 4px; }
   --bar-h: 48px; --head-h: 34px; --ui-fs: 13.5px; --ib: 28px; --tab-pad: 6px 13px; --tab-fs: 13px;
   --note-zolty: #f6e27a; --note-mieta: #b6ead0; --note-roz: #f6c3d3; --note-niebo: #bcdcf5; --note-papier: #f1ece0; --note-ink: #2a2412;
 }
-:root[data-density="zwarta"] { --bar-h: 40px; --head-h: 28px; --ui-fs: 12.5px; --ib: 24px; --tab-pad: 4px 10px; --tab-fs: 12.5px; }
+:root[data-density="zwarta"] { --bar-h: 34px; --head-h: 26px; --ui-fs: 12px; --ib: 22px; --tab-pad: 3px 9px; --tab-fs: 12px; --win-r: 6px; }
 :root[data-density="duza"] { --bar-h: 58px; --head-h: 42px; --ui-fs: 15px; --ib: 34px; --tab-pad: 9px 16px; --tab-fs: 14.5px; }
 @media (pointer: coarse) { :root { --ib: 40px; --head-h: 44px; } }
 
@@ -1597,6 +1608,18 @@ body:has(.jk.phone) .jk-toasts { bottom: calc(78px + env(safe-area-inset-bottom,
 .sl-main { display: grid; gap: 2px; min-width: 0; }
 .sl-main b { font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sl-main small { font-size: 11.5px; color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* an answer under a remark (v6.2): what was done about it, by whom it was done is in the version */
+.uw-ans { margin: 3px 0 0; font-size: 12px; line-height: 1.45; color: var(--ink-2); white-space: normal; }
+.uw-st { display: inline-block; padding: 0 6px; border-radius: 8px; font-size: 11px; line-height: 17px; background: var(--plate-3); color: var(--ink); }
+.uw-st[data-st="zrobione"] { background: color-mix(in srgb, var(--h4) 34%, var(--plate-3)); }
+.uw-st[data-st="częściowo"] { background: color-mix(in srgb, var(--h2) 34%, var(--plate-3)); }
+.uw-st[data-st="myśl"], .uw-st[data-st="pytanie"] { background: color-mix(in srgb, var(--cold) 30%, var(--plate-3)); }
+.agents-jk .agent-text + .agent-text { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--rule); }
+.agents-jk .agent-note { display: grid; gap: 4px; }
+.agents-jk .agent-note h3 { margin: 6px 0 0; font-size: 14px; }
+.agents-jk .agent-note p { margin: 0; }
+.agent-ans { margin: 2px 0 0; font-size: 12.5px; color: var(--ink-2); }
+.agent-ans.open { color: var(--ink-3); font-style: italic; }
 .sl-acts { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
 .set-cur { font-size: 11px; color: var(--ink-3); padding-inline: 6px; }
 .set-danger { display: flex; justify-content: flex-end; padding-top: 4px; }
@@ -1857,6 +1880,54 @@ body:has(.jk.phone) .jk-toasts { bottom: calc(78px + env(safe-area-inset-bottom,
 .sw-jump { position: absolute; right: 18px; bottom: 24px; width: 66px; height: 66px; border-radius: 50%; border: 0; background: color-mix(in srgb, var(--hand) 88%, transparent); color: var(--ground); font: inherit; font-weight: 800; font-size: 13px; touch-action: none; }
 .sw-walking { cursor: crosshair; }
 .sw-thumbhost { position: fixed; left: -10000px; top: 0; width: 384px; height: 240px; pointer-events: none; }
+
+/* ---------- quiet chrome (v6.1) ----------
+   The owner, 18 Oct: too much shouts for attention and the composition is weak; on a desk the interface should be small
+   and tight, like Blender or Unreal, so the space belongs to what is shown (the content may stay rich); big controls
+   belong on a phone. With a mouse and the compact size: window titles in the plain interface face, window tools only
+   while the pointer is on the header (the menu "…" always, the zoom while a window is zoomed), a one-line snapshot age,
+   tabs without pills, a slimmer selection and "Zagraj". Themes keep their own character (Kataster's capitals). */
+@media (pointer: fine) {
+  :root[data-density="zwarta"] .whead { gap: 4px; padding: 0 2px 0 3px; }
+  :root[data-density="zwarta"]:not([data-jk="kataster"]) .wtype { font-family: inherit; font-weight: 600; font-stretch: normal; font-size: var(--ui-fs); }
+  :root[data-density="zwarta"] .wtype { color: var(--ink-2); padding: 2px 6px; gap: 6px; }
+  :root[data-density="zwarta"] .wtype svg { width: 13px; height: 13px; }
+  :root[data-density="zwarta"] .win.focused > .whead .wtype { color: var(--ink); }
+  :root[data-density="zwarta"] .win.focused > .whead { box-shadow: inset 0 1.5px 0 color-mix(in srgb, var(--hand) 80%, transparent); }
+  :root[data-density="zwarta"] .wtools .ib { width: 20px; height: 20px; border-radius: 4px; }
+  :root[data-density="zwarta"] .wtools .ib svg { width: 13px; height: 13px; }
+  :root[data-density="zwarta"] .wzv { font-size: 10px; min-width: 32px; padding: 2px 1px; }
+  /* faded, not removed: the pointer over the header shows them before it can click, and they keep their places */
+  :root[data-density="zwarta"] .wtools > :not(.b-more) { opacity: 0; transition: opacity .12s; }
+  :root[data-density="zwarta"] .whead:hover .wtools > *, :root[data-density="zwarta"] .whead:focus-within .wtools > *,
+  :root[data-density="zwarta"] .win.zoomed .wtools > .wzoom { opacity: 1; }
+  :root[data-density="zwarta"] .wback { padding: 1px 9px 1px 6px; font-size: 11.5px; }
+  :root[data-density="zwarta"] .jk-bar { gap: 6px; padding-inline: 4px 8px; }
+  :root[data-density="zwarta"] .jk-brand { padding: 3px 6px; gap: 6px; border-radius: 6px; }
+  :root[data-density="zwarta"]:not([data-jk="kataster"]) .jk-brand b { font-size: 14px; }
+  :root[data-density="zwarta"] .jk-brand .mark { width: 10px; height: 10px; box-shadow: none; }
+  :root[data-density="zwarta"] .jk-brand .jk-ver { font-size: 9.5px; }
+  :root[data-density="zwarta"] .jk-snap { display: flex; align-items: baseline; gap: 5px; padding: 2px 6px; }
+  :root[data-density="zwarta"] .jk-snap b { font-size: 11px; font-weight: 500; color: var(--ink-3); }
+  :root[data-density="zwarta"] .jk-tabs { padding-block: 0; align-self: stretch; }
+  :root[data-density="zwarta"] .jk-tab { font-weight: 600; color: var(--ink-3); border-radius: 5px; }
+  :root[data-density="zwarta"] .jk-tab:hover { color: var(--ink-2); background: var(--plate-2); }
+  :root[data-density="zwarta"]:not([data-jk="kataster"]) .jk-tab.on { color: var(--ink); background: transparent; border-radius: 0; box-shadow: inset 0 -2px 0 var(--hand); }
+  :root[data-density="zwarta"] .jk-tab-add { width: 20px; height: 20px; margin-left: 2px; }
+  :root[data-density="zwarta"] .jk-sep { height: 16px; margin-inline: 3px; }
+  :root[data-density="zwarta"] .jk-selb { padding: 1px 8px 1px 2px; gap: 6px; }
+  :root[data-density="zwarta"] .jk-selb .sig { width: 18px !important; height: 18px !important; }
+  :root[data-density="zwarta"] .jk-selb small { display: none; }
+  :root[data-density="zwarta"] .jk-selb b { font-family: inherit; font-weight: 650; font-size: 12px; }
+  :root[data-density="zwarta"] .jk-selplay { padding: 2px 9px; font-size: 11.5px; gap: 5px; }
+  :root[data-density="zwarta"] .jk-selplay svg { width: 11px; height: 11px; }
+  :root[data-density="zwarta"] .jk-help-b { padding: 4px 6px; font-size: 11.5px; }
+  :root[data-density="zwarta"] .jk-help-b span { display: none; }
+  /* content keeps its richness, at a lower voice: the biggest headings of the card and the Kataster */
+  :root[data-density="zwarta"] .jk .view.repo .card-h h1 { font-size: clamp(24px, 5cqw, 48px); }
+  :root[data-density="zwarta"] .jk .sec-h h2 { font-size: clamp(18px, 3.2cqw, 26px); }
+  :root[data-density="zwarta"] .jk .fam-h h3 { font-size: clamp(16px, 2.6cqw, 21px); }
+}
 
 </style>
 <div id="layer"></div>
@@ -5996,8 +6067,9 @@ return __SWIAT3D_MOD;
 
 const BIB_HOST = "artifact";
 const BIB_MODE = "jaskinia";
-const JASK_BUILD = {"v": "6.1", "built": "2026-10-18T16:15Z", "host": "artifact"};
+const JASK_BUILD = {"v": "6.2", "built": "2026-10-19T00:44Z", "host": "artifact"};
 const LAB_DEMO = "<!doctype html>\n<html lang=\"pl\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n<title>Piłki: przyrząd pokazowy Jaskini</title>\n<style>\n  :root { color-scheme: dark; --bg: #0f1418; --panel: #172027; --ink: #e6edf2; --ink2: #9fb0bd; --line: #2a3640; --hot: #ffb547; --ok: #64d28a; }\n  * { box-sizing: border-box; }\n  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font: 13px/1.4 system-ui, sans-serif; overflow: hidden; }\n  #c { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }\n  .ui { position: absolute; left: 10px; top: 10px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; max-width: calc(100% - 20px); }\n  button { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 4px 10px; cursor: pointer; }\n  button:hover { border-color: var(--ink2); }\n  label { display: inline-flex; align-items: center; gap: 6px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 3px 8px; color: var(--ink2); }\n  .hud { position: absolute; left: 10px; bottom: 10px; color: var(--ink2); font: 12px/1.3 ui-monospace, monospace; }\n  .trace { position: absolute; right: 10px; top: 10px; width: min(300px, 46%); max-height: 45%; overflow: auto; background: color-mix(in srgb, var(--panel) 88%, transparent);\n    border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; display: none; }\n  .trace.on { display: block; }\n  .trace h2 { margin: 0 0 4px; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--ink2); }\n  .trace p { margin: 3px 0; }\n  .trace time { color: var(--hot); font-family: ui-monospace, monospace; margin-right: 6px; }\n  .pause { position: absolute; inset: 0; display: none; place-items: center; color: var(--ink2); font-size: 15px; }\n  .pause.on { display: grid; }\n</style>\n</head>\n<body>\n<canvas id=\"c\" aria-label=\"Piłki odbijające się od podłogi\"></canvas>\n<div class=\"ui\">\n  <button id=\"add\" type=\"button\">Dodaj piłkę</button>\n  <button id=\"shake\" type=\"button\">Potrząśnij</button>\n  <label>sprężystość <input id=\"e\" type=\"range\" min=\"0.5\" max=\"0.98\" step=\"0.01\" value=\"0.86\"></label>\n</div>\n<div class=\"hud\" id=\"hud\"></div>\n<section class=\"trace\" id=\"trace\" aria-live=\"polite\"><h2>Ślad: uwagi z Jaskini</h2></section>\n<div class=\"pause\" id=\"pause\">pauza: okno w Jaskini jest ukryte</div>\n<script>\n/* Jaskinia instrument contract, v1: a drop-in for any lab or game page.\n   Load it with a script tag (src=\"jaskinia-przyrzad.js\") or paste it into an inline script. The contract: docs/przyrzad/KONTRAKT.md\n\n   Jaskinia.hello({ name: 'MiniFeniks', version: 'kampania 04', wants: ['remark'] });   // who you are (once, at start)\n   Jaskinia.state('Dzień 3, 14:20 · Ania niesie deski', { dzien: 3 });                  // what is happening now\n   Jaskinia.signals({ fps: 58, zapas: 12 });                                             // numbers to draw live, a few times a second\n   Jaskinia.event('Ania porzuciła zamiar: brak desek', 'uwaga');                         // something happened ('info' | 'uwaga' | 'blad')\n   Jaskinia.onRemark(r => trace.push(r));      // the owner's remark from Jaskinia's flag: { text, at }\n   Jaskinia.onStateRequest(() => ({ text, data }));   // optional: a fresh state for the moment of the flag\n   Jaskinia.onVisible(v => paused = !v);       // optional: the window was hidden or shown again\n\n   Opened on its own (no Jaskinia around) every call does nothing, so the lab never depends on it. Ctrl+. inside the\n   page asks Jaskinia for the \"To mnie uwiera\" note, pinned to this lab and this second. */\n(() => {\n  if (window.Jaskinia) return;\n  const host = window.parent !== window ? window.parent : null;\n  const send = m => { if (host) try { host.postMessage({ jaskinia: 1, ...m }, '*'); } catch { /* not allowed: fine */ } };\n  let hello = null, last = null, stateFn = null;\n  const remarkFns = [], visFns = [];\n  addEventListener('message', ev => {\n    if (!host || ev.source !== host) return;           // only the page that holds this lab\n    const d = ev.data;\n    if (!d || d.jaskinia !== 1) return;\n    if (d.type === 'hi' && hello) send({ type: 'hello', ...hello });\n    else if (d.type === 'state?') { let s = last; try { if (stateFn) s = stateFn() || last; } catch { /* keep the last one */ } if (s) send({ type: 'state', text: s.text, data: s.data }); }\n    else if (d.type === 'remark') for (const f of remarkFns) try { f({ text: String(d.text || ''), at: String(d.at || '') }); } catch { /* the lab's problem */ }\n    else if (d.type === 'visible') for (const f of visFns) try { f(!!d.visible); } catch { /* the lab's problem */ }\n  });\n  addEventListener('keydown', ev => { if (host && (ev.ctrlKey || ev.metaKey) && ev.key === '.') { ev.preventDefault(); send({ type: 'flag' }); } }, true);\n  window.Jaskinia = {\n    active: !!host,\n    hello(h) { hello = { name: String(h && h.name || ''), version: String(h && h.version || ''), wants: Array.isArray(h && h.wants) ? h.wants : [] }; send({ type: 'hello', ...hello }); },\n    state(text, data) { last = { text: String(text || ''), data }; send({ type: 'state', text: last.text, data }); },\n    signals(values) { send({ type: 'signals', values }); },\n    event(text, level) { send({ type: 'event', text: String(text || ''), level }); },\n    onRemark(fn) { remarkFns.push(fn); },\n    onStateRequest(fn) { stateFn = fn; },\n    onVisible(fn) { visFns.push(fn); },\n  };\n})();\n\n<\/script>\n<script>\n/* A small physics toy that speaks the instrument contract: it tells Jaskinia who it is, what is happening, a few numbers,\n   and what happened; it keeps the owner's remarks in its own trace. Opened on its own, it simply runs. */\nconst cv = document.getElementById('c'), g = cv.getContext('2d');\nconst R = 14, G = 900;              // ball radius (px) and gravity (px/s²); 100 px count as 1 m in the numbers below\nlet W = 0, H = 0, balls = [], restit = 0.86, bounces = [], paused = false, t0 = performance.now(), frames = [];\nfunction size() { const d = devicePixelRatio || 1; W = cv.clientWidth; H = cv.clientHeight; cv.width = Math.round(W * d); cv.height = Math.round(H * d); g.setTransform(d, 0, 0, d, 0, 0); }\naddEventListener('resize', size); size();\nfunction addBall(x, y) {\n  const b = { x: x ?? R + Math.random() * (W - 2 * R), y: y ?? R + Math.random() * H * 0.3, vx: (Math.random() - 0.5) * 420, vy: -Math.random() * 300, still: 0, said: false, hue: 30 + balls.length * 47 % 300 };\n  balls.push(b);\n  Jaskinia.event(`nowa piłka (${balls.length})`);\n  sayState();\n}\ndocument.getElementById('add').onclick = () => addBall();\ndocument.getElementById('shake').onclick = () => { for (const b of balls) { b.vy -= 500 + Math.random() * 300; b.vx += (Math.random() - 0.5) * 400; b.still = 0; b.said = false; } Jaskinia.event('potrząśnięcie'); };\ndocument.getElementById('e').oninput = ev => { restit = +ev.target.value; sayState(); };\ncv.addEventListener('pointerdown', ev => addBall(ev.offsetX, ev.offsetY));\nconst energy = () => balls.reduce((a, b) => a + 0.5 * (b.vx * b.vx + b.vy * b.vy) / 1e4 + G / 100 * (H - R - b.y) / 100, 0);\nfunction sayState() { Jaskinia.state(`${balls.length} piłki, energia ${energy().toFixed(1)} J, sprężystość ${restit.toFixed(2)}`, { pilki: balls.length, energia: +energy().toFixed(2), sprezystosc: restit, czas_s: Math.round((performance.now() - t0) / 1000) }); }\nJaskinia.hello({ name: 'Piłki', version: 'pokaz 1', wants: ['remark'] });\nfor (let i = 0; i < 3; i++) addBall();\nJaskinia.onStateRequest(() => ({ text: `${balls.length} piłki, energia ${energy().toFixed(1)} J, sprężystość ${restit.toFixed(2)}`, data: { pilki: balls.length, energia: +energy().toFixed(2), sprezystosc: restit } }));\nJaskinia.onRemark(r => {\n  const tr = document.getElementById('trace');\n  tr.classList.add('on');\n  const p = document.createElement('p'), tm = document.createElement('time');\n  tm.textContent = (r.at || '').slice(11, 19); p.append(tm, document.createTextNode(r.text));\n  tr.append(p);\n  window.__remarks = (window.__remarks || []).concat(r);\n});\nJaskinia.onVisible(v => { paused = !v; document.getElementById('pause').classList.toggle('on', paused); });\n\nlet last = performance.now(), sigT = 0, stT = 0;\nfunction step(now) {\n  const dt = Math.min(0.033, (now - last) / 1000); last = now;\n  frames.push(now); while (frames.length && now - frames[0] > 1000) frames.shift();\n  if (!paused) for (const b of balls) {\n    b.vy += G * dt; b.vx *= 1 - 0.15 * dt; b.x += b.vx * dt; b.y += b.vy * dt;\n    if (b.x < R) { b.x = R; b.vx = -b.vx * restit; } if (b.x > W - R) { b.x = W - R; b.vx = -b.vx * restit; }\n    if (b.y > H - R) { b.y = H - R; if (b.vy > 60) bounces.push(now); b.vy = -b.vy * restit; b.vx *= 0.98; }\n    const moving = Math.abs(b.vy) > 40 || Math.abs(b.vx) > 25 || b.y < H - R - 2;\n    b.still = moving ? 0 : b.still + dt;\n    if (b.still > 1 && !b.said) { b.said = true; Jaskinia.event('piłka się zatrzymała'); }\n    if (moving) b.said = false;\n  }\n  while (bounces.length && now - bounces[0] > 1000) bounces.shift();\n  g.clearRect(0, 0, W, H);\n  g.strokeStyle = '#2a3640'; g.beginPath(); g.moveTo(0, H - 0.5); g.lineTo(W, H - 0.5); g.stroke();\n  for (const b of balls) { g.fillStyle = `hsl(${b.hue} 80% 62%)`; g.beginPath(); g.arc(b.x, b.y, R, 0, Math.PI * 2); g.fill(); }\n  document.getElementById('hud').textContent = `${balls.length} piłki · ${energy().toFixed(1)} J · ${bounces.length} odbić/s · ${frames.length} kl./s${Jaskinia.active ? ' · w Jaskini' : ''}`;\n  if (now - sigT > 100) { sigT = now; Jaskinia.signals({ energia: +energy().toFixed(2), odbicia: bounces.length, pilki: balls.length, fps: frames.length }); }\n  if (now - stT > 1000) { stT = now; sayState(); }\n  requestAnimationFrame(step);\n}\nrequestAnimationFrame(step);\nwindow.__boot = Math.random().toString(36).slice(2); // lets a check tell a running lab from a restarted one\n<\/script>\n</body>\n</html>\n";
+const UW_ODP = {};
 (() => {
 'use strict';
 
@@ -6123,6 +6195,49 @@ function tip(e, content) {
   tipEl.style.left = Math.max(8, x) + 'px'; tipEl.style.top = Math.max(8, y) + 'px';
 }
 function untip() { if (tipEl) tipEl.hidden = true; }
+/* One way of answering what the pointer points at (v6.2; the owner, 18 Oct: the charts were inconsistent — some answered,
+   others only through the browser's late plain tooltip). Every chart mark drawn with an SVG <title> loses it (the
+   browser's tooltip came after a second, unstyled, on top of ours) and speaks through the same note instead: it lights
+   up softly while pointed at, the note follows the pointer, and crossing a gap does not flash. The text stays as the
+   mark's accessible name. A chart with its own richer answer marks itself data-own-tip and is left alone. */
+function upgradeTitles(root) {
+  const one = tt => {
+    const el = tt.parentElement;
+    if (!el || el.tagName.toLowerCase() === 'svg') return;
+    el.dataset.tip = tt.textContent;
+    if (!el.getAttribute('aria-label')) el.setAttribute('aria-label', tt.textContent);
+    tt.remove();
+  };
+  if (root.matches?.('svg title')) one(root);
+  else if (root.querySelectorAll) for (const tt of root.querySelectorAll('svg title')) one(tt);
+}
+/* "5 commitów" says more than "2026-10-12", so a note "head: value" or "head · value" shows the value large and the head
+   under it, the way the Puls and Statystyki notes do. A note without either is one plain line. */
+function tipBody(text) {
+  const m = /^(.*?)(?::| ·) (.+)$/s.exec(text || '');
+  return m && m[1].length <= 40 && m[2].length <= 32 ? [h('div', { class: 'tt', text: m[2] }), h('div', { class: 'ts', text: m[1] })] : [h('div', { class: 'ts0', text: text || '' })];
+}
+{
+  const mo = new MutationObserver(list => { for (const m of list) for (const n of m.addedNodes) if (n.nodeType === 1) upgradeTitles(n); });
+  const start = () => { upgradeTitles(document.body); mo.observe(document.body, { childList: true, subtree: true }); };
+  if (document.body) start(); else addEventListener('DOMContentLoaded', start);
+  let on = null, body = null, offT = 0;
+  const off = () => {
+    clearTimeout(offT); offT = 0; on?.classList.remove('tip-on'); on = null;
+    if (body && tipEl && body.includes(tipEl.firstChild)) untip(); // never hide a note another chart is showing
+    body = null;
+  };
+  document.addEventListener('pointermove', e => {
+    if (e.pointerType === 'touch') return;
+    const el = e.target.closest?.('[data-tip]');
+    if (!el || el.closest('[data-own-tip]')) { if (on && !offT) offT = setTimeout(off, 140); return; }
+    clearTimeout(offT); offT = 0;
+    if (on !== el) { on?.classList.remove('tip-on'); on = el; el.classList.add('tip-on'); body = tipBody(el.dataset.tip); }
+    tip(e, tipEl && body.includes(tipEl.firstChild) ? null : body);
+  }, true);
+  document.documentElement.addEventListener('mouseleave', off);
+  addEventListener('blur', off);
+}
 function toast(msg) { const t = h('div', { class: 'toast', role: 'status', text: msg }); document.body.append(t); setTimeout(() => t.remove(), 2700); }
 async function copyText(text, okMsg = 'Skopiowane') {
   try { await navigator.clipboard.writeText(text); toast(okMsg); }
@@ -6287,7 +6402,7 @@ function parcelMap(width, height) {
   const H = height ? Math.max(120, Math.round(height)) : Math.round(Math.max(360, Math.min(600, width * 0.5)));
   const fams = D.families.map(f => ({ f, v: f.repos.reduce((a, n) => a + parcelValue(R[n]), 0) })).sort((a, b) => b.v - a.v);
   const districts = squarify(fams, 0, 0, width, H);
-  const svg = s('svg', { class: 'map', viewBox: `0 0 ${width} ${H}`, width, height: H, role: 'group', 'aria-label': 'Mapa: każde repo to działka; wielkość rośnie z liczbą commitów, kolor to czas od ostatniego commita.' });
+  const svg = s('svg', { class: 'map', 'data-own-tip': '', viewBox: `0 0 ${width} ${H}`, width, height: H, role: 'group', 'aria-label': 'Mapa: każde repo to działka; wielkość rośnie z liczbą commitów, kolor to czas od ostatniego commita.' });
   const defs = s('defs');
   defs.append(s('pattern', { id: 'hatch', width: 7, height: 7, patternUnits: 'userSpaceOnUse', patternTransform: 'rotate(45)' },
     s('rect', { width: 7, height: 7, fill: 'var(--ash)' }), s('line', { x1: 0, y1: 0, x2: 0, y2: 7, stroke: 'var(--hatch)', 'stroke-width': 3 })));
@@ -6314,7 +6429,6 @@ function parcelMap(width, height) {
       const fsev = (r.findings || []).filter(f => (f.sev === 'high' || f.sev === 'mid') && !decision[f.id]);
       const p = s('g', { class: 'parcel' + (ash ? ' ash' : ''), tabindex: 0, role: 'link', 'data-repo': r.name,
         'aria-label': `${r.short}. ${LIFE[r.life]?.label || ''}. Ostatni commit ${ago(r.last_ts)}. ${pl(r.commits, 'commit', 'commity', 'commitów')}.${fsev.length ? ' ' + pl(fsev.length, 'ustalenie', 'ustalenia', 'ustaleń') + ' do decyzji.' : ''}` });
-      p.append(s('title', { text: `${r.short} — ${ash ? 'zakończone' : ago(r.last_ts)}` }));
       const fill = ash ? 'url(#ashx)' : lvl <= 0 ? (JASK ? (lvl === 0 ? 'var(--h0)' : 'url(#hatch)') : lvl === 0 ? 'url(#hatch)' : 'var(--ash)') : `var(${heatVar(lvl)})`;
       p.append(s('rect', { class: 'body', x, y, width: w, height: hh, rx: 2.5, fill }));
       if (lvl >= 1) p.append(s('rect', { class: 'sheen', x, y, width: w, height: hh, rx: 2.5, fill: 'url(#sheen)' }));
@@ -6324,7 +6438,7 @@ function parcelMap(width, height) {
       p.dataset.tc = txtCol;
       const hasNo = w > 40 && hh > 40;
       if (w > 30 && hh > 22) {
-        const fs = Math.max(11, Math.min(30, Math.max(Math.sqrt(w * hh) / 6.2, Math.min(w / 7.5, hh / 2.6))));
+        const fs = Math.max(11, Math.min(PARCEL_CAP(), Math.max(Math.sqrt(w * hh) / 6.2, Math.min(w / 7.5, hh / 2.6))));
         const t = s('text', { class: 'pname', x: x + 8, y: y + 6 + fs * 0.92, 'font-size': fs, fill: txtCol, text: r.short });
         const badge = fsev.length && w > 46 && hh > 34;
         Object.assign(t.dataset, { maxw: w - 16 - (badge ? 20 : 0), maxh: hh - 10, x0: x + 8, y0: y + 6, fs0: fs, name: r.short, bottom: y + hh, right: x + w, nob: hasNo ? 1 : 0 });
@@ -6350,9 +6464,14 @@ function parcelMap(width, height) {
     }
     svg.append(g);
   }
-  let tipFor = null;
+  /* Hover without a disco (the owner, 18 Oct: sweeping the mouse across the map flashed every border it crossed).
+     Crossing a gap between plots keeps the current plot lit for a moment; only resting outside the plots, or leaving the
+     map, lets the light go. The light itself fades (CSS), so a fast sweep reads as one calm movement. */
+  let tipFor = null, offT = 0;
+  const lightsOff = () => { clearTimeout(offT); offT = 0; tipFor = null; untip(); svg.classList.remove('dimmed'); $$('.parcel.on', svg).forEach(x => x.classList.remove('on')); };
   svg.addEventListener('pointermove', e => {
-    const p = e.target.closest?.('.parcel'); if (!p) { tipFor = null; untip(); svg.classList.remove('dimmed'); $$('.parcel.on', svg).forEach(x => x.classList.remove('on')); return; }
+    const p = e.target.closest?.('.parcel'); if (!p) { if (!offT && tipFor) offT = setTimeout(lightsOff, 180); return; }
+    clearTimeout(offT); offT = 0;
     const r = R[p.dataset.repo];
     if (tipFor === r.name) { tip(e, null); return; }
     tipFor = r.name;
@@ -6363,12 +6482,14 @@ function parcelMap(width, height) {
       h('div', { class: 'tm', text: `${FAM[r.family]?.name} · nr ${r.no} · ostatni commit ${ago(r.last_ts)} · ${pl(r.commits, 'commit', 'commity', 'commitów')} · ${pl(r.branches.length, 'gałąź', 'gałęzie', 'gałęzi')}${r.pages && r.life !== 'zakończone' ? ' · ▶ Pages' : ''}` }),
       (() => { const fs = (r.findings || []).filter(f => f.sev === 'high' || f.sev === 'mid'); return fs.length ? h('div', { class: 'tf' }, fs.slice(0, 3).map(f => h('div', null, sevTag(f.sev), ' ', ticks(f.title)))) : null; })())));
   });
-  svg.addEventListener('pointerleave', () => { tipFor = null; untip(); svg.classList.remove('dimmed'); $$('.parcel.on', svg).forEach(x => x.classList.remove('on')); });
+  svg.addEventListener('pointerleave', () => { clearTimeout(offT); offT = setTimeout(lightsOff, 120); });
   svg.addEventListener('click', e => { const p = e.target.closest?.('.parcel'); if (p) go(routeFor(p.dataset.repo)); });
   svg.addEventListener('keydown', e => { const p = e.target.closest?.('.parcel'); if (p && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); go(routeFor(p.dataset.repo)); } });
   return { svg, parcels, H };
 }
 function parcelValue(r) { return Math.sqrt(r.commits || 0) + 4; }
+/* the largest name on the map: Jaskinia's compact (desktop) size keeps the hierarchy but lowers the voice (v6.1) */
+const PARCEL_CAP = () => (JASK && document.documentElement.dataset.density === 'zwarta' ? 23 : 30);
 /* Label typesetting for a parcel: the name is set as large as the plot allows, in one line if it can stay
    reasonably wide (Anybody's width axis does the squeezing), otherwise broken onto 2–3 lines; never below 11px.
    Measured at the base size, then scaled linearly (SVG text length is linear in font-size). */
@@ -6689,20 +6810,43 @@ function seismo() {
   const vals = []; let mx = 1;
   for (let i = 0; i < nk; i++) { const k = new Date((start + i) * DAY * 1000).toISOString().slice(0, 10); const v0 = days[k] || 0; vals.push(v0); mx = Math.max(mx, v0); }
   const bw = W / n;
-  const svg = s('svg', { class: 'seismo', viewBox: `0 0 ${W} ${Hh + 2}`, preserveAspectRatio: 'none', role: 'img',
+  const svg = s('svg', { class: 'seismo', 'data-own-tip': '', viewBox: `0 0 ${W} ${Hh + 2}`, preserveAspectRatio: 'none', role: 'img',
     'aria-label': `Wszystkie repo razem, dzień po dniu od maja 2026 do zrzutu z ${DS.format(new Date(SNAP * 1000))}. Rekord: ${fmt(mx)} commitów jednego dnia.` });
   svg.append(s('line', { x1: 0, x2: W, y1: Hh + .5, y2: Hh + .5, stroke: 'var(--rule-2)', 'vector-effect': 'non-scaling-stroke' }));
+  const bars = [];
   vals.forEach((v0, i) => {
     if (!v0) return;
     const bh = Math.max(1.5, (Hh - 2) * Math.sqrt(v0 / mx));
     const lvl = heatOf((start + i) * DAY + DAY / 2);
-    svg.append(s('rect', { x: i * bw + bw * 0.12, y: Hh - bh, width: Math.max(0.8, bw * 0.76), height: bh, fill: lvl >= 1 ? `var(${heatVar(lvl)})` : 'var(--cold)' },
-      s('title', { text: `${new Date((start + i) * DAY * 1000).toISOString().slice(0, 10)}: ${pl(v0, 'commit', 'commity', 'commitów')}` })));
+    bars[i] = s('rect', { class: 'sbar', x: i * bw + bw * 0.12, y: Hh - bh, width: Math.max(0.8, bw * 0.76), height: bh, fill: lvl >= 1 ? `var(${heatVar(lvl)})` : 'var(--cold)' });
+    svg.append(bars[i]);
   });
+  /* Pointing at a day answers like every other day chart (the owner, 18 Oct: the Puls bars said nothing while the very
+     similar chart in Statystyki did): a guide, the bar lit, and a note with the day, its commits and who made them.
+     Clicking selects the busiest project of that day. The light fades instead of flashing (as on the map). */
+  const guide = s('line', { class: 'sguide', x1: 0, x2: 0, y1: 0, y2: Hh, 'vector-effect': 'non-scaling-stroke', visibility: 'hidden' });
+  svg.append(guide);
+  const repos = Object.values(R);
+  const dayKey = i => new Date((start + i) * DAY * 1000).toISOString().slice(0, 10);
+  const topOf = i => { const k = dayKey(i); return repos.map(r => ({ r, n: (r.days && r.days[k]) || 0 })).filter(x => x.n).sort((a, b) => b.n - a.n); };
+  const dayAt = e => { const bb = svg.getBoundingClientRect(); return Math.max(0, Math.min(nk - 1, Math.floor((e.clientX - bb.left) / bb.width * n))); };
+  let lit = null, offT = 0;
+  const off = () => { clearTimeout(offT); offT = 0; guide.setAttribute('visibility', 'hidden'); lit?.classList.remove('on'); lit = null; untip(); };
+  svg.addEventListener('pointermove', e => {
+    clearTimeout(offT); offT = 0;
+    const i = dayAt(e), x = i * bw + bw / 2;
+    guide.setAttribute('x1', x); guide.setAttribute('x2', x); guide.setAttribute('visibility', 'visible');
+    if (lit !== bars[i]) { lit?.classList.remove('on'); lit = bars[i] || null; lit?.classList.add('on'); }
+    const top = topOf(i);
+    tip(e, [h('div', { class: 'tt', text: pl(vals[i] || 0, 'commit', 'commity', 'commitów') }), h('div', { class: 'ts', text: DS.format(new Date((start + i) * DAY * 1000)) }),
+      h('div', { class: 'tm', text: top.length ? top.slice(0, 3).map(x => `${x.r.short} ${x.n}`).join(' · ') + (JASK ? ' · kliknij, żeby zaznaczyć' : '') : 'cisza' })]);
+  });
+  svg.addEventListener('pointerleave', () => { clearTimeout(offT); offT = setTimeout(off, 120); });
+  svg.addEventListener('click', e => { const top = topOf(dayAt(e)); if (top[0]) go(routeFor(top[0].r.name)); });
   const plot = h('div', { class: 'seismo-plot' }, svg);
   const after = endNow - endSnap;
   if (after >= 1) plot.append(h('div', { class: 'seismo-after', style: { left: (nk / n * 100).toFixed(3) + '%' },
-    title: `Po zrzucie z ${DS.format(new Date(SNAP * 1000))}: brak danych (${pl(after, 'dzień', 'dni', 'dni')}). To nie są dni bez commitów, tylko dni, których zrzut nie widział.` }));
+    'data-tip': `Po zrzucie z ${DS.format(new Date(SNAP * 1000))}: brak danych (${pl(after, 'dzień', 'dni', 'dni')}). To nie są dni bez commitów, tylko dni, których zrzut nie widział.` }));
   const months = h('div', { class: 'seismo-m', 'aria-hidden': 'true' });
   const MON = new Intl.DateTimeFormat('pl-PL', { month: 'long', timeZone: 'UTC' }), MSH = new Intl.DateTimeFormat('pl-PL', { month: 'short', timeZone: 'UTC' });
   for (let y = 2026, m = 4; ; m++) {
@@ -7094,11 +7238,13 @@ const HOSTED = (typeof BIB_HOST !== 'undefined' && BIB_HOST === 'web') || RUNS_L
 function playA(r, attrs, ...kids) {
   const a = h('a', Object.assign({ href: r.pages, target: '_blank', rel: 'noopener' }, attrs), ...kids);
   a.addEventListener('click', e => {
-    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button) return;
-    // Jaskinia decides: a game window when self-hosted; otherwise the link opens a new tab as usual
-    if (JASK && HOOK.play) { if (HOOK.play(r) === true) e.preventDefault(); return; }
+    if (e.metaKey || e.ctrlKey || e.altKey || e.button) return; // Ctrl+click: the browser's new tab, as everywhere
+    // Jaskinia decides: the game window when self-hosted (Shift: a new window beside); otherwise the link opens a new tab
+    if (JASK && HOOK.play) { if (HOOK.play(r, { beside: e.shiftKey }) === true) e.preventDefault(); return; }
+    if (e.shiftKey) return;
     if (HOSTED) { e.preventDefault(); openPlayer(r); }
   });
+  if (JASK && !a.title) a.title = 'Zagraj w oknie gry · Shift: w nowym oknie obok · Ctrl: w nowej karcie';
   return a;
 }
 let playerOpen = false;
@@ -7365,7 +7511,7 @@ function rhythmPanel(r) {
     if (!v0) return;
     const bh = Math.max(1.5, (Hh - 6) * Math.sqrt(v0 / mx));
     const lvl = heatOf((start + i) * DAY + DAY / 2);
-    svg.append(s('rect', { x: i * bw, y: Hh - bh, width: Math.max(1, bw - (bw > 3 ? 1 : 0)), height: bh, fill: lvl >= 1 ? `var(${heatVar(lvl)})` : 'var(--cold)' }, s('title', { text: `${new Date((start + i) * DAY * 1000).toISOString().slice(0, 10)}: ${pl(v0, 'commit', 'commity', 'commitów')}` })));
+    svg.append(s('rect', { x: i * bw, y: Hh - bh, width: Math.max(1, bw - (bw > 3 ? 1 : 0)), height: bh, fill: lvl >= 1 ? `var(${heatVar(lvl)})` : 'var(--cold)' }, s('title', { text: `${DS.format(new Date((start + i) * DAY * 1000))}: ${pl(v0, 'commit', 'commity', 'commitów')}` })));
   });
   sec.append(h('p', { class: 'hint', text: `Każdy słupek to jeden dzień od pierwszego commita. Wysokość rośnie z pierwiastkiem liczby commitów, więc widać też małe dni. Pracowało ${pl(r.active_days, 'dzień', 'dni', 'dni')} z ${fmt(life)}.` }), svg,
     h('div', { class: 'rhythm-ax' }, h('span', { text: day(start * DAY + DAY / 2) + (start < first ? ' (repo powstało ' + day(r.first_ts) + ')' : '') }), h('span', { text: 'dziś' })));
@@ -7424,7 +7570,7 @@ function clockChart(hours, size, label, center) {
 function weekStrip(wd) {
   const mx = Math.max(1, ...wd), tot = wd.reduce((a, b) => a + b, 0) || 1;
   return h('div', { class: 'week', role: 'img', 'aria-label': 'Dni tygodnia: ' + WD.map((d, i) => `${d} ${wd[i]}`).join(', ') },
-    WD.map((d, i) => h('div', { class: 'wd' + (wd[i] === mx ? ' peak' : ''), title: `${d}: ${pl(wd[i], 'commit', 'commity', 'commitów')}` },
+    WD.map((d, i) => h('div', { class: 'wd' + (wd[i] === mx ? ' peak' : ''), 'data-tip': `${d}: ${pl(wd[i], 'commit', 'commity', 'commitów')}` },
       h('div', { class: 'wbar' }, h('i', { style: { height: (100 * wd[i] / mx).toFixed(1) + '%' } })),
       h('b', { text: d }), h('small', { text: Math.round(100 * wd[i] / tot) + '%' }))));
 }
@@ -7989,13 +8135,14 @@ const PREF_CHOICES = {
   theme: ['jaskinia', 'kataster', 'neon', 'piwnica'],
   scheme: ['auto', 'ciemna', 'jasna'],
   life: ['zielen', 'zar'],
-  density: ['zwarta', 'srednia', 'duza'],
+  density: ['auto', 'zwarta', 'srednia', 'duza'],
   lang: ['pl', 'en'],
   wheel: ['zoom', 'pan'],
   motion: ['full', 'less'],
   games: ['auto', 'okno', 'karta'],
+  pixels: ['ostre', 'gladkie'],
 };
-const PREFS_DEF = { theme: 'jaskinia', scheme: 'auto', life: 'zielen', density: 'srednia', cz: 1, lang: 'pl', wheel: 'zoom', tips: true, motion: 'full', games: 'auto' };
+const PREFS_DEF = { theme: 'jaskinia', scheme: 'auto', life: 'zielen', density: 'auto', cz: 1, lang: 'pl', wheel: 'zoom', tips: true, motion: 'full', games: 'auto', pixels: 'ostre', pv: 2 };
 function sanitizePrefs(p) {
   const out = { ...PREFS_DEF };
   if (!p || typeof p !== 'object') return out;
@@ -8004,7 +8151,9 @@ function sanitizePrefs(p) {
   if (typeof p.tips === 'boolean') out.tips = p.tips;
   return out;
 }
-const prefs = (() => { try { return sanitizePrefs(JSON.parse(localStorage.getItem(PREFS_KEY) || '{}')); } catch { return sanitizePrefs({}); } })();
+/* pv 2 (v6.1): the size of the interface became "auto" (compact with a mouse, larger on touch). Preferences written before
+   held the old default "srednia" without anyone choosing it, so that one value becomes "auto" once. */
+const prefs = (() => { try { const raw = JSON.parse(localStorage.getItem(PREFS_KEY) || '{}'); if (raw && !raw.pv && raw.density === 'srednia') raw.density = 'auto'; return sanitizePrefs(raw); } catch { return sanitizePrefs({}); } })();
 function savePrefs() { try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); return true; } catch { return false; } }
 
 /* ---------- interface language: Polish source strings, English beside them (05-i18n.js) ---------- */
@@ -9031,6 +9180,23 @@ const EN = {
   'Dodaj cały folder: modele z ich teksturami, reszta plików nie jest czytana': 'Add a whole folder: models with their textures; other files are not read',
   'Plik z układami, notatkami i zapisami. Na innym urządzeniu (albo po wyczyszczeniu przeglądarki) wczytasz go w imporcie. Modeli z Materiałów w nim nie ma: zostają w bibliotece tej przeglądarki, a ich pliki masz u siebie na dysku.': 'A file with layouts, notes and saves. On another device (or after clearing the browser) you load it in the import. Models from Materials are not in it: they stay in this browser\'s library, and you have their files on your disk.',
   'Układy, notatki, zapisy, kopie, kosz i Materiały są tylko w tej przeglądarce, na tym urządzeniu. Nigdzie ich nie wysyłam. Kilka kart Jaskini naraz scala swoje zmiany. Żeby przenieść Jaskinię, użyj eksportu (bez modeli). Dane o projektach to zrzut z GitHuba wbudowany w stronę: odświeża go Claude (regen).': 'Layouts, notes, saves, copies, the trash and Materials are only in this browser, on this device. I send them nowhere. Several Jaskinia tabs at once merge their changes. To move Jaskinia, use the export (without models). The project data is a GitHub snapshot built into the page: Claude refreshes it (regen).',
+  'Sam': 'Auto', 'Paski, przyciski i zakładki. „Sam”: zwarty przy myszy, jak w Blenderze, żeby miejsce należało do treści; na dotyku większy.': 'Bars, buttons and tabs. “Auto”: compact with a mouse, like Blender, so the space belongs to the content; larger on touch.',
+  'Zagraj w nowym oknie obok': 'Play in a new window beside', 'w nowym oknie obok': 'in a new window beside', 'w oknie gry': 'in the game window', 'gra w oknie: {0}': 'game in the window: {0}',
+  'mysz rozgląda się, WASD idzie, Spacja skacze, Shift biegnie, F lata (Spacja w górę, Shift w dół), kółko myszy zmienia prędkość, Esc puszcza mysz': 'the mouse looks around, WASD walks, Space jumps, Shift runs, F flies (Space up, Shift down), the mouse wheel sets the speed, Esc lets go of the mouse',
+  'lot: Spacja w górę, Shift w dół, F wraca na ziemię': 'flying: Space up, Shift down, F lands', 'prędkość ×{0}': 'speed ×{0}',
+  'Uwagi Jozza o Jaskini („To mnie uwiera”)': 'Jozz\'s remarks on Jaskinia (“To mnie uwiera”)',
+  '{0}, najnowsze pierwsze. Każda jest przypięta do chwili, układu, okna i projektu. To jego bezpośredni feedback z używania: czytaj je przed pracą nad Jaskinią.': '{0}, newest first. Each is pinned to the moment, the layout, the window and the project. This is his direct feedback from use: read them before working on Jaskinia.',
+  'Jozz nie ma jeszcze uwag.': 'Jozz has no remarks yet.', 'poprawiona {0}': 'corrected {0}',
+  'Popraw uwagę': 'Correct the remark', 'uwaga poprawiona: {0}': 'remark corrected: {0}',
+  'Uwaga': 'Remark',
+  'Modele 3D': '3D models', 'Piksele tekstur': 'Texture pixels', 'Ostre': 'Sharp', 'Gładkie': 'Smooth', 'Ostre piksele': 'Sharp pixels',
+  '„Ostre”: każdy piksel tekstury widać tak, jak w Blockbench; tak są pomyślane modele pixel-art. „Gładkie”: tekstury się wygładzają, lepiej dla zdjęć i dużych tekstur.':
+    '“Sharp”: every texture pixel shows as it does in Blockbench; pixel-art models are made for that. “Smooth”: textures are smoothed, better for photos and large textures.',
+  'Ostre piksele tekstur, jak w Blockbench (wyłącz, żeby wygładzić). To samo ustawienie jest w Ustawieniach → Wygląd.': 'Sharp texture pixels, as in Blockbench (turn off to smooth). The same setting is in Settings → Look.',
+  'Pełny ekran': 'Full screen', 'Pełny ekran: skróty przeglądarki (Ctrl+W, Ctrl+T) nie zamkną karty. Przytrzymaj Esc, żeby wyjść.': 'Full screen: browser shortcuts (Ctrl+W, Ctrl+T) will not close the tab. Hold Esc to leave.',
+  'zrobione': 'done', 'częściowo': 'partly', 'myśl, nie zbudowane': 'a thought, not built', 'pytanie do Ciebie': 'a question for you',
+  'Odpowiedź ({0}, {1}): {2}': 'Answer ({0}, {1}): {2}', 'Bez odpowiedzi: otwarta.': 'No answer yet: open.',
+  'Usunąłem z biblioteki modele, które nie są Twoje: {0}. Przyszły z pierwotnego Box3D, nie od Ciebie.': 'I removed models that are not yours from the library: {0}. They came with the original Box3D, not from you.',
 };
 
 /* ---------- the layout model (pure; no DOM) ----------
@@ -9759,7 +9925,7 @@ function statChart(m, W, H, select) {
   const mx = Math.max(1, ...bins.map(b => b.v)), bw = W / nb;
   const y = v => padT + ch - (v / mx) * ch;
   const unit = k === 1 ? t('dzień') : k === 7 ? t('tydzień') : t('miesiąc');
-  const svg = s('svg', { class: 'st-chart', viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: 'img',
+  const svg = s('svg', { class: 'st-chart', 'data-own-tip': '', viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: 'img',
     'aria-label': t('Commity, jeden słupek to {0}. Najwięcej {1}.', unit, fmt(Math.max(...bins.map(b => b.v)))) });
   const mon = i => (prefs.lang === 'en' ? ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] : MON)[i];
   // "od początku" leaves out a thin prelude: say so at the left edge, where it would have been
@@ -9771,15 +9937,16 @@ function statChart(m, W, H, select) {
     bandLabel = s('text', { class: 'band-t', x: 6, y: brk && y1 - 5 < 28 ? Math.min(y2 - 3, y1 + 13) : Math.max(11, y1 - 5), text: k === 1 ? t('typowy aktywny dzień: {0}–{1} commitów', p25, p75) : t('typowy aktywny {0}: {1}–{2} commitów', unit, p25, p75) });
   }
   svg.append(s('line', { class: 'base', x1: 0, x2: W, y1: padT + ch + 0.5, y2: padT + ch + 0.5 }));
-  const g = s('g');
+  const g = s('g'), bars = [];
   let best = -1;
   bins.forEach((b, i) => { if (best < 0 || b.v > bins[best].v) best = i; });
   bins.forEach((b, i) => {
     if (!b.v) return;
     const lvl = heatOf((STAT.end - b.lo) * DAY + DAY / 2);
     const bh = Math.max(1.5, (b.v / mx) * ch);
-    g.append(s('rect', { class: 'bar' + (i === best ? ' rec' : ''), x: i * bw + Math.min(1, bw * 0.15), y: padT + ch - bh, width: Math.max(0.8, bw - Math.min(2, bw * 0.3)), height: bh,
-      fill: lvl >= 1 ? `var(${heatVar(lvl)})` : 'var(--cold)' })); // older than a month: neutral blue, still plainly visible
+    bars[i] = s('rect', { class: 'bar' + (i === best ? ' rec' : ''), x: i * bw + Math.min(1, bw * 0.15), y: padT + ch - bh, width: Math.max(0.8, bw - Math.min(2, bw * 0.3)), height: bh,
+      fill: lvl >= 1 ? `var(${heatVar(lvl)})` : 'var(--cold)' }); // older than a month: neutral blue, still plainly visible
+    g.append(bars[i]);
   });
   svg.append(g);
   if (bandLabel) svg.append(bandLabel); // above the bars, with a halo so it stays readable
@@ -9814,14 +9981,20 @@ function statChart(m, W, H, select) {
   const at = e => { const bb = svg.getBoundingClientRect(); return clamp(Math.floor((e.clientX - bb.left) / bb.width * nb), 0, nb - 1); };
   const topIn = b => { let top = null, tv = 0; for (const p of P) { let v = 0; for (let di = b.lo; di <= b.hi; di++) v += p.v[di] || 0; if (v > tv) { tv = v; top = p.r; } } return { top, tv }; };
   const when0 = b => k === 1 ? diText(b.lo) : `${diText(b.hi, false)} – ${diText(b.lo)}`;
+  /* the same answer as Puls and every other chart mark: the bar under the pointer lights softly, the note follows, and
+     leaving fades instead of snapping off (the owner, 18 Oct) */
+  let lit = null, offT = 0;
+  const off = () => { clearTimeout(offT); offT = 0; guide.setAttribute('visibility', 'hidden'); lit?.classList.remove('on'); lit = null; B.untip(); };
   svg.addEventListener('pointermove', e => {
+    clearTimeout(offT); offT = 0;
     const i = at(e), b = bins[i];
+    if (lit !== bars[i]) { lit?.classList.remove('on'); lit = bars[i] || null; lit?.classList.add('on'); }
     guide.setAttribute('x1', i * bw + bw / 2); guide.setAttribute('x2', i * bw + bw / 2); guide.setAttribute('visibility', 'visible');
     const { top, tv } = topIn(b);
     B.tip(e, [h('div', { class: 'tt', text: tn(b.v, 'commit', 'commity', 'commitów') }), h('div', { class: 'ts', text: when0(b) }),
       h('div', { class: 'tm', text: top ? t('najwięcej: {0} ({1})', top.short, tv) + (select ? t(' · kliknij, żeby zaznaczyć') : '') : t('cisza') })]);
   });
-  svg.addEventListener('pointerleave', () => { guide.setAttribute('visibility', 'hidden'); B.untip(); });
+  svg.addEventListener('pointerleave', () => { clearTimeout(offT); offT = setTimeout(off, 120); });
   if (select) svg.addEventListener('click', e => { const { top } = topIn(bins[at(e)]); if (top) select(top.name); });
   return svg;
 }
@@ -10719,7 +10892,9 @@ function renderWall(box, c) {
       openMenu(anchor, [
         { head: r.short },
         { label: t('Karta projektu'), icon: 't_karta', act: () => { c.select(r.name); c.openType('karta', { free: true }); } },
-        r.pages && r.life !== 'zakończone' ? { label: t('Zagraj'), icon: 'play', act: () => B.openUrl(r.pages) } : null,
+        // the same "Zagraj" as everywhere (v6 opened a new browser tab from here): the game window, Shift-version beside
+        r.pages && r.life !== 'zakończone' ? { label: t('Zagraj'), icon: 'play', act: () => { if (B.HOOK.play?.(r) !== true) B.openUrl(r.pages); } } : null,
+        r.pages && r.life !== 'zakończone' && gamesInWindow() ? { label: t('Zagraj w nowym oknie obok'), icon: 'play', act: () => { if (B.HOOK.play?.(r, { beside: true }) !== true) B.openUrl(r.pages); } } : null,
         { label: t('Otwórz na GitHubie'), icon: 'ext', act: () => B.openUrl(r.url) },
         { sep: true },
         it.hand ? { label: t('Rozmiar z miary'), desc: t('oddaj rozmiar mierze „{0}”', t(WALL_DRV.find(d => d[0] === st.size)?.[1] || '')), icon: 'reset', act: () => { c.commit(t('rozmiar karty {0} z miary', r.short), () => { const c0 = st.cards[r.name]; delete c0.w; delete c0.h; }); c.save(); paint(); } } : null,
@@ -11102,7 +11277,7 @@ const THEMES = {
   piwnica: { name: 'Piwnica', desc: 'Warsztat: drewno, blacha, taśma z etykieciarki, zielone diody.', fonts: 'family=Barlow+Condensed:wght@500;600;700;800&family=VT323' },
 };
 const LIFE_RAMPS = { zielen: { name: 'Zieleń', desc: 'Im żywszy projekt, tym bardziej zielony; stare uspokajają się do błękitu i tła.' }, zar: { name: 'Żar', desc: 'Jak dawna Biblioteka: świeże świeci pomarańczem.' } };
-const DENSITY = { zwarta: 'Zwarty', srednia: 'Średni', duza: 'Duży' };
+const DENSITY = { auto: 'Sam', zwarta: 'Zwarty', srednia: 'Średni', duza: 'Duży' };
 function applyLook() {
   const de = document.documentElement, th = THEMES[prefs.theme] ? prefs.theme : 'jaskinia';
   de.dataset.jk = th;
@@ -11111,7 +11286,7 @@ function applyLook() {
   else if (th !== 'jaskinia') de.dataset.theme = 'dark';
   else delete de.dataset.theme;
   de.dataset.life = prefs.life;
-  de.dataset.density = prefs.density;
+  de.dataset.density = prefs.density === 'auto' ? (matchMedia('(pointer: coarse)').matches ? 'srednia' : 'zwarta') : prefs.density;
   de.dataset.motion = prefs.motion;
   de.lang = prefs.lang === 'en' ? 'en' : 'pl';
   B.HOOK.noTips = !prefs.tips;
@@ -11133,6 +11308,7 @@ function setPref(k, v) {
   if (k === 'density') { apply(); B.HOOK.refresh(); }
   if (k === 'theme' || k === 'scheme' || k === 'life') setTimeout(() => B.HOOK.refresh(), 30);
   if (k === 'games') B.HOOK.refresh();
+  if (k === 'pixels') document.dispatchEvent(new CustomEvent('jk:pixels'));
 }
 /* rebuild the whole interface (after a language change): the store and the layouts stay as they are */
 function relaunch() {
@@ -11203,8 +11379,11 @@ const SET_SECTIONS = {
           h('span', { class: 'ramp-s', 'data-life': k }, ['--h5', '--h4', '--h3', '--h2', '--h1', '--h0'].map(v => h('i', { style: { background: `var(${v})` } }))),
           h('b', { text: t(X.name) }), h('small', { text: t(X.desc) }))))),
       setCard(t('Rozmiar'),
-        setRow(t('Rozmiar interfejsu'), t('Paski, przyciski i zakładki. Na dotyku przyciski i tak są duże.'), setSeg(t('Rozmiar interfejsu'), prefs.density, Object.entries(DENSITY), v => { setPref('density', v); draw(); })),
-        setRow(t('Powiększenie treści okien'), t('Ile znaczy „100%” w oknie. Każde okno możesz dalej przybliżać po swojemu (Ctrl+kółko).'), zoomSlider(draw))));
+        setRow(t('Rozmiar interfejsu'), t('Paski, przyciski i zakładki. „Sam”: zwarty przy myszy, jak w Blenderze, żeby miejsce należało do treści; na dotyku większy.'), setSeg(t('Rozmiar interfejsu'), prefs.density, Object.entries(DENSITY), v => { setPref('density', v); draw(); })),
+        setRow(t('Powiększenie treści okien'), t('Ile znaczy „100%” w oknie. Każde okno możesz dalej przybliżać po swojemu (Ctrl+kółko).'), zoomSlider(draw))),
+      setCard(t('Modele 3D'),
+        setRow(t('Piksele tekstur'), t('„Ostre”: każdy piksel tekstury widać tak, jak w Blockbench; tak są pomyślane modele pixel-art. „Gładkie”: tekstury się wygładzają, lepiej dla zdjęć i dużych tekstur.'),
+          setSeg(t('Piksele tekstur'), prefs.pixels, [['ostre', 'Ostre'], ['gladkie', 'Gładkie']], v => { setPref('pixels', v); draw(); }))));
   },
   zachowanie(c, draw) {
     return h('div', { class: 'set-body' },
@@ -11642,7 +11821,12 @@ function makeWin(id) {
   head.addEventListener('pointerdown', e => headDown(e, id));
   head.addEventListener('contextmenu', e => { if (e.target.closest('input, textarea, select')) return; e.preventDefault(); winMenu(id, null, { x: e.clientX, y: e.clientY }); });
   head.addEventListener('dblclick', e => { if (!phone && !e.target.closest('button, select, input, a, label')) toggleMax(id); });
-  el.addEventListener('pointerdown', () => { focusWin(id); if (isFloat(id)) raiseFloat(id); }, true);
+  el.addEventListener('pointerdown', e => {
+    const was = L.focus === id, ty = L.wins[id]?.type;
+    focusWin(id); if (isFloat(id)) raiseFloat(id);
+    // a click on a game window's frame gives the game the keys back (a click inside the game does that by itself)
+    if (was && (ty === 'gra' || ty === 'przyrzad') && !e.target.closest('button, a, input, textarea, select')) setTimeout(() => focusGame(id), 0);
+  }, true);
   el.addEventListener('wheel', e => {
     if (!e.ctrlKey) return;
     const w = L.wins[id];
@@ -11865,13 +12049,28 @@ function toggleMax(id) {
   persist();
   if (L.max) RT.get(id)?.back.focus({ preventScroll: true });
 }
+let lastGameWin = null; // the game window Jozz used last: where a plain "Zagraj" goes
 function focusWin(id) {
+  if (L.wins[id]?.type === 'gra') lastGameWin = id;
   if (L.focus === id) return;
   const prev = L.focus;
   L.focus = id;
   if (prev) RT.get(prev)?.el.classList.remove('focused');
   RT.get(id)?.el.classList.add('focused');
   persist();
+  // a game window taken into use takes the keyboard too (a click on its header, a phone switch, a layout change)
+  const ty = L.wins[id]?.type;
+  if ((ty === 'gra' || ty === 'przyrzad') && !/^(input|textarea|select)$/i.test(document.activeElement?.tagName || '')) setTimeout(() => focusGame(id), 0);
+}
+/* a game gets the keyboard (the owner, 18 Oct: WASD and the arrows moved Jaskinia instead of JV Web until fullscreen) */
+function focusGame(id, tries = 24) {
+  const rt = RT.get(id), w = L.wins[id];
+  if (!rt || !w || (w.type !== 'gra' && w.type !== 'przyrzad')) return;
+  const fr = rt.body.querySelector('iframe');
+  if (!fr) { if (tries > 0) setTimeout(() => focusGame(id, tries - 1), 150); return; }
+  const go = () => { if (L.focus !== id) return; try { fr.focus(); fr.contentWindow?.focus(); } catch { /* a click inside the game still gives it the keys */ } };
+  go();
+  if (!fr.dataset.jkKeys) { fr.dataset.jkKeys = '1'; fr.addEventListener('load', go); }
 }
 function phoneSwitch(id) {
   if (!L.wins[id]) return;
@@ -12891,28 +13090,33 @@ function boot() {
   });
   B.HOOK.go = hash => route(hash, true); // the Library's own links and clicks inside windows
   B.HOOK.refresh = () => { for (const id of allIds()) { const rt = RT.get(id); if (rt && !typeOf(L.wins[id]).live) rt.key = null; refreshWin(id); } }; // a theme change never restarts a running lab
-  /* "Zagraj" never stops the game Jozz is playing (v5 took over the first game window: M1 in docs/2026-10-16-szwy.md).
-     A game window that follows the selection is pinned to what it shows before the selection moves; the new game gets
-     the window that already shows it, or a new one beside the last game window (tiled, so nothing covers anything). */
-  B.HOOK.play = r => {
+  /* "Zagraj" (the owner's note, 18 Oct): the plain click changes the game in the game window he is using, so he can try
+     many games quickly; Shift+Zagraj opens the game in a new window beside the last one (v6's way, M1, for playing two
+     at once). Ctrl+click stays the browser's new tab. Other game windows that follow the selection are pinned to what
+     they show before the selection moves, so only the chosen window changes. The game then gets the keyboard. */
+  B.HOOK.play = (r, o = {}) => {
     const prev = store.sel, inWin = gamesInWindow();
-    const following = inWin ? allIds().filter(id => L.wins[id].type === 'gra' && !L.wins[id].pin) : [];
-    if (following.length && prev && prev !== r.name && R[prev]) commit(t('gra zostaje: {0}', R[prev].short), () => { for (const id of following) L.wins[id].pin = prev; });
-    select(r.name);
-    logEv(t('zagraj: {0} ({1})', r.short, inWin ? t('w oknie') : t('w nowej karcie')));
-    if (!inWin) return false; // the link opens the game in a new tab
-    const same = allIds().find(id => L.wins[id].type === 'gra' && (L.wins[id].pin || store.sel) === r.name);
-    if (same) {
-      focusWin(same);
-      if (phone) phoneSwitch(same); else if (isFloat(same)) { raiseFloat(same); apply(); } else if (L.max && L.max !== same) toggleMax(same);
-      RT.get(same)?.el.classList.add('flash');
-      setTimeout(() => RT.get(same)?.el.classList.remove('flash'), 700);
+    const games = inWin ? allIds().filter(id => L.wins[id].type === 'gra') : [];
+    const pinOthers = keep => { const following = games.filter(id => id !== keep && !L.wins[id].pin); if (following.length && prev && prev !== r.name && R[prev]) for (const id of following) L.wins[id].pin = prev; };
+    logEv(t('zagraj: {0} ({1})', r.short, !inWin ? t('w nowej karcie') : o.beside ? t('w nowym oknie obok') : t('w oknie gry')));
+    if (!inWin) { select(r.name); return false; } // the link opens the game in a new tab
+    const shows = id => (L.wins[id].pin || store.sel) === r.name;
+    const flash = id => { RT.get(id)?.el.classList.add('flash'); setTimeout(() => RT.get(id)?.el.classList.remove('flash'), 700); };
+    const bring = id => { focusWin(id); if (phone) phoneSwitch(id); else if (isFloat(id)) { raiseFloat(id); apply(); } else if (L.max && L.max !== id) toggleMax(id); flash(id); focusGame(id); };
+    const same = games.find(shows);
+    if (same && !o.beside) { select(r.name); bring(same); return true; }
+    if (!o.beside && games.length) {
+      const target = games.includes(L.focus) ? L.focus : games.includes(lastGameWin) ? lastGameWin : games[games.length - 1];
+      commit(t('gra w oknie: {0}', r.short), () => { pinOthers(target); L.wins[target].pin = r.name; });
+      select(r.name);
+      bring(target);
       return true;
     }
-    const last = allIds().filter(id => L.wins[id].type === 'gra').pop();
-    if (!last) { openWinOfType('gra', { pin: r.name, fresh: true, w: 0.72, h: 0.86 }); return true; }
+    if (!games.length) { select(r.name); const id = openWinOfType('gra', { pin: r.name, fresh: true, w: 0.72, h: 0.86 }); focusGame(id); return true; }
+    // Shift: a new window beside the last game window (tiled, so nothing covers anything)
+    const last = games.includes(lastGameWin) ? lastGameWin : games[games.length - 1];
     const nid = newWinId(), rr = rects.wins[last];
-    if (commit(t('gra obok: {0}', r.short), () => { L.wins[nid] = { type: 'gra', z: 1, pin: r.name, st: {} }; winBeside(last, nid, rr && rr.h > rr.w * 1.1 ? 'bottom' : 'right', 0.5); })) { focusWin(nid); if (phone) phoneSwitch(nid); }
+    if (commit(t('gra obok: {0}', r.short), () => { pinOthers(null); L.wins[nid] = { type: 'gra', z: 1, pin: r.name, st: {} }; winBeside(last, nid, rr && rr.h > rr.w * 1.1 ? 'bottom' : 'right', 0.5); })) { select(r.name); focusWin(nid); if (phone) phoneSwitch(nid); focusGame(nid); }
     return true;
   };
   new ResizeObserver(() => apply()).observe(stage);
@@ -12925,7 +13129,7 @@ function boot() {
   firstHint();
   v6Hint();
   routeStart();
-  window.__JASK = { get L() { return L; }, get store() { return store; }, get phone() { return phone; }, RT, WALLS, apply, select, commit, undo, redo, setSpace, layoutRects, leafIds, rects: () => rects, prefs, openSettings, readBackups, persistNow, get log() { return jlog; }, get uwagi() { return uwagi; }, packageData, packageText, deleteSpace, restoreTrash, forgetTrash, restoreBackup, setPref, signalsBeside, uwagaPop, noteSet, noteNew, persist, route, get dirty() { return dirty; }, get lastText() { return lastText; },
+  window.__JASK = { get L() { return L; }, get store() { return store; }, get phone() { return phone; }, RT, WALLS, apply, select, commit, undo, redo, setSpace, layoutRects, leafIds, rects: () => rects, prefs, openSettings, readBackups, persistNow, get log() { return jlog; }, get uwagi() { return uwagi; }, packageData, packageText, deleteSpace, restoreTrash, forgetTrash, restoreBackup, setPref, signalsBeside, uwagaPop, noteSet, noteNew, persist, route, matImport, get dirty() { return dirty; }, get lastText() { return lastText; },
     live: () => [...LIVE.values()].map(e => ({ id: e.id, url: e.url, hello: e.hello, state: e.state, sigs: [...e.sigs.keys()], n: Object.fromEntries([...e.sigs].map(([k, v]) => [k, v.v.length])), evs: e.evs.map(x => x.text), marks: e.marks.length, last: e.last, vis: e.vis })) };
 }
 
@@ -13335,11 +13539,45 @@ function logEv(what, extra) {
   clearTimeout(logT); logT = setTimeout(saveLog, 700);
   lastLogged = a;
 }
+/* Several tabs (v6.1): each tab keeps the log and the notes in memory, and the last one to write used to win, so a note
+   made in one tab could vanish when another tab wrote. Now a write takes in what is stored first (a note is known by
+   its moment, t; an edit carries its own time), and a tab hears the other tabs' writes. */
+const uwGone = new Set(); // notes deleted in this tab: never brought back from what another tab still had
+const uwKey = u => String(u.t);
+function mergeUwagi(a, b) {
+  const by = new Map();
+  for (const u of [...a, ...b]) { if (!u || !u.t || typeof u.text !== 'string' || uwGone.has(uwKey(u))) continue; const k = uwKey(u), o = by.get(k); if (!o || (u.edited || u.t) > (o.edited || o.t)) by.set(k, u); }
+  return [...by.values()].sort((x, y) => x.t - y.t);
+}
+/* Answers (v6.2): what was done about a remark, written by the agent who did it, shown under the remark here and in
+   "Dla agentów", so Jozz sees it where he wrote it and every agent sees which remarks are still open. They come from the
+   private layer (private/uwagi_odpowiedzi.json through tools/render.py); a public build has none. */
+const UW_ANS = (typeof UW_ODP !== 'undefined' && UW_ODP) || {};
+const UW_STAN = { zrobione: 'zrobione', 'częściowo': 'częściowo', 'myśl': 'myśl, nie zbudowane', pytanie: 'pytanie do Ciebie' };
+const uwAnswer = u => UW_ANS[uwKey(u)] || null;
+function uwAnswerEl(u) {
+  const a = uwAnswer(u);
+  return a ? h('p', { class: 'uw-ans' }, h('span', { class: 'uw-st', 'data-st': a.stan, text: t(UW_STAN[a.stan] || a.stan) }), h('span', { text: ' ' + (a.v ? 'v' + a.v + ': ' : '') + a.odp })) : null;
+}
+const readUw = () => { try { return arr(JSON.parse(lsGet(KEY_UW) || '[]')); } catch { return []; } };
+const logKey = e => e.t + '|' + e.a;
+function mergeLog(a, b) {
+  const by = new Map();
+  for (const e of [...a, ...b]) if (e && e.t && e.a) { const o = by.get(logKey(e)); if (!o || (e.n || 1) > (o.n || 1)) by.set(logKey(e), e); }
+  return [...by.values()].sort((x, y) => x.t - y.t).slice(-LOG_MAX);
+}
 function saveLog() {
   clearTimeout(logT);
+  let stored = []; try { stored = arr(JSON.parse(lsGet(KEY_LOG) || '[]')); } catch { stored = []; }
+  jlog = mergeLog(jlog, stored);
   if (lsSet(KEY_LOG, JSON.stringify(jlog)) !== true) { jlog = jlog.slice(-200); lsSet(KEY_LOG, JSON.stringify(jlog)); }
 }
-function saveUwagi() { return lsSet(KEY_UW, JSON.stringify(uwagi)) === true; }
+function saveUwagi() { uwagi = mergeUwagi(uwagi, readUw()); return lsSet(KEY_UW, JSON.stringify(uwagi)) === true; }
+addEventListener('storage', e => {
+  if (e.storageArea !== localStorage) return;
+  if (e.key === KEY_UW && e.newValue) { try { uwagi = mergeUwagi(uwagi, arr(JSON.parse(e.newValue))); } catch { /* fine */ } }
+  if (e.key === KEY_LOG && e.newValue) { try { jlog = mergeLog(jlog, arr(JSON.parse(e.newValue))); } catch { /* fine */ } }
+});
 
 /* the moment, in the owner's own clock: 2026-10-16 06:52:13.412 +02:00 */
 function isoLocal(ms) {
@@ -13393,6 +13631,30 @@ function uwagaPop(anchor, liveId) {
     h('div', { class: 'jk-row' }, h('button', { class: 'btn', type: 'button', text: t('Zapisz'), onclick: ok }), h('button', { class: 'btn ghost', type: 'button', text: t('Anuluj'), onclick: () => close() }),
       h('small', { class: 'uw-hint', text: phone ? '' : 'Ctrl+Enter' })));
   close = showPopover(el, anchor || bar.querySelector('.jk-uw-b') || bar);
+  inp.focus();
+}
+
+/* a note can be corrected later (the owner, 18 Oct: remarks could not be edited); it keeps its moment and context */
+function uwagaEdit(anchor, u, after) {
+  let close = null;
+  const inp = h('textarea', { class: 'jk-in', rows: 7, maxlength: 4000, 'aria-label': t('Uwaga') });
+  inp.value = u.text;
+  const ok = () => {
+    const v = inp.value.trim(); close();
+    if (!v || v === u.text) return;
+    const cur = uwagi.find(x => uwKey(x) === uwKey(u)) || u; // the list may have been refreshed from another tab meanwhile
+    cur.text = v; cur.edited = Date.now();
+    if (!uwagi.includes(cur)) uwagi.push(cur);
+    saveUwagi(); logEv(t('uwaga poprawiona: {0}', noteTitle(v))); after?.();
+  };
+  inp.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); ok(); } else if (e.key === 'Escape') { e.preventDefault(); close(); } });
+  const el = h('div', { class: 'jk-menu jk-confirm jk-uwaga', role: 'dialog', 'aria-label': t('Popraw uwagę') },
+    h('h3', { text: t('Popraw uwagę') }),
+    h('p', { class: 'uw-ctx', text: t('Chwila {0}', isoLocal(u.t).slice(0, 19)) + [u.u, u.okno, u.projekt].filter(Boolean).map(x => ' · ' + x).join('') }),
+    inp,
+    h('div', { class: 'jk-row' }, h('button', { class: 'btn', type: 'button', text: t('Zapisz'), onclick: ok }), h('button', { class: 'btn ghost', type: 'button', text: t('Anuluj'), onclick: () => close() }),
+      h('small', { class: 'uw-hint', text: phone ? '' : 'Ctrl+Enter' })));
+  close = showPopover(el, anchor);
   inp.focus();
 }
 
@@ -13480,13 +13742,14 @@ SET_SECTIONS.uwagi = (c, draw) => {
       h('p', { class: 'set-note', text: t('Szybka uwaga przypięta do chwili: zapisuje godzinę co do sekundy, układ, okno, projekt i rozmiar ekranu. Przycisk z chorągiewką u góry albo Ctrl+. (na telefonie: menu pod logo).') }),
       h('div', { class: 'set-acts' }, h('button', { class: 'btn', type: 'button', onclick: e => uwagaPop(e.currentTarget) }, icon('flag', 14), t('Nowa uwaga'))),
       list.length ? h('ul', { class: 'set-list' }, list.map(u => h('li', null,
-        h('div', { class: 'sl-main' }, h('b', { text: u.text }), h('small', { text: [isoLocal(u.t).slice(0, 19), u.u, u.okno, u.przyrzad && (u.przyrzad.nazwa || u.przyrzad.adres), u.projekt, u.ekran + (u.telefon ? ' · ' + t('telefon') : ''), u.v].filter(Boolean).join(' · ') })),
+        h('div', { class: 'sl-main' }, h('b', { text: u.text }), h('small', { text: [isoLocal(u.t).slice(0, 19), u.u, u.okno, u.przyrzad && (u.przyrzad.nazwa || u.przyrzad.adres), u.projekt, u.ekran + (u.telefon ? ' · ' + t('telefon') : ''), u.v].filter(Boolean).join(' · ') }), uwAnswerEl(u)),
         h('div', { class: 'sl-acts' },
+          ibtn('pencil', t('Popraw uwagę'), e => uwagaEdit(e.currentTarget, u, draw)),
           ibtn('copy', t('Kopiuj'), () => B.copyText(u.text, t('Skopiowane'))),
           ibtn('trash', t('Usuń uwagę'), () => {
-            const i = uwagi.indexOf(u); if (i < 0) return;
-            uwagi.splice(i, 1); saveUwagi(); draw();
-            jtoast(t('Uwaga usunięta.'), { label: t('Cofnij'), act: () => { uwagi.splice(i, 0, u); saveUwagi(); draw(); } });
+            const i = uwagi.findIndex(x => uwKey(x) === uwKey(u)); if (i < 0) return;
+            uwagi.splice(i, 1); uwGone.add(uwKey(u)); saveUwagi(); draw();
+            jtoast(t('Uwaga usunięta.'), { label: t('Cofnij'), act: () => { uwGone.delete(uwKey(u)); uwagi.splice(i, 0, u); saveUwagi(); draw(); } });
           })))))
         : h('p', { class: 'set-note', text: t('Jeszcze żadnej uwagi.') })),
     setCard(t('Paczka dla Claude\'a'),
@@ -13550,6 +13813,23 @@ function swDispose(obj) {
   });
 }
 
+/* Pixels of a texture: sharp, as Blockbench draws them, or smoothed. The owner, 18 Oct: most Blockbench models are made
+   for sharp pixels, with no smoothing. One choice for every model (Ustawienia → Wygląd → Modele 3D, and the "Piksele"
+   button on the Materiały stage); sharp is the default. Sharp is Blockbench's own sampler: nearest, no mipmaps. */
+const SW_TEX = ['map', 'emissiveMap', 'alphaMap', 'aoMap', 'bumpMap', 'normalMap', 'roughnessMap', 'metalnessMap', 'specularMap', 'lightMap'];
+function swPixels(obj, sharp = prefs.pixels !== 'gladkie') {
+  const { THREE } = swiat();
+  const mag = sharp ? THREE.NearestFilter : THREE.LinearFilter, min = sharp ? THREE.NearestFilter : THREE.LinearMipmapLinearFilter;
+  obj?.traverse(o => {
+    for (const m of [].concat(o.material || [])) for (const k of SW_TEX) {
+      const x = m[k];
+      if (!x || !x.isTexture || (x.magFilter === mag && x.minFilter === min)) continue;
+      x.magFilter = mag; x.minFilter = min; x.generateMipmaps = !sharp;
+      if (x.image) x.needsUpdate = true; // a picture still loading takes the filters when it arrives
+    }
+  });
+  return obj;
+}
 /* a stage: canvas, light, ground, grid, an orbiting camera; renders only when something changed */
 function swStage(host, o = {}) {
   const S = swiat(), { THREE, OrbitControls, RoomEnvironment } = S;
@@ -13589,6 +13869,13 @@ function swStage(host, o = {}) {
   controls.enableDamping = true;
   controls.dampingFactor = 0.12;
   controls.screenSpacePanning = true;
+  /* The owner's hands (18 Oct, his loudest note): the wheel button always moves the view, turning the wheel zooms.
+     OrbitControls dollied on the wheel button. Now: left turns around, the wheel button and the right one move, turning
+     the wheel zooms toward the cursor. The wheel button never starts the browser's autoscroll over the stage. */
+  controls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.PAN, RIGHT: THREE.MOUSE.PAN };
+  controls.zoomToCursor = true;
+  canvas.addEventListener('mousedown', e => { if (e.button === 1) e.preventDefault(); });
+  canvas.addEventListener('auxclick', e => { if (e.button === 1) e.preventDefault(); });
   controls.maxPolarAngle = Math.PI * 0.495;
   let need = true, raf = 0, alive = true, bounds = null, gridKey = '';
   const ticks = new Set();
@@ -13670,9 +13957,14 @@ function swStage(host, o = {}) {
   function placeBody() { const b = bounds; body.position.set(b.box.max.x + 0.45 + Math.min(1, b.size * 0.08), b.box.min.y, b.center.z); }
   st.set = obj => {
     for (const ch of root.children.splice(0)) { ch.parent = null; swDispose(ch); }
-    if (obj) { obj.traverse(x => { if (x.isMesh) { x.castShadow = true; x.receiveShadow = true; } }); root.add(obj); }
+    if (obj) { obj.traverse(x => { if (x.isMesh) { x.castShadow = true; x.receiveShadow = true; } }); swPixels(obj); root.add(obj); }
     st.frame();
   };
+  /* sharp pixels also when the stage draws fewer pixels than the screen has (a slow frame, a screen scaled by 125%):
+     the picture is enlarged block by block instead of blurred */
+  const px = () => { const sharp = prefs.pixels !== 'gladkie'; canvas.style.imageRendering = sharp ? 'pixelated' : ''; swPixels(root, sharp); need = true; };
+  px();
+  document.addEventListener('jk:pixels', px);
   /* the body: 1.8 m, beside the thing, so its size is felt and not only read */
   let body = null;
   st.human = (on, keep) => {
@@ -13737,7 +14029,7 @@ function swStage(host, o = {}) {
   st.camera = camera;
   st.paint();
   st.dispose = () => {
-    alive = false; cancelAnimationFrame(raf); ro.disconnect(); controls.dispose();
+    alive = false; cancelAnimationFrame(raf); ro.disconnect(); controls.dispose(); document.removeEventListener('jk:pixels', px);
     swDispose(root); swDispose(extra); grid.children.forEach(g => { g.geometry.dispose(); g.material.dispose(); });
     ground.geometry.dispose(); ground.material.dispose(); env.dispose(); pmrem.dispose();
     renderer.dispose(); renderer.forceContextLoss?.(); canvas.remove();
@@ -13815,16 +14107,32 @@ function swWalk(stage, o = {}) {
   const hint = h('div', { class: 'sw-hint' });
   const exitB = h('button', { class: 'jk-tb sw-exit', type: 'button', onclick: () => end() }, icon('close', 12), h('span', { text: t('Wyjdź') }));
   const flyB = h('button', { class: 'jk-tb sw-fly', type: 'button', title: t('Lot: bez grawitacji i ścian (F)'), onclick: () => setFly(!fly) }, h('span', { text: t('Lot') }));
-  const veil = h('button', { class: 'sw-veil', type: 'button', onclick: () => lock() }, h('b', { text: t('Kliknij, żeby wejść') }), h('span', { text: t('mysz rozgląda się, WASD idzie, Spacja skacze, Shift biegnie, F lata, Esc puszcza mysz') }));
+  const veil = h('button', { class: 'sw-veil', type: 'button', onclick: () => lock() }, h('b', { text: t('Kliknij, żeby wejść') }), h('span', { text: t('mysz rozgląda się, WASD idzie, Spacja skacze, Shift biegnie, F lata (Spacja w górę, Shift w dół), kółko myszy zmienia prędkość, Esc puszcza mysz') }));
   const cross = h('div', { class: 'sw-cross', 'aria-hidden': 'true' });
   const touch = matchMedia('(pointer: coarse)').matches;
   const stick = h('div', { class: 'sw-stick', hidden: !touch }, h('i'));
   const jumpB = h('button', { class: 'sw-jump', type: 'button', hidden: !touch, text: t('Skok') });
-  const hud = h('div', { class: 'sw-hud' }, cross, hint, h('div', { class: 'sw-top' }, flyB, exitB), stick, jumpB, touch ? null : veil);
+  /* Fullscreen with the keyboard held (the owner, 18 Oct: the browser's own shortcuts can close the whole tab while he
+     plays, and Ctrl+W is "sprint forward" to a Minecraft hand). In fullscreen a Chromium browser lets the page keep every
+     key (Keyboard Lock), so Ctrl+W or Ctrl+T no longer reach the browser; holding Esc leaves fullscreen. Where the browser
+     or the embedding does not allow the lock, fullscreen alone still helps. */
+  const isFull = () => document.fullscreenElement === host;
+  const fullB = !touch && host.requestFullscreen ? h('button', { class: 'jk-tb sw-full', type: 'button', title: t('Pełny ekran: skróty przeglądarki (Ctrl+W, Ctrl+T) nie zamkną karty. Przytrzymaj Esc, żeby wyjść.'), onclick: () => fullToggle() }, h('span', { text: t('Pełny ekran') })) : null;
+  async function fullToggle() {
+    try {
+      if (isFull()) { await document.exitFullscreen(); return; }
+      await host.requestFullscreen({ navigationUI: 'hide' });
+      try { await navigator.keyboard?.lock?.(); } catch { /* not in this browser or embedding */ }
+      lock();
+    } catch { /* fullscreen refused: nothing changes */ }
+  }
+  const hud = h('div', { class: 'sw-hud' }, cross, hint, h('div', { class: 'sw-top' }, fullB, flyB, exitB), stick, jumpB, touch ? null : veil);
   host.append(hud);
   host.classList.add('sw-walking');
   const setFly = on => { fly = on; flyB.classList.toggle('on', fly); vel.set(0, 0, 0); };
-  const say = () => { hint.textContent = fly ? t('lot: Spacja w górę, C w dół, F wraca na ziemię') : dragLook ? t('przeciągnij myszą, żeby się rozejrzeć; WASD idzie') : ''; };
+  let speedK = 1; // the wheel's speed (Unreal's way): ×0.25 to ×8, kept for this walk
+  const kTxt = () => (speedK === 1 ? '' : ' · ' + t('prędkość ×{0}', String(Math.round(speedK * 100) / 100).replace('.', ',')));
+  const say = () => { hint.textContent = (fly ? t('lot: Spacja w górę, Shift w dół, F wraca na ziemię') : dragLook ? t('przeciągnij myszą, żeby się rozejrzeć; WASD idzie') : '') + kTxt(); };
   say();
 
   // desk: pointer lock, keys
@@ -13836,9 +14144,11 @@ function swWalk(stage, o = {}) {
     try { const p = cv.requestPointerLock?.(); if (!cv.requestPointerLock) noLock(); else p?.catch?.(() => noLock()); } catch { noLock(); }
   };
   const locked = () => document.pointerLockElement === cv;
-  const onLockChange = () => { veil.hidden = locked() || touch || dragLook; };
+  const onLockChange = () => { veil.hidden = locked() || touch || dragLook; if (!locked()) keys.clear(); }; // a lost lock (a browser shortcut, another window) drops held keys
   document.addEventListener('pointerlockchange', onLockChange);
   document.addEventListener('pointerlockerror', noLock);
+  const onFull = () => { fullB?.classList.toggle('on', isFull()); if (!isFull()) { try { navigator.keyboard?.unlock?.(); } catch { /* fine */ } keys.clear(); } };
+  document.addEventListener('fullscreenchange', onFull);
   // the first move after the mouse is locked can carry a jump across the whole screen (a known browser quirk): skip it,
   // and never turn more than a quarter turn from one event
   let fresh = true;
@@ -13862,15 +14172,29 @@ function swWalk(stage, o = {}) {
       if (locked()) { try { document.exitPointerLock(); } catch { /* fine */ } return; }
       end(); return;
     }
-    if (!active() || e.ctrlKey || e.metaKey || e.altKey) return;
+    // a key let go is always let go, whatever else is held (v6: Space released while Ctrl was down stayed pressed, and the
+    // body flew up until Space was pressed again)
+    if (e.type === 'keyup') { if (keys.delete(e.code) && active()) { e.preventDefault(); e.stopImmediatePropagation(); } return; }
+    if (!active() || e.ctrlKey || e.metaKey || e.altKey) { // a shortcut is the browser's: nothing stays held (in fullscreen the page keeps it)
+      if (e.ctrlKey || e.metaKey || e.altKey) { keys.clear(); if (isFull() && e.type === 'keydown') e.preventDefault(); }
+      return;
+    }
     if (!MOVE.has(e.code)) return;
     e.preventDefault(); e.stopImmediatePropagation();
-    if (e.type === 'keydown') {
-      if (e.code === 'KeyF' && !e.repeat) { setFly(!fly); say(); return; }
-      if (e.code === 'Space' && !fly && onGround && !e.repeat) { vel.y = 4.4; onGround = false; }
-      keys.add(e.code);
-    } else keys.delete(e.code);
+    if (e.code === 'KeyF' && !e.repeat) { setFly(!fly); say(); return; }
+    if (e.code === 'Space' && !fly && onGround && !e.repeat) { vel.y = 4.4; onGround = false; }
+    keys.add(e.code);
   };
+  const onWheel = e => {
+    if (!locked() && !host.contains(e.target)) return;
+    e.preventDefault();
+    speedK = clamp(Math.round(speedK * (e.deltaY < 0 ? 1.25 : 0.8) * 100) / 100, 0.25, 8);
+    if (Math.abs(speedK - 1) < 0.06) speedK = 1;
+    say();
+  };
+  host.addEventListener('wheel', onWheel, { passive: false }); // the canvas is inside: one notch counts once
+  const onVis = () => { if (document.hidden) keys.clear(); };
+  document.addEventListener('visibilitychange', onVis);
   window.addEventListener('keydown', onKey, true);
   window.addEventListener('keyup', onKey, true);
   const onBlur = () => keys.clear();
@@ -13925,18 +14249,19 @@ function swWalk(stage, o = {}) {
     if (keys.has('KeyD') || keys.has('ArrowRight')) wish.add(side);
     if (keys.has('KeyA') || keys.has('ArrowLeft')) wish.sub(side);
     if (tstate.id !== null) { wish.addScaledVector(fwd, -tstate.dy); wish.addScaledVector(side, tstate.dx); }
-    run = keys.has('ShiftLeft') || keys.has('ShiftRight');
+    const shift = keys.has('ShiftLeft') || keys.has('ShiftRight');
+    run = shift && !fly;
     if (wish.lengthSq() > 1) wish.normalize();
-    if (fly) {
-      const sp = (run ? 14 : 5) * Math.max(1, b.size / 40);
+    if (fly) { // Minecraft's flying: Space up, Shift down; the wheel sets the speed
+      const sp = 5 * Math.max(1, b.size / 40) * speedK;
       const look = new THREE.Vector3(-Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), -Math.cos(yaw) * Math.cos(pitch));
       const v = new THREE.Vector3().addScaledVector(side, wish.dot(side)).addScaledVector(look, wish.dot(fwd));
       if (keys.has('Space')) v.y += 1;
-      if (keys.has('KeyC')) v.y -= 1;
+      if (shift || keys.has('KeyC')) v.y -= 1;
       pos.addScaledVector(v, sp * dt);
       return;
     }
-    const sp = run ? 6.2 : 2.8;
+    const sp = (run ? 6.2 : 2.8) * speedK;
     // small steps (as in three-mesh-bvh's character example), so fast moves do not pass through walls
     const N = Math.max(1, Math.min(40, Math.ceil(dt * 300))), h1 = dt / N; // about 300 small steps a second, whatever the frame rate
     for (let i = 0; i < N; i++) {
@@ -13996,11 +14321,16 @@ function swWalk(stage, o = {}) {
     if (locked()) document.exitPointerLock?.();
     document.removeEventListener('pointerlockchange', onLockChange);
     document.removeEventListener('pointerlockerror', noLock);
+    document.removeEventListener('fullscreenchange', onFull);
+    if (isFull()) document.exitFullscreen?.().catch?.(() => {});
+    try { navigator.keyboard?.unlock?.(); } catch { /* fine */ }
     document.removeEventListener('mousemove', onMouse);
     document.removeEventListener('pointerdown', onDocDown, true);
     window.removeEventListener('keydown', onKey, true);
     window.removeEventListener('keyup', onKey, true);
     window.removeEventListener('blur', onBlur);
+    host.removeEventListener('wheel', onWheel);
+    document.removeEventListener('visibilitychange', onVis);
     host.removeEventListener('pointerdown', onTouchDown);
     host.removeEventListener('pointermove', onTouchMove);
     host.removeEventListener('pointerup', onTouchUp);
@@ -14026,6 +14356,14 @@ function swWalk(stage, o = {}) {
    inflate, the embedded pictures (pixel-sharp), and only what was visible when he saved it (all of it if nothing was).
    Pixels become metres the way Blockbench's own glTF export does it: 16 pixels are 1 metre. */
 const BB_ORDER = 'ZYX';
+/* The look of a Blockbench model, as Blockbench's own glTF export defines it (alphaMode MASK with cutoff 0.05, both sides,
+   matte, clamped at the edges; pixel-sharp unless the owner chose smooth). A .bbmodel, a Blockbench .obj export and a Blockbench glTF look the same in
+   Jaskinia (the owner, 18 Oct: his .obj exports came out shiny, blurred and without their transparent pixels). */
+function bbLook(map, color) {
+  const { THREE } = swiat();
+  if (map) { map.colorSpace = THREE.SRGBColorSpace; map.wrapS = map.wrapT = THREE.ClampToEdgeWrapping; } // its pixels: swPixels()
+  return new THREE.MeshStandardMaterial({ map: map || null, color: map ? 0xffffff : (color ?? 0xb9b2a6), roughness: 1, metalness: 0, alphaTest: map ? 0.05 : 0, side: THREE.DoubleSide });
+}
 function bbModel(j, mgr, missing) {
   const { THREE } = swiat();
   const CLAY = 0xb9b2a6; // the colour of a face without a picture, as in Materiały
@@ -14036,15 +14374,13 @@ function bbModel(j, mgr, missing) {
   const texs = (j.textures || []).map((tx, i) => {
     const uvw = tx.uv_width || res.width || tx.width || 16, uvh = tx.uv_height || res.height || tx.height || 16;
     let map = null;
-    if (tx.source && /^data:image\//.test(tx.source)) {
-      map = tl.load(tx.source);
-      map.colorSpace = THREE.SRGBColorSpace; map.magFilter = THREE.NearestFilter; map.minFilter = THREE.NearestFilter; map.generateMipmaps = false;
-    } else if (tx.name) missing.add(tx.name);
-    const mat = new THREE.MeshStandardMaterial({ map, color: map ? 0xffffff : CLAY, roughness: 0.86, metalness: 0, alphaTest: 0.5, side: THREE.DoubleSide });
+    if (tx.source && /^data:image\//.test(tx.source)) map = tl.load(tx.source);
+    else if (tx.name) missing.add(tx.name);
+    const mat = bbLook(map, CLAY);
     mat.name = tx.name || 'texture ' + i;
     return { uuid: tx.uuid, uvw, uvh, mat };
   });
-  const noTex = new THREE.MeshStandardMaterial({ color: CLAY, roughness: 0.86, side: THREE.DoubleSide });
+  const noTex = bbLook(null, CLAY);
   const texOf = v => { if (v === null || v === undefined || v === false) return null; if (typeof v === 'number') return texs[v] || null; return texs.find(x => x.uuid === v) || null; };
   // which elements and groups count: visible and exported (when nothing is visible, everything)
   const els = (j.elements || []).filter(e => e.export !== false);
@@ -14277,8 +14613,6 @@ async function matLoad(m) {
       const bl = await fileBlob(m.main.sha), url = URL.createObjectURL(bl); urls.push(url);
       const tex = await new THREE.TextureLoader(mgr).loadAsync(url);
       tex.colorSpace = THREE.SRGBColorSpace;
-      const px = Math.max(tex.image?.width || 0, tex.image?.height || 0);
-      if (px && px <= 256) { tex.magFilter = THREE.NearestFilter; tex.minFilter = THREE.NearestMipmapNearestFilter; }
       obj = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.8 }));
       obj.position.y = 0.5;
       const g = new THREE.Group(); g.add(obj); obj = g;
@@ -14297,17 +14631,39 @@ async function matLoad(m) {
       } else {
         const text = await bl.text(), mtl = (/^mtllib\s+(.+?)\s*$/m.exec(text) || [])[1];
         const ol = new OBJLoader(mgr);
+        let mtlText = '';
         if (mtl && deps.has(baseName(mtl).toLowerCase())) {
-          const mats = new MTLLoader(mgr).parse(await deps.get(baseName(mtl).toLowerCase()).text(), '');
+          mtlText = await deps.get(baseName(mtl).toLowerCase()).text();
+          const mats = new MTLLoader(mgr).parse(mtlText, '');
           mats.preload();
           ol.setMaterials(mats);
         } else if (mtl) missing.add(baseName(mtl));
         obj = ol.parse(text);
-        // an OBJ without its own materials gets clay instead of plain white
-        obj.traverse(x => { if (x.isMesh && (!x.material || x.material.type === 'MeshPhongMaterial') && !x.material?.map) { const old = x.material; x.material = new THREE.MeshStandardMaterial({ color: old?.color && old.color.getHex() !== 0xffffff ? old.color : CLAY, roughness: 0.82 }); old?.dispose?.(); } });
+        /* An .obj's materials arrive as shiny Phong with no cut-outs (the owner, 18 Oct: his exports looked wrongly shaded
+           and lost their transparent pixels).
+           A Blockbench export (it says so in its first line) gets exactly the Blockbench look; any other .obj gets the same
+           matte material with cut-outs where its picture has transparent pixels, and clay where it has no picture.
+           Multi-material meshes keep one material per group. Sharp or smooth pixels: swPixels(), below. */
+        const fromBB = /Made in Blockbench/i.test(text.slice(0, 300) + mtlText.slice(0, 300));
+        const objMat = old => {
+          if (!old) return bbLook(null, CLAY);
+          const col = old.color && old.color.getHex() !== 0xffffff ? old.color.getHex() : null;
+          let m2;
+          if (fromBB) m2 = bbLook(old.map || null, col ?? CLAY);
+          else {
+            if (old.map) old.map.colorSpace = THREE.SRGBColorSpace;
+            m2 = new THREE.MeshStandardMaterial({ map: old.map || null, color: old.map ? (col ?? 0xffffff) : (col ?? CLAY), roughness: 0.86, metalness: 0,
+              alphaTest: old.map ? 0.05 : 0, side: THREE.DoubleSide, transparent: old.opacity < 1, opacity: old.opacity ?? 1 });
+          }
+          m2.name = old.name || '';
+          old.dispose?.();
+          return m2;
+        };
+        obj.traverse(x => { if (x.isMesh) x.material = Array.isArray(x.material) ? x.material.map(objMat) : objMat(x.material); });
       }
     }
     if (pending > 0) await Promise.race([settled, new Promise(r => setTimeout(r, 6000))]);
+    swPixels(obj); // sharp or smooth pixels: the owner's one choice for every model
   } finally { setTimeout(() => urls.forEach(u => URL.revokeObjectURL(u)), 1500); }
   obj.traverse(x => { if (x.isMesh) { x.castShadow = true; x.receiveShadow = true; } });
   return { object: obj, animations: anims, missing: [...missing].filter(n => n && n !== ',' && !/^(blob|data):/.test(n) && !/^[0-9a-f-]{36}$/i.test(n)) };
@@ -14490,11 +14846,11 @@ function matSay(res, sel) {
   return first ? first.id : null;
 }
 
-/* ---------- Jozz's own models from his public repositories ---------- */
+/* ---------- Jozz's own models from his public repositories ----------
+   Only what he made. Box3d_FunProject's data/meshes (a house, stairs, a test map) came with the original Box3D in its
+   first commit (Erin Catto's; the house is named like a commercial asset pack), so they were never his and are not
+   offered (the owner, 18 Oct: they are not his, and models without rights should go). */
 const MAT_REPO = [
-  ['Dom', 'Box3d_FunProject', 'data/meshes/building.obj', 'Box3D'],
-  ['Schody', 'Box3d_FunProject', 'data/meshes/stairs.obj', 'Box3D'],
-  ['Mapa testowa', 'Box3d_FunProject', 'data/meshes/test_map01.obj', 'Box3D'],
   ['Nadwozie', 'Box3d_FunProject', 'assets/source/Nadwozie.gltf', 'Box3D · Blockbench'],
   ['Koła terenowe', 'Box3d_FunProject', 'assets/source/Offroad_Big_Wheels.gltf', 'Box3D · Blockbench'],
   ['Wywrotka', 'Box3d_FunProject', 'assets/source/Asset_Dumper.gltf', 'Box3D · Blockbench'],
@@ -14503,6 +14859,20 @@ const MAT_REPO = [
   ['Silnik', 'voxel-aeronautics-workshop', 'assets/visual_packs/local_working_visuals/models/blocks/thruster/model.gltf', 'VAW · Blockbench'],
   ['Animacja testowa', 'voxel-aeronautics-workshop', 'tools/blockbench_import_studio/assets/real_blockbench_regression/test_anim.gltf', 'VAW · Blockbench'],
 ];
+/* A library that already holds them (brought here by v6) lets them go once, out loud and with Cofnij; after Cofnij they stay. */
+const MAT_NOT_HIS = /^repo:Jozzpoly\/Box3d_FunProject\/data\/meshes\//;
+async function matDropNotHis(all) {
+  const bad = [...all.values()].filter(m => !m.gone && !m.keep && MAT_NOT_HIS.test(m.from || ''));
+  if (!bad.length) return [];
+  for (const m of bad) { m.gone = Date.now(); m.goneWhy = 'nie-jozza'; await matSave(m); }
+  matEmit({ removed: bad.map(m => m.id) });
+  const names = [...new Set(bad.map(m => m.name))].join(', ');
+  jtoast(t('Usunąłem z biblioteki modele, które nie są Twoje: {0}. Przyszły z pierwotnego Box3D, nie od Ciebie.', names), { label: t('Cofnij'), act: async () => {
+    for (const m of bad) { delete m.gone; delete m.goneWhy; m.keep = true; await matSave(m); }
+    matEmit({ changed: bad.map(m => m.id) });
+  } }, 12000);
+  return bad;
+}
 const repoUrl = (repo, path) => `https://raw.githubusercontent.com/Jozzpoly/${repo}/main/${path}`;
 async function matFromRepo(row) {
   const [label, repo, path] = row;
@@ -14625,6 +14995,9 @@ function renderMaterialy(box, c) {
         ...actions.map((a, i) => ({ label: a.getClip().name || t('animacja {0}', i + 1), checked: a.isRunning(), act: () => { for (const b of actions) b.stop(); a.reset().play(); stage?.redraw(); } })),
         { label: t('Zatrzymaj'), act: () => { for (const b of actions) b.stop(); stage?.redraw(); } },
       ]) }, icon('t_gra', 13), h('span', { text: tn(actions.length, 'animacja', 'animacje', 'animacji') })) : null,
+      h('button', { class: 'jk-tb mt-px' + (prefs.pixels !== 'gladkie' ? ' on' : ''), type: 'button', 'aria-pressed': String(prefs.pixels !== 'gladkie'),
+        title: t('Ostre piksele tekstur, jak w Blockbench (wyłącz, żeby wygładzić). To samo ustawienie jest w Ustawieniach → Wygląd.'),
+        onclick: () => setPref('pixels', prefs.pixels === 'gladkie' ? 'ostre' : 'gladkie') }, icon('t_piksele', 13), h('span', { text: t('Ostre piksele') })),
       h('span', { class: 'mt-gap' }),
       h('button', { class: 'jk-tb mt-del', type: 'button', title: t('Usuń z biblioteki (da się cofnąć)'), onclick: () => remove(m) }, icon('trash', 13)),
       h('button', { class: 'mt-go', type: 'button', title: t('Stań obok w skali 1:1 i chodź (WASD, mysz). Esc wychodzi.'), onclick: () => enter() }, icon('t_wejdz', 15), h('span', { text: t('Wejdź') }))].filter(Boolean));
@@ -14728,9 +15101,12 @@ function renderMaterialy(box, c) {
     drawList();
   };
   document.addEventListener('jk:materialy', onLib);
+  const onPx = () => { const on = prefs.pixels !== 'gladkie'; for (const b of bar.querySelectorAll('.mt-px')) { b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); } };
+  document.addEventListener('jk:pixels', onPx);
   c.onDispose(() => {
     alive = false;
     document.removeEventListener('jk:materialy', onLib);
+    document.removeEventListener('jk:pixels', onPx);
     if (walk) walk.end();
     mixer?.stopAllAction();
     stage?.dispose();
@@ -14739,11 +15115,13 @@ function renderMaterialy(box, c) {
   const mo = new MutationObserver(() => { stage?.paint(); });
   mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-jk', 'data-theme', 'style'] });
   c.onDispose(() => mo.disconnect());
-  matAll().then(all => {
+  matAll().then(async all => {
+    if (!alive) return;
+    const dropped = await matDropNotHis(all);
     if (!alive) return;
     drawList();
     if (st.sel && all.get(st.sel) && !all.get(st.sel).gone) { show(st.sel); return; }
-    if (st.sel) jtoast(t('Nie ma w bibliotece materiału {0}.', st.sel));
+    if (st.sel && !dropped.some(m => m.id === st.sel)) jtoast(t('Nie ma w bibliotece materiału {0}.', st.sel));
     matList().then(items => { if (alive && items[0]) sel(items[0].id); });
   })
     .catch(err => { say(t('Biblioteka materiałów nie działa w tej przeglądarce: {0}', err.message), 'err'); });
@@ -14784,6 +15162,7 @@ ICONS.t_materialy = 'M8 1.8 13.6 5v6.1L8 14.2 2.4 11.1V5z M2.4 5 8 8.1 13.6 5 M8
 ICONS.t_wejdz = 'M9.5 2.5h4v11h-4 M2 8h7.5 M6.5 5l3 3-3 3';
 ICONS.t_czlowiek = 'M8 2a1.6 1.6 0 1 1 0 3.2A1.6 1.6 0 0 1 8 2z M5.5 14l.7-5.2-1.4-1.6 1.6-1.3h3.2l1.6 1.3-1.4 1.6.7 5.2 M8 9.5V14';
 ICONS.t_folder = 'M2 4.5h4l1.5 1.5H14v7H2z';
+ICONS.t_piksele = 'M2.5 2.5h5v5h-5z M8.5 8.5h5v5h-5z M8.5 2.5h5v5h-5z M2.5 8.5h5v5h-5z M5 5h.01 M11 11h.01';
 ICONS.t_obrot = 'M12.8 6.2A5 5 0 1 0 13 9.5 M13.2 3v3.4H9.8';
 if (!ICONS.plus) ICONS.plus = 'M8 3v10 M3 8h10';
 if (!ICONS.trash) ICONS.trash = 'M3 4.5h10 M6.5 4.5V3h3v1.5 M4.5 4.5l.7 9h5.6l.7-9';
@@ -14936,6 +15315,13 @@ function renderAgents(box, c) {
         h('li', { text: t('Układ na ekranie: {0} ({1}). Okna: {2}.', sp ? spaceName(sp) : '?', '#uklad~' + store.cur, winList.join(', ') || '—') }),
         h('li', { text: sel ? t('Zaznaczony projekt: {0} ({1}).', sel.name, '#repo~' + sel.name) : t('Nic nie jest zaznaczone.') }),
         h('li', { text: t('Układy: {0}.', store.spaces.map(s => `${spaceName(s)} (#uklad~${s.id})`).join(', ')) }))),
+    sec(t('Uwagi Jozza o Jaskini („To mnie uwiera”)'),
+      uwagi.length ? h('p', { class: 'muted', text: t('{0}, najnowsze pierwsze. Każda jest przypięta do chwili, układu, okna i projektu. To jego bezpośredni feedback z używania: czytaj je przed pracą nad Jaskinią.', tn(uwagi.length, 'uwaga', 'uwagi', 'uwag')) }) : h('p', { text: t('Jozz nie ma jeszcze uwag.') }),
+      ...uwagi.slice().reverse().map(u => h('article', { class: 'agent-note' },
+        h('h3', { text: noteTitle(u.text) || t('Uwaga') }),
+        h('p', { class: 'muted', text: [isoLocal(u.t).slice(0, 19), u.v, u.u && t('układ „{0}”', u.u), u.okno && t('okno „{0}”', u.okno), u.projekt && t('projekt {0}', u.projekt), u.przyrzad && (u.przyrzad.nazwa || u.przyrzad.adres), u.edited && t('poprawiona {0}', isoLocal(u.edited).slice(0, 16))].filter(Boolean).join(' · ') }),
+        h('pre', { class: 'agent-note-text', text: u.text }),
+        uwAnswer(u) ? h('p', { class: 'agent-ans', text: t('Odpowiedź ({0}, {1}): {2}', 'v' + uwAnswer(u).v, t(UW_STAN[uwAnswer(u).stan] || uwAnswer(u).stan), uwAnswer(u).odp) }) : h('p', { class: 'agent-ans open', text: t('Bez odpowiedzi: otwarta.') })))),
     sec(t('Notatki Jozza'),
       notes.length ? h('p', { class: 'muted', text: t('{0}, najnowsze pierwsze. Notatki bez okna też tu są.', tn(notes.length, 'notatka', 'notatki', 'notatek')) }) : h('p', { text: t('Jozz nie ma jeszcze notatek.') }),
       ...notes.map(n => h('article', { class: 'agent-note' },

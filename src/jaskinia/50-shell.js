@@ -225,7 +225,12 @@ function makeWin(id) {
   head.addEventListener('pointerdown', e => headDown(e, id));
   head.addEventListener('contextmenu', e => { if (e.target.closest('input, textarea, select')) return; e.preventDefault(); winMenu(id, null, { x: e.clientX, y: e.clientY }); });
   head.addEventListener('dblclick', e => { if (!phone && !e.target.closest('button, select, input, a, label')) toggleMax(id); });
-  el.addEventListener('pointerdown', () => { focusWin(id); if (isFloat(id)) raiseFloat(id); }, true);
+  el.addEventListener('pointerdown', e => {
+    const was = L.focus === id, ty = L.wins[id]?.type;
+    focusWin(id); if (isFloat(id)) raiseFloat(id);
+    // a click on a game window's frame gives the game the keys back (a click inside the game does that by itself)
+    if (was && (ty === 'gra' || ty === 'przyrzad') && !e.target.closest('button, a, input, textarea, select')) setTimeout(() => focusGame(id), 0);
+  }, true);
   el.addEventListener('wheel', e => {
     if (!e.ctrlKey) return;
     const w = L.wins[id];
@@ -448,13 +453,28 @@ function toggleMax(id) {
   persist();
   if (L.max) RT.get(id)?.back.focus({ preventScroll: true });
 }
+let lastGameWin = null; // the game window Jozz used last: where a plain "Zagraj" goes
 function focusWin(id) {
+  if (L.wins[id]?.type === 'gra') lastGameWin = id;
   if (L.focus === id) return;
   const prev = L.focus;
   L.focus = id;
   if (prev) RT.get(prev)?.el.classList.remove('focused');
   RT.get(id)?.el.classList.add('focused');
   persist();
+  // a game window taken into use takes the keyboard too (a click on its header, a phone switch, a layout change)
+  const ty = L.wins[id]?.type;
+  if ((ty === 'gra' || ty === 'przyrzad') && !/^(input|textarea|select)$/i.test(document.activeElement?.tagName || '')) setTimeout(() => focusGame(id), 0);
+}
+/* a game gets the keyboard (the owner, 18 Oct: WASD and the arrows moved Jaskinia instead of JV Web until fullscreen) */
+function focusGame(id, tries = 24) {
+  const rt = RT.get(id), w = L.wins[id];
+  if (!rt || !w || (w.type !== 'gra' && w.type !== 'przyrzad')) return;
+  const fr = rt.body.querySelector('iframe');
+  if (!fr) { if (tries > 0) setTimeout(() => focusGame(id, tries - 1), 150); return; }
+  const go = () => { if (L.focus !== id) return; try { fr.focus(); fr.contentWindow?.focus(); } catch { /* a click inside the game still gives it the keys */ } };
+  go();
+  if (!fr.dataset.jkKeys) { fr.dataset.jkKeys = '1'; fr.addEventListener('load', go); }
 }
 function phoneSwitch(id) {
   if (!L.wins[id]) return;
@@ -1474,28 +1494,33 @@ function boot() {
   });
   B.HOOK.go = hash => route(hash, true); // the Library's own links and clicks inside windows
   B.HOOK.refresh = () => { for (const id of allIds()) { const rt = RT.get(id); if (rt && !typeOf(L.wins[id]).live) rt.key = null; refreshWin(id); } }; // a theme change never restarts a running lab
-  /* "Zagraj" never stops the game Jozz is playing (v5 took over the first game window: M1 in docs/2026-10-16-szwy.md).
-     A game window that follows the selection is pinned to what it shows before the selection moves; the new game gets
-     the window that already shows it, or a new one beside the last game window (tiled, so nothing covers anything). */
-  B.HOOK.play = r => {
+  /* "Zagraj" (the owner's note, 18 Oct): the plain click changes the game in the game window he is using, so he can try
+     many games quickly; Shift+Zagraj opens the game in a new window beside the last one (v6's way, M1, for playing two
+     at once). Ctrl+click stays the browser's new tab. Other game windows that follow the selection are pinned to what
+     they show before the selection moves, so only the chosen window changes. The game then gets the keyboard. */
+  B.HOOK.play = (r, o = {}) => {
     const prev = store.sel, inWin = gamesInWindow();
-    const following = inWin ? allIds().filter(id => L.wins[id].type === 'gra' && !L.wins[id].pin) : [];
-    if (following.length && prev && prev !== r.name && R[prev]) commit(t('gra zostaje: {0}', R[prev].short), () => { for (const id of following) L.wins[id].pin = prev; });
-    select(r.name);
-    logEv(t('zagraj: {0} ({1})', r.short, inWin ? t('w oknie') : t('w nowej karcie')));
-    if (!inWin) return false; // the link opens the game in a new tab
-    const same = allIds().find(id => L.wins[id].type === 'gra' && (L.wins[id].pin || store.sel) === r.name);
-    if (same) {
-      focusWin(same);
-      if (phone) phoneSwitch(same); else if (isFloat(same)) { raiseFloat(same); apply(); } else if (L.max && L.max !== same) toggleMax(same);
-      RT.get(same)?.el.classList.add('flash');
-      setTimeout(() => RT.get(same)?.el.classList.remove('flash'), 700);
+    const games = inWin ? allIds().filter(id => L.wins[id].type === 'gra') : [];
+    const pinOthers = keep => { const following = games.filter(id => id !== keep && !L.wins[id].pin); if (following.length && prev && prev !== r.name && R[prev]) for (const id of following) L.wins[id].pin = prev; };
+    logEv(t('zagraj: {0} ({1})', r.short, !inWin ? t('w nowej karcie') : o.beside ? t('w nowym oknie obok') : t('w oknie gry')));
+    if (!inWin) { select(r.name); return false; } // the link opens the game in a new tab
+    const shows = id => (L.wins[id].pin || store.sel) === r.name;
+    const flash = id => { RT.get(id)?.el.classList.add('flash'); setTimeout(() => RT.get(id)?.el.classList.remove('flash'), 700); };
+    const bring = id => { focusWin(id); if (phone) phoneSwitch(id); else if (isFloat(id)) { raiseFloat(id); apply(); } else if (L.max && L.max !== id) toggleMax(id); flash(id); focusGame(id); };
+    const same = games.find(shows);
+    if (same && !o.beside) { select(r.name); bring(same); return true; }
+    if (!o.beside && games.length) {
+      const target = games.includes(L.focus) ? L.focus : games.includes(lastGameWin) ? lastGameWin : games[games.length - 1];
+      commit(t('gra w oknie: {0}', r.short), () => { pinOthers(target); L.wins[target].pin = r.name; });
+      select(r.name);
+      bring(target);
       return true;
     }
-    const last = allIds().filter(id => L.wins[id].type === 'gra').pop();
-    if (!last) { openWinOfType('gra', { pin: r.name, fresh: true, w: 0.72, h: 0.86 }); return true; }
+    if (!games.length) { select(r.name); const id = openWinOfType('gra', { pin: r.name, fresh: true, w: 0.72, h: 0.86 }); focusGame(id); return true; }
+    // Shift: a new window beside the last game window (tiled, so nothing covers anything)
+    const last = games.includes(lastGameWin) ? lastGameWin : games[games.length - 1];
     const nid = newWinId(), rr = rects.wins[last];
-    if (commit(t('gra obok: {0}', r.short), () => { L.wins[nid] = { type: 'gra', z: 1, pin: r.name, st: {} }; winBeside(last, nid, rr && rr.h > rr.w * 1.1 ? 'bottom' : 'right', 0.5); })) { focusWin(nid); if (phone) phoneSwitch(nid); }
+    if (commit(t('gra obok: {0}', r.short), () => { pinOthers(null); L.wins[nid] = { type: 'gra', z: 1, pin: r.name, st: {} }; winBeside(last, nid, rr && rr.h > rr.w * 1.1 ? 'bottom' : 'right', 0.5); })) { select(r.name); focusWin(nid); if (phone) phoneSwitch(nid); focusGame(nid); }
     return true;
   };
   new ResizeObserver(() => apply()).observe(stage);
@@ -1508,6 +1533,6 @@ function boot() {
   firstHint();
   v6Hint();
   routeStart();
-  window.__JASK = { get L() { return L; }, get store() { return store; }, get phone() { return phone; }, RT, WALLS, apply, select, commit, undo, redo, setSpace, layoutRects, leafIds, rects: () => rects, prefs, openSettings, readBackups, persistNow, get log() { return jlog; }, get uwagi() { return uwagi; }, packageData, packageText, deleteSpace, restoreTrash, forgetTrash, restoreBackup, setPref, signalsBeside, uwagaPop, noteSet, noteNew, persist, route, get dirty() { return dirty; }, get lastText() { return lastText; },
+  window.__JASK = { get L() { return L; }, get store() { return store; }, get phone() { return phone; }, RT, WALLS, apply, select, commit, undo, redo, setSpace, layoutRects, leafIds, rects: () => rects, prefs, openSettings, readBackups, persistNow, get log() { return jlog; }, get uwagi() { return uwagi; }, packageData, packageText, deleteSpace, restoreTrash, forgetTrash, restoreBackup, setPref, signalsBeside, uwagaPop, noteSet, noteNew, persist, route, matImport, get dirty() { return dirty; }, get lastText() { return lastText; },
     live: () => [...LIVE.values()].map(e => ({ id: e.id, url: e.url, hello: e.hello, state: e.state, sigs: [...e.sigs.keys()], n: Object.fromEntries([...e.sigs].map(([k, v]) => [k, v.v.length])), evs: e.evs.map(x => x.text), marks: e.marks.length, last: e.last, vis: e.vis })) };
 }

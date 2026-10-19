@@ -193,6 +193,7 @@ code, .code {
 .parcel rect.ring { fill: none; stroke: var(--ink); stroke-width: 0; transition: stroke-width .15s; }
 .parcel:hover rect.ring, .parcel:focus-visible rect.ring, .parcel.on rect.ring { stroke-width: 2; }
 .map.dimmed .parcel:not(.on) rect.body { opacity: .55; }
+.parcel rect.body { transition: opacity .24s ease, filter .2s ease; } .parcel rect.ring { transition: stroke-width .2s ease; }
 .parcel text { pointer-events: none; }
 .parcel .pname { font-family: var(--font-display); font-weight: 760; letter-spacing: .005em; }
 .parcel .pmeta { font-family: var(--font-text); font-size: 11.5px; font-weight: 500; }
@@ -221,7 +222,17 @@ code, .code {
 
 .seismo-wrap { padding-top: 16px; }
 .seismo-h { display: flex; justify-content: space-between; gap: 12px; font-size: var(--t-s); color: var(--ink-3); margin-bottom: 8px; }
-.seismo { display: block; width: 100%; height: 66px; }
+.seismo { display: block; width: 100%; height: 66px; cursor: crosshair; }
+/* Every chart mark answers the pointer the same way (the owner, 18 Oct: the charts were inconsistent): the mark under the pointer
+   brightens and fades back, never flashes, and the same note follows the pointer (tip() in app.js). */
+.seismo .sbar, .st-chart .bar, svg [data-tip] { transition: filter .2s ease, stroke-opacity .2s ease; }
+.seismo .sbar.on, .st-chart .bar.on, svg .tip-on { filter: brightness(1.35) saturate(1.1); }
+.st-year .c { stroke: var(--ink); stroke-width: 1.2; stroke-opacity: 0; }
+.st-year .c.tip-on { stroke-opacity: .75; }
+.week .wbar i, .week .wd b, .week .wd small { transition: filter .2s ease, color .2s ease; }
+.week .wd.tip-on .wbar i { filter: brightness(1.35) saturate(1.1); }
+.week .wd.tip-on b, .week .wd.tip-on small { color: var(--ink); }
+.seismo .sguide { stroke: var(--ink-3); stroke-width: 1; stroke-dasharray: 2 3; pointer-events: none; }
 .seismo-m { position: relative; height: 18px; font-size: 11px; color: var(--ink-3); margin-top: 4px; }
 .seismo-m span { position: absolute; top: 0; padding-left: 3px; border-left: 1px solid var(--rule-2); line-height: 1.2; white-space: nowrap; }
 .seismo-m span.moved { border-left: 0; }
@@ -557,7 +568,7 @@ table.t tr:hover td { background: var(--plate); }
 .clock { display: block; max-width: 100%; height: auto; overflow: visible; }
 .clock .night { fill: var(--plate-2); }
 .clock .ring { fill: none; stroke: var(--rule); stroke-width: 1; }
-.clock .wedge { fill: var(--ink-3); transition: fill .15s; }
+.clock .wedge { fill: var(--ink-3); transition: fill .2s ease, filter .2s ease; }
 .clock .wedge.peak { fill: var(--ink); }
 .clock .wedge:hover { fill: var(--ink-2); }
 .clock .tick { stroke: var(--rule-2); stroke-width: 1; }
