@@ -2,18 +2,18 @@
   "schema": "jaskinia-public-preview-v1",
   "preview": true,
   "public": true,
-  "title": "Jaskinia v6 — publiczny podgląd: Materiały i Wejdź, bez prywatnej warstwy",
+  "title": "Jaskinia v6.3 — publiczny podgląd: uwagi z v6 i wydanie, którego stara karta nie cofnie; bez prywatnej warstwy",
   "source": {
     "repository": "Jozzpoly/Jozz-Cave-Workbench",
     "ref": "v6-materialy",
-    "commit": "2fde98717acd65d6ac1718a78fe6167d4d254f47",
+    "commit": "dd47f3253dbcf522b4cd671c794599d32cbe79b9",
     "pull_request": 4,
-    "html_blob": "b5f0416af09b0e3c94a786a1fb774a693c00c8df"
+    "html_blob": "3ff64ec0cb25b94c1fa1381b86f45e3c7c3c59e9"
   },
   "data": {
-    "repository_count": 24,
+    "repository_count": 26,
     "scope": "public-repositories-only",
-    "historical_snapshot": "2026-10-14",
+    "historical_snapshot": "2026-10-19",
     "auto_refresh": false
   },
   "limitations": [
@@ -23,6 +23,7 @@
     "local_browser_state_is_origin_scoped",
     "materials_live_in_this_browsers_indexeddb_on_the_shared_jozzpoly_github_io_origin",
     "no_private_layer",
+    "no_answers_to_owner_remarks_in_public_build",
     "no_owner_recordings",
     "do_not_enter_private_notes",
     "no_external_lab_is_contract_integrated",
@@ -32,7 +33,7 @@
   "provenance": {
     "packaged_by": "Claude (Opus), Jaskinia line",
     "authored_through": "Jozzpoly GitHub, Claude Code session",
-    "owner_approval": "Owner asked to update the public preview (18 Oct 2026, 06:38 Warsaw)",
-    "previous_preview": "v5, packaged by ChatGPT GPT-6 (e82e900)"
+    "owner_approval": "Owner approved updating the public preview (18 Oct 2026, 18:21 Warsaw)",
+    "previous_preview": "v6 (79c0b5f, packaged by Claude), with GPT's verified VAW play entry (099788b)"
   }
 }
