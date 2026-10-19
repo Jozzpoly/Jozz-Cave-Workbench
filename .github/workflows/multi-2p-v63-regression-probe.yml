@@ -1,0 +1,25 @@
+name: One-shot Jaskinia v6.3 regression before Multi 2P adoption
+on:
+  push:
+    branches:
+      - experiment/multi-2p-jaskinia-entry-2026-10-20
+permissions:
+  contents: read
+jobs:
+  v63:
+    runs-on: ubuntu-latest
+    timeout-minutes: 24
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: python3 -I tools/build.py
+      - run: python3 tools/render.py --app jaskinia
+      - name: Run all v6.3 state/old-tabs/games tests
+        run: node tools/jk63_test.mjs
