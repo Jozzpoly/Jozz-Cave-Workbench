@@ -31,7 +31,24 @@ const evidence = async page => page.evaluate(() => {
 });
 const wait = (page, fn, label, ms=timeout) =>
   page.waitForFunction(fn, null, { timeout:ms, polling:200 })
-      .catch(() => { throw new Error('probe did not reach ' + label); });
+    .catch(async () => {
+      // Nonsecret launch diagnostics only; never emit room key, actor ID,
+      // player invite, storage record, query string or resume token.
+      const status = await page.evaluate(() => {
+        const e = window.__sharedYardV0Evidence?.();
+        return {
+          appBooted:typeof window.__sharedYardV0Evidence === 'function',
+          entryBooted:typeof window.__sharedYardV0FriendEntry === 'function',
+          buttonEnabled:document.querySelector('#enter')?.disabled===false,
+          bootCompact:document.querySelector('#boot')?.classList.contains('compact'),
+          network:e?.networkState || null,
+          runtimeFailed:e?.runtimeFailed===true,
+          r0:e?.lifecycle?.r0===true,
+          currentTopologySize:e?.lifecycle?.topology?.actors?.length ?? 0,
+        };
+      }).catch(()=>({evaluationFailed:true}));
+      throw new Error('probe did not reach ' + label + ' · ' + JSON.stringify(status));
+    });
 
 try {
   const launcher = await fetch(origin + '/api/ping', {signal:AbortSignal.timeout(10000)});
@@ -49,6 +66,12 @@ try {
     const navigation=await page.goto(link(who),{waitUntil:'domcontentloaded',timeout:30000});
     assert.equal(navigation?.status(),200,'staging page HTTP');
     await page.locator('#enter:not([disabled])').waitFor({timeout:timeout});
+    // Boot enables Enter before the async module finishes binding event
+    // handlers. A synthetic instant click would test a JS bootstrap race,
+    // not remote Worker admission; wait for ordinary app + friend shell.
+    await wait(page,()=>typeof window.__sharedYardV0Evidence==='function' &&
+      typeof window.__sharedYardV0FriendEntry==='function',
+      'ready Enter event handlers',30000);
     await page.locator('#enter').click();
     await wait(page,()=>!!window.__sharedYardV0Evidence?.()?.session?.actorSessionId,'ActorSession welcome');
   }
