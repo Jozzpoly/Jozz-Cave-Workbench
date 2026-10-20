@@ -23,10 +23,15 @@ jobs:
         run: npm ci --ignore-scripts
       - name: Install browser
         run: npx playwright install --with-deps chromium
-      - name: Test exact committed Jaskinia web bundle
-        run: node tools/gpt_recovery_host_gate.mjs
-      - name: Compare window identity and same-origin saved state
-        run: node tools/gpt_same_origin_session_gate.mjs
+      - name: Check original host and independent state (keep both verdicts)
+        run: |
+          set +e
+          node tools/gpt_same_origin_session_gate.mjs
+          collision=$?
+          node tools/gpt_recovery_host_gate.mjs
+          lifecycle=$?
+          echo "TEST_STATUS collision=$collision lifecycle=$lifecycle"
+          test "$collision" -eq 0 && test "$lifecycle" -eq 0
       - name: Keep UI screenshots and exact host for inspection
         if: always()
         uses: actions/upload-artifact@v4
