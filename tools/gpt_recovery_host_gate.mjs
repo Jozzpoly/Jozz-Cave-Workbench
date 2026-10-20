@@ -120,9 +120,19 @@ try{
  check(physA.length===2&&physA.every(x=>x.boot&&x.url==='pokaz:pilki')&&physA[0].boot!==physA[1].boot,'two real physics lab instances, distinct runtime boot IDs',JSON.stringify(physA));
  const oldSpace=await cp.evaluate(()=>{const x=__JASK.store.cur;__JASK.setSpace('granie');return x});
  await cp.waitForTimeout(350);
+ const direct=()=>cp.evaluate(ids=>ids.map(id=>{const cw=document.querySelector('.win[data-id="'+id+'"] iframe')?.contentWindow;
+   return cw?.eval('({paused,W,H,energy:energy(),balls:balls.map(b=>({x:b.x,y:b.y,vx:b.vx,vy:b.vy}))})')||null;
+ }),[idA,idB]);
  const paused1=await capture();
+ const direct1=await direct();
  await cp.waitForTimeout(1550);
  const paused2=await capture();
+ const direct2=await direct();
+ console.log('PHYSICS_DIRECT_BEFORE_AFTER',JSON.stringify({before:direct1,after:direct2}));
+ console.log('TELEMETRY_BEFORE_AFTER',JSON.stringify({before:paused1,after:paused2}));
+ check(direct1.every((x,i)=>x?.paused===true&&direct2[i]?.paused===true&&
+    JSON.stringify(x.balls)===JSON.stringify(direct2[i].balls)),
+    'REAL physical positions and velocities frozen after lab sees pause');
  check(paused1.every(x=>x.paused&&x.vis===false),'host visibility message pauses both bundled labs',JSON.stringify(paused1));
  check(paused1.every((x,i)=>x.boot===physA[i].boot&&Math.abs(x.energy-paused2[i].energy)<0.02),'hidden labs hold physical energy and runtime identity',JSON.stringify(paused2));
  console.log('CLOCK_SEAM paused_time_before_after',JSON.stringify(paused1.map((x,i)=>({before:x.time,after:paused2[i].time}))));
