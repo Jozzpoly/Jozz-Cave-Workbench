@@ -105,6 +105,37 @@ try{
  check(await phone.page.evaluate(()=>Object.values(__JASK.L.wins).some(w=>w.type==='przyrzad'&&w.st?.url?.includes('playmat-s0'))),'phone can create specific experiment window');
  await phone.page.screenshot({path:path.join(dist,'_gpt_recovery_real_host_phone.png')});
  await phone.ctx.close();
+ // Genuine bundled Piłki lab: two concurrent physical runtimes, hidden pause, same-session continuity, reload versus genuine resume.
+ const cont=await open(false), cp=cont.page;
+ const idA=await cp.evaluate(()=>Jaskinia.ext.open('przyrzad',{fresh:true,st:{url:'pokaz:pilki',title:'Piłki A'}}));
+ const idB=await cp.evaluate(()=>Jaskinia.ext.open('przyrzad',{fresh:true,st:{url:'pokaz:pilki',title:'Piłki B'}}));
+ const capture=async()=>cp.evaluate(ids=>ids.map(id=>{
+   const f=document.querySelector('.win[data-id="'+id+'"] iframe'),lab=f?.contentWindow;
+   const live=__JASK.live().find(x=>x.id===id);
+   return {id,boot:lab?.__boot||null,paused:lab?.document?.querySelector('#pause')?.classList.contains('on')||false,vis:live?.vis??null,energy:live?.state?.data?.energia??null,time:live?.state?.data?.czas_s??null,url:__JASK.L.wins[id]?.st.url};
+ }),[idA,idB]);
+ await cp.waitForFunction(ids=>ids.every(id=>!!document.querySelector('.win[data-id="'+id+'"] iframe')?.contentWindow?.__boot),[idA,idB]);
+ await cp.waitForTimeout(750);
+ const physA=await capture();
+ check(physA.length===2&&physA.every(x=>x.boot&&x.url==='pokaz:pilki')&&physA[0].boot!==physA[1].boot,'two real physics lab instances, distinct runtime boot IDs',JSON.stringify(physA));
+ const oldSpace=await cp.evaluate(()=>{const x=__JASK.store.cur;__JASK.setSpace('granie');return x});
+ await cp.waitForTimeout(350);
+ const paused1=await capture();
+ await cp.waitForTimeout(1550);
+ const paused2=await capture();
+ check(paused1.every(x=>x.paused&&x.vis===false),'host visibility message pauses both bundled labs',JSON.stringify(paused1));
+ check(paused1.every((x,i)=>x.boot===physA[i].boot&&Math.abs(x.energy-paused2[i].energy)<0.02),'hidden labs hold physical energy and runtime identity',JSON.stringify(paused2));
+ console.log('CLOCK_SEAM paused_time_before_after',JSON.stringify(paused1.map((x,i)=>({before:x.time,after:paused2[i].time}))));
+ await cp.evaluate(x=>__JASK.setSpace(x),oldSpace);
+ await cp.waitForTimeout(500);
+ const resumed=await capture();
+ check(resumed.every((x,i)=>x.boot===physA[i].boot&&!x.paused),'return to layout continues SAME physical runtime, not reload',JSON.stringify(resumed));
+ await cp.reload({waitUntil:'domcontentloaded'});
+ await cp.waitForFunction(ids=>ids.every(id=>!!document.querySelector('.win[data-id="'+id+'"] iframe')?.contentWindow?.__boot),[idA,idB]);
+ await cp.waitForTimeout(800);
+ const afterReload=await capture();
+ check(afterReload.length===2&&afterReload.every((x,i)=>x.url==='pokaz:pilki'&&x.boot&&x.boot!==physA[i].boot),'reload restores WINDOW but creates NEW physical runtime (not resume)',JSON.stringify(afterReload));
+ await cont.ctx.close();
 } catch(err){console.error('TEST ABORT',err.stack);fail++;}
 finally{await browser.close();await s.close?.();}
 console.log('REAL_HOST_RESULT',JSON.stringify({pass,fail,errors:errors.slice(0,12)}));
