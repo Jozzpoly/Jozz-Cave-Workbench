@@ -65,6 +65,13 @@ try{
  await page.waitForFunction(()=>!!document.querySelector('.recover-host-smoke'));
  check(await page.locator('.recover-host-smoke').count()===1,'registered extension renders inside REAL Jaskinia window');
  await page.locator('.recover-s0').click();
+ const covered=await page.locator('.recover-d1').evaluate(el=>{
+   const b=el.getBoundingClientRect();
+   const over=document.elementFromPoint(b.left+b.width/2,b.top+b.height/2);
+   return !el.contains(over);
+ });
+ console.log('UX_FINDING: chooser covered by new floating experiment?',covered);
+ await page.evaluate(()=>Jaskinia.ext.open('doznania')); // normal host API: bring chooser back to front
  await page.locator('.recover-d1').click();
  await page.waitForTimeout(1200);
  const win=await page.evaluate(()=>Object.entries(__JASK.L.wins).filter(([,w])=>w.type==='przyrzad').map(([id,w])=>({id,url:w.st?.url,hasIframe:!!document.querySelector('.win[data-id="'+id+'"] iframe')})));
