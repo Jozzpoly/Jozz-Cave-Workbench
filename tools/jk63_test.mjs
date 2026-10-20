@@ -364,7 +364,7 @@ if (!ONLY || ONLY === 'games') {
   });
   ok(multi?.url === 'https://cloudflare-multiplayer-lab-staging.jozzpoly.workers.dev/world-v0/' &&
      multi.tab === true && multi.inWin === false &&
-     /2P/.test(multi.why || '') && /Inspect solo/.test(multi.why || ''),
+     /2P/.test(multi.why || '') && /3 publicznych Yardów/.test(multi.why || '') && !/Inspect solo/.test(multi.why || ''),
      'Multi_World candidate 2P Worker entry uses existing verified-entry tab-only path', JSON.stringify(multi));
   ok(await J(() => __BIB.R['Jozz-Cave-Workbench'] && !__BIB.R['Jozz-Cave-Workbench'].pages), 'Jaskinia\'s own preview is not offered as a game (no Jaskinia inside Jaskinia)');
   await J(() => { __JASK.select('Tysi-c-The-Game'); Jaskinia.ext.open('gra'); }); await wait(800);
