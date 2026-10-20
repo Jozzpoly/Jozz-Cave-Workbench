@@ -78,7 +78,9 @@ async function runMutableVersionCase(){
     const code=deployed;count++;
     const pageHtml='<!doctype html><meta charset="utf-8"><title>Mutable lab build '+code+'</title>'+
       '<script>window.__specBuild='+JSON.stringify(code)+';'+
-      'parent.postMessage({jaskinia:1,type:"hello",name:"Same URL lab",version:"build '+code+'",wants:[]},"*");<\/script>';
+      'const identify=()=>parent.postMessage({jaskinia:1,type:"hello",name:"Same URL lab",version:"build '+code+'",wants:[]},"*");'+
+      'addEventListener("message",ev=>{if(ev.source===parent&&ev.data?.jaskinia===1&&ev.data?.type==="hi")identify()});'+
+      'identify();<\/script>';
     await route.fulfill({status:200,contentType:'text/html',headers:{'cache-control':'no-store'},body:pageHtml});
   });
   await page.goto(server.base+'/jaskinia-web.html',{waitUntil:'domcontentloaded'});
