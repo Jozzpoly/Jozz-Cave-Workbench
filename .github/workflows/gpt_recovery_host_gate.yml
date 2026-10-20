@@ -5,6 +5,7 @@ on:
       - research/gpt-recovery-api-e2e-20261020
     paths:
       - tools/gpt_recovery_host_gate.mjs
+      - tools/gpt_same_origin_session_gate.mjs
       - .github/workflows/gpt_recovery_host_gate.yml
 permissions:
   contents: read
@@ -24,6 +25,8 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Test exact committed Jaskinia web bundle
         run: node tools/gpt_recovery_host_gate.mjs
+      - name: Compare window identity and same-origin saved state
+        run: node tools/gpt_same_origin_session_gate.mjs
       - name: Keep UI screenshots and exact host for inspection
         if: always()
         uses: actions/upload-artifact@v4
