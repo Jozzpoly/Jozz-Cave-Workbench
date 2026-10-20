@@ -89,7 +89,20 @@ async function runMutableVersionCase(){
     const live=__JASK.live().find(x=>x.id===id);
     return win&&frame?.contentWindow?.__specBuild===version&&live?.hello?.version==='build '+version;
   },{id,version},{timeout:12000});
-  await waitFor('A');
+  try {await waitFor('A')} catch(err) {
+    const snapshot=await page.evaluate(id=>{
+      const w=__JASK.L.wins[id];
+      const iframe=document.querySelector('.win[data-id="'+id+'"] iframe');
+      const e=__JASK.live().find(x=>x.id===id);
+      return {window:!!w,st:w?.st,frame:!!iframe,src:iframe?.src,
+        frameBuild:iframe?.contentWindow?.__specBuild,
+        frameTitle:iframe?.contentWindow?.document?.title,
+        frameHtml:iframe?.contentWindow?.document?.documentElement?.outerHTML?.slice(0,600),
+        announced:e?.hello,error:e?.state};
+    },id);
+    console.log('VERSION_GATE_DIAGNOSTIC',JSON.stringify({snapshot,count,errors}));
+    throw err;
+  }
   const get=()=>page.evaluate(id=>{
     const w=__JASK.L.wins[id],frame=document.querySelector('.win[data-id="'+id+'"] iframe');
     const live=__JASK.live().find(x=>x.id===id);
