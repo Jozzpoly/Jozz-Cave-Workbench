@@ -67,7 +67,50 @@ async function runCase(isolated){
   check(errors.length===0,'no host page errors',{isolated,errors});
   await ctx.close();
 }
-try{await runCase(false);await runCase(true)}
+async function runMutableVersionCase(){
+  const ctx=await browser.newContext({viewport:{width:1280,height:780}});
+  await ctx.addInitScript(()=>{window.__JASK_PLACE='web';try{localStorage.setItem('jaskinia:hint','1')}catch{}});
+  const page=await ctx.newPage();
+  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  let deployed='A',count=0;
+  const testUrl=server.base+'/_gpt_mutable_fixture.html';
+  await page.route('**/_gpt_mutable_fixture.html',async route=>{
+    const code=deployed;count++;
+    const pageHtml='<!doctype html><meta charset="utf-8"><title>Mutable lab build '+code+'</title>'+
+      '<script>window.__specBuild='+JSON.stringify(code)+';'+
+      'parent.postMessage({jaskinia:1,type:"hello",name:"Same URL lab",version:"build '+code+'",wants:[]},"*");<\/script>';
+    await route.fulfill({status:200,contentType:'text/html',headers:{'cache-control':'no-store'},body:pageHtml});
+  });
+  await page.goto(server.base+'/jaskinia-web.html',{waitUntil:'domcontentloaded'});
+  await page.waitForFunction(()=>!!window.__JASK&&!!window.Jaskinia);
+  const id=await page.evaluate(url=>Jaskinia.ext.open('przyrzad',{fresh:true,st:{url,title:'Same URL lab'}}),testUrl);
+  const waitFor=version=>page.waitForFunction(({id,version})=>{
+    const win=__JASK.L.wins[id],frame=document.querySelector('.win[data-id="'+id+'"] iframe');
+    const live=__JASK.live().find(x=>x.id===id);
+    return win&&frame?.contentWindow?.__specBuild===version&&live?.hello?.version==='build '+version;
+  },{id,version},{timeout:12000});
+  await waitFor('A');
+  const get=()=>page.evaluate(id=>{
+    const w=__JASK.L.wins[id],frame=document.querySelector('.win[data-id="'+id+'"] iframe');
+    const live=__JASK.live().find(x=>x.id===id);
+    return {id,st:JSON.stringify(w.st),url:frame?.src,build:frame?.contentWindow?.__specBuild,
+      announced:live?.hello?.version,recordedBuild:w.st?.build??null,oldVersion:w.st?.previousVersion??null};
+  },id);
+  const first=await get();
+  check(first.build==='A'&&first.announced==='build A'&&first.url===testUrl,'initial immutable physical build is A',first);
+  deployed='B';
+  await page.reload({waitUntil:'domcontentloaded'});
+  await waitFor('B');
+  const second=await get();
+  check(count===2&&first.id===second.id&&first.st===second.st&&first.url===second.url&&
+    first.build==='A'&&second.build==='B',
+    'same address and saved Jaskinia window silently load new code build B',{first,second,loadCount:count});
+  check(second.announced==='build B'&&second.recordedBuild===null&&second.oldVersion===null,
+    'current hello version is visible, but prior build identity is not stored in the window',second);
+  check(errors.length===0,'no host script errors during mutable-build replacement',{errors});
+  await ctx.close();
+}
+try{await runCase(false);await runCase(true);await runMutableVersionCase()}
 catch(e){console.error('TEST_ABORT',e.stack);fail++}
 finally{await browser.close();await server.close();}
 console.log('SAME_ORIGIN_SESSION_GATE',JSON.stringify({pass,fail}));
