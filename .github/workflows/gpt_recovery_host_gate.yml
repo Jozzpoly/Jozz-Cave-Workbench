@@ -32,5 +32,6 @@ jobs:
           path: |
             dist/_gpt_recovery_real_host_desktop.png
             dist/_gpt_recovery_real_host_phone.png
+            dist/jaskinia-web.html
           if-no-files-found: ignore
           retention-days: 7
