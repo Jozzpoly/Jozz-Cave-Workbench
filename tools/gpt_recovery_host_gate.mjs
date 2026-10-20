@@ -134,7 +134,8 @@ try{
     JSON.stringify(x.balls)===JSON.stringify(direct2[i].balls)),
     'REAL physical positions and velocities frozen after lab sees pause');
  check(paused1.every(x=>x.paused&&x.vis===false),'host visibility message pauses both bundled labs',JSON.stringify(paused1));
- check(paused1.every((x,i)=>x.boot===physA[i].boot&&Math.abs(x.energy-paused2[i].energy)<0.02),'hidden labs hold physical energy and runtime identity',JSON.stringify(paused2));
+ check(paused1.every((x,i)=>x.boot===physA[i].boot&&direct1[i]?.energy===direct2[i]?.energy),
+   'hidden labs preserve directly observed physical energy and runtime (host telemetry may lag)',JSON.stringify({direct1:direct1.map(x=>x.energy),direct2:direct2.map(x=>x.energy)}));
  console.log('CLOCK_SEAM paused_time_before_after',JSON.stringify(paused1.map((x,i)=>({before:x.time,after:paused2[i].time}))));
  await cp.evaluate(x=>__JASK.setSpace(x),oldSpace);
  await cp.waitForTimeout(500);
