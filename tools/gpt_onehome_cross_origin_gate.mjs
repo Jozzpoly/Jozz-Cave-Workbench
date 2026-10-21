@@ -87,10 +87,10 @@ try{
          witness.ignored.push('bad request');return;
        }
        witness.pending.add(d.nonce);witness.requests.push(d.nonce);
-       recipient.postMessage({mediumOffOrigin:1,type:'offer',...d},origin);
+       recipient.postMessage({...d,mediumOffOrigin:1,type:'offer'},origin);
      }else if(e.source===recipient&&d.type==='outcome'&&witness.pending.has(d.nonce)){
        witness.pending.delete(d.nonce);witness.results.push(d);
-       source.postMessage({mediumOffOrigin:1,type:'receipt',...d},origin);
+       source.postMessage({...d,mediumOffOrigin:1,type:'receipt'},origin);
      }else witness.ignored.push('bad source');
    });
    let blocked=false;
