@@ -90,6 +90,26 @@ try{
   },{id:newSigId,payload:transfer.roundtripBack});
   judge(!fresh.meaning&&JSON.stringify(fresh.receiver)!==JSON.stringify(transfer.authoredReceiver),
     'fresh receiver imports same topology but cannot reconstruct lost author decision',{wanted:transfer.authoredReceiver,actual:fresh.receiver});
+  // Counterfactual "fix": blindly retaining unknown receiver metadata is ALSO unsafe after topology edits.
+  // Use both real importers. The source program legitimately adds a wall at the authored receiver cell.
+  const stale=await p.evaluate(({srcId,sigId,target})=>{
+    const a=document.querySelector('.win[data-id="'+srcId+'"] iframe').contentWindow;
+    const b=document.querySelector('.win[data-id="'+sigId+'"] iframe').contentWindow;
+    const base=a.__mediumPortable.get(),point=target.y*112+target.x;
+    const changes=base.changes.map(x=>[...x]);const hit=changes.find(x=>x[0]===point);
+    if(hit)hit[1]=1;else changes.push([point,1]);
+    const updated=a.__mediumPortable.apply(JSON.stringify({...base,changes}));
+    const staleMeaning={...updated,mediumSignal:{receiver:target}};
+    const before=JSON.stringify(b.__mediumSignal.get());
+    let rejected=null;
+    try{b.__mediumSignal.import(JSON.stringify(staleMeaning))}catch(e){rejected=e.message}
+    const after=JSON.stringify(b.__mediumSignal.get());
+    return {isWall:a.__kowal.sample(target.x,target.y).solid===1,
+      recipientReject:rejected,unchanged:before===after,
+      wouldKeepOpaqueReceiver:staleMeaning.mediumSignal.receiver};
+  },{srcId:worldIds[0],sigId:worldIds[1],target:transfer.authoredReceiver});
+  judge(stale.isWall&&typeof stale.recipientReject==='string'&&stale.recipientReject.includes('pustej komórce')&&stale.unchanged,
+    'preserving opaque receiver data across incompatible topology edits would be invalid; recipient correctly rejects atomically',stale);
   const hostRecords=await p.evaluate(()=>Object.values(__JASK.L.wins)
     .filter(w=>w.type==='przyrzad').map(w=>({url:w.st?.url,project:w.st?.project,build:w.st?.build})));
   judge(hostRecords.length===3&&hostRecords.every(x=>!x.build),
