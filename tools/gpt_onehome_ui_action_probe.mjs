@@ -61,20 +61,31 @@ try{
       proof.receipts.push(reply);
       src.postMessage({mediumProbe:1,action:'receipt',...reply},safeOrigin);
     });
-    // Research-only adaptation OF THE DONOR, not a second host portal.
-    const button=src.document.createElement('button');
-    button.id='try-signal-in-home';
-    button.type='button';button.className='minor';
-    button.textContent='Sprawdź tę konstrukcję w ŚLADZIE';
-    button.addEventListener('click',()=>src.parent.postMessage({mediumProbe:1,action:request},safeOrigin));
-    src.addEventListener('message',e=>{
-      if(e.origin!==safeOrigin||e.source!==src.parent||e.data?.mediumProbe!==1||e.data?.action!=='receipt')return;
-      button.textContent=e.data.ok?'ŚLAD: interpretacja gotowa':'ŚLAD: zmiana niezgodna · '+e.data.error;
-      button.dataset.ok=String(e.data.ok);
-    });
+    // Attach a tiny test-only adapter INSIDE the donor's own JavaScript realm.
+    // A callback installed in the parent's realm would falsely claim to originate from the parent,
+    // and the real source-window identity gate correctly rejects it.
+    const script=src.document.createElement('script');
+    script.textContent=[
+      '(()=>{',
+      'const trustedOrigin=location.origin;',
+      'const button=document.createElement("button");',
+      'button.id="try-signal-in-home";button.type="button";button.className="minor";',
+      'button.textContent="Sprawdź tę konstrukcję w ŚLADZIE";',
+      'button.addEventListener("click",()=>parent.postMessage({mediumProbe:1,action:"try-signal-workpiece-v0"},trustedOrigin));',
+      'addEventListener("message",e=>{',
+      'if(e.origin!==trustedOrigin||e.source!==parent||e.data?.mediumProbe!==1||e.data?.action!=="receipt")return;',
+      'button.textContent=e.data.ok?"ŚLAD: interpretacja gotowa":"ŚLAD: zmiana niezgodna · "+e.data.error;',
+      'button.dataset.ok=String(e.data.ok);',
+      '});',
+      'const toolbar=document.querySelector(".utility");',
+      'if(!toolbar)throw Error("Missing original Medium toolbar");',
+      'toolbar.append(button);',
+      '})();'
+    ].join('\n');
+    src.document.body.appendChild(script);script.remove();
+    const button=src.document.getElementById('try-signal-in-home');
     const toolbar=src.document.querySelector('.utility');
-    if(!toolbar)throw Error('Real donor controls missing');
-    toolbar.append(button);
+    if(!button||!toolbar)throw Error('Real donor controls missing');
     return {project:src.document.title,signal:dst.document.title,button:!!button,buttonInExistingToolbar:button.parentElement===toolbar};
   },[srcId,dstId]);
   test(setup.button&&setup.buttonInExistingToolbar,'new action is inline in original authoring tool, not a new Jaskinia portal',setup);
