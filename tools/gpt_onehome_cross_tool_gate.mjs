@@ -110,24 +110,39 @@ try{
   },{srcId:worldIds[0],sigId:worldIds[1],target:transfer.authoredReceiver});
   judge(stale.isWall&&typeof stale.recipientReject==='string'&&stale.recipientReject.includes('pustej komórce')&&stale.unchanged,
     'preserving opaque receiver data across incompatible topology edits would be invalid; recipient correctly rejects atomically',stale);
-  // Finally distinguish "same authored terrain" from "same ongoing physical simulation".
-  await p.evaluate(id=>{
-    const w=document.querySelector('.win[data-id="'+id+'"] iframe').contentWindow;
-    const b=w.document.querySelector('#pause');
-    if(!b)throw Error('Real PRZESMYK play/pause unavailable');
-    if(w.__kowal.snapshot().paused)b.click();
+  // A hosted iframe may be throttled, hidden, or paused. Do not confuse that with actual saved solver history.
+  const hostMotion=await p.evaluate(id=>{
+    const frame=document.querySelector('.win[data-id="'+id+'"] iframe');
+    const cw=frame.contentWindow, button=cw.document.querySelector('#pause');
+    if(cw.__kowal.snapshot().paused)button.click();
+    return {before:cw.__kowal.snapshot(),frameCss:getComputedStyle(frame).display,
+      parentCss:getComputedStyle(frame.parentElement).display};
   },worldIds[0]);
-  await p.waitForTimeout(700);
-  const replay=await p.evaluate(id=>{
-    const a=document.querySelector('.win[data-id="'+id+'"] iframe').contentWindow;
-    const during=a.__kowal.snapshot(),saved=a.__mediumPortable.get();
-    a.__mediumPortable.apply(JSON.stringify(saved));
-    const restored=a.__kowal.snapshot(),again=a.__mediumPortable.get();
-    return {duringStep:during.step,afterStep:restored.step,afterPaused:restored.paused,
+  await p.waitForTimeout(650);
+  const hostAfter=await p.evaluate(id=>{
+    const f=document.querySelector('.win[data-id="'+id+'"] iframe');
+    return f.contentWindow.__kowal.snapshot();
+  },worldIds[0]);
+  console.log('HOSTED_SIM_ACTIVITY_BOUNDARY',JSON.stringify({before:hostMotion,after:hostAfter}));
+  // Independent real runtime control: authoring capsule import MUST NOT be confused with live-solver resume.
+  // Use the unchanged Medium page outside its Jaskinia iframe so it can actually advance.
+  const solo=await context.newPage();
+  await solo.goto(sourceUrl,{waitUntil:'domcontentloaded'});
+  await solo.waitForFunction(()=>!!(window.__mediumPortable&&window.__kowal));
+  await solo.evaluate(()=>{
+    if(window.__kowal.snapshot().paused)document.querySelector('#pause').click();
+  });
+  await solo.waitForFunction(()=>window.__kowal.snapshot().step>=2,{timeout:7000});
+  const replay=await solo.evaluate(()=>{
+    const running=__kowal.snapshot(),saved=__mediumPortable.get();
+    __mediumPortable.apply(JSON.stringify(saved));
+    const after=__kowal.snapshot(),again=__mediumPortable.get();
+    return {duringStep:running.step,afterStep:after.step,afterPaused:after.paused,
       sameTopology:JSON.stringify(saved.changes)===JSON.stringify(again.changes)};
-  },worldIds[0]);
-  judge(replay.duringStep>0&&replay.afterStep===0&&replay.afterPaused&&replay.sameTopology,
-    'full topological roundtrip resets living solver history: saved workpiece is NOT a runtime checkpoint',replay);
+  });
+  judge(replay.duringStep>=2&&replay.afterStep===0&&replay.afterPaused&&replay.sameTopology,
+    'real running Medium solver resets on topological import; same terrain is NOT a runtime checkpoint',replay);
+  await solo.close();
   const hostRecords=await p.evaluate(()=>Object.values(__JASK.L.wins)
     .filter(w=>w.type==='przyrzad').map(w=>({url:w.st?.url,project:w.st?.project,build:w.st?.build})));
   judge(hostRecords.length===3&&hostRecords.every(x=>!x.build),
