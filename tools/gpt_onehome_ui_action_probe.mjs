@@ -87,16 +87,24 @@ try{
       '});',
       'const toolbar=document.querySelector(".utility");',
       'if(!toolbar)throw Error("Missing original Medium toolbar");',
-      'toolbar.append(button,output);',
+      'const strip=document.createElement("section");strip.id="medium-cross-action";',
+      'strip.setAttribute("aria-label","Inna interpretacja tej konstrukcji");',
+      'strip.style.cssText="display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:10px 12px;margin:10px 0 14px;border:1px solid #386274;border-radius:10px;background:#0c2430";',
+      'button.style.cssText="flex:0 0 auto;max-width:100%;white-space:normal";',
+      'output.style.cssText="flex:1 1 260px;min-width:0;white-space:normal;color:#b6dfde;font-size:13px;line-height:1.45";',
+      'strip.append(button,output);',
+      'const controls=toolbar.closest(".bottom");',
+      'if(controls)controls.insertAdjacentElement("afterend",strip);else toolbar.append(strip);',
       '})();'
     ].join('\n');
     src.document.body.appendChild(script);script.remove();
     const button=src.document.getElementById('try-signal-in-home');
     const toolbar=src.document.querySelector('.utility');
     if(!button||!toolbar)throw Error('Real donor controls missing');
-    return {project:src.document.title,signal:dst.document.title,button:!!button,buttonInExistingToolbar:button.parentElement===toolbar};
+    return {project:src.document.title,signal:dst.document.title,button:!!button,
+      inlineDonorAction:button.parentElement?.id==='medium-cross-action'&&!!src.document.querySelector('.bottom + #medium-cross-action')};
   },[srcId,dstId]);
-  test(setup.button&&setup.buttonInExistingToolbar,'new action is inline in original authoring tool, not a new Jaskinia portal',setup);
+  test(setup.button&&setup.inlineDonorAction,'contextual action is inside actual donor authoring UI, not a second Jaskinia portal',setup);
 
   const hostBefore=await page.evaluate(()=>Object.values(__JASK.L.wins).filter(x=>x.type==='przyrzad').length);
   test(hostBefore===2,'the host has only the two original Jaskinia instrument windows');
