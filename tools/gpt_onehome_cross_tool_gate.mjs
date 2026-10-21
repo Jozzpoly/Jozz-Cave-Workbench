@@ -118,12 +118,28 @@ try{
     return {before:cw.__kowal.snapshot(),frameCss:getComputedStyle(frame).display,
       parentCss:getComputedStyle(frame.parentElement).display};
   },worldIds[0]);
+  const rafProbe=await p.evaluate(id=>{
+    const frame=document.querySelector('.win[data-id="'+id+'"] iframe'), win=frame?.closest('.win');
+    const w=frame?.contentWindow, rect=frame?.getBoundingClientRect();
+    const html=w?.document?.documentElement;
+    const original=w?.requestAnimationFrame.bind(w);
+    if(w&&original) {
+      w.__rafProbes=0;
+      w.requestAnimationFrame=cb=>original(t=>{w.__rafProbes++;cb(t)});
+    }
+    return {docHidden:document.hidden,childHidden:w?.document.hidden,hasFocus:document.hasFocus(),
+      frameRect:rect&&{x:rect.x,y:rect.y,width:rect.width,height:rect.height},
+      frameDisplay:getComputedStyle(frame).display,frameVisibility:getComputedStyle(frame).visibility,
+      winClass:win?.className,winHidden:win?.hidden,winDisplay:win&&getComputedStyle(win).display,
+      originalStep:w?.__kowal?.snapshot().step,
+      rafProbeInstalled:!!original,childCss:html&&getComputedStyle(html).display};
+  },worldIds[0]);
   await p.waitForTimeout(650);
   const hostAfter=await p.evaluate(id=>{
     const f=document.querySelector('.win[data-id="'+id+'"] iframe');
     return f.contentWindow.__kowal.snapshot();
   },worldIds[0]);
-  console.log('HOSTED_SIM_ACTIVITY_BOUNDARY',JSON.stringify({before:hostMotion,after:hostAfter}));
+  console.log('HOSTED_SIM_ACTIVITY_BOUNDARY',JSON.stringify({before:hostMotion,probe:rafProbe,after:hostAfter,rafCalls:await p.evaluate(id=>document.querySelector('.win[data-id="'+id+'"] iframe').contentWindow.__rafProbes,worldIds[0])}));
   // Independent real runtime control: authoring capsule import MUST NOT be confused with live-solver resume.
   // Use the unchanged Medium page outside its Jaskinia iframe so it can actually advance.
   const solo=await context.newPage();
