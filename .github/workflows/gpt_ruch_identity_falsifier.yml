@@ -1,0 +1,23 @@
+name: GPT exact v6.4 motion identity falsifier (research only)
+on:
+  push:
+    branches:
+      - research/gpt-recovery-api-e2e-20261020
+    paths:
+      - tools/gpt_ruch_identity_falsifier.mjs
+      - .github/workflows/gpt_ruch_identity_falsifier.yml
+permissions:
+  contents: read
+jobs:
+  v64-source-identity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch exact Opus v6.4 source without changing the worktree
+        run: git fetch --no-tags --depth=1 origin fd93caabf91a98fd8a32cc34815b78a8e7f61183
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Falsify and validate material part transfer on exact code
+        run: node tools/gpt_ruch_identity_falsifier.mjs
