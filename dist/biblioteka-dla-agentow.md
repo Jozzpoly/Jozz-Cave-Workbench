@@ -221,6 +221,7 @@ _Grać razem: karty przy wspólnym stole, wspólny fizyczny świat, kooperacja w
 - [średnie] main stoi od 18 wrz, a najświeższy commit jest na research/multiplayer-foundation-v2-v28-dynamic-composition (19 paź).
 - Dokumenty wejścia wskazują gałęzie: `archive/multi-world-history-2026-09-18`
 - Dokumenty wejścia: `AGENTS.md`, `README.md`
+- Pages: https://cloudflare-multiplayer-lab-staging.jozzpoly.workers.dev/world-v0/
 - Repo: https://github.com/Jozzpoly/cloudflare-multiplayer-lab
 
 ### Tysi-c-The-Game

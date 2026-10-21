@@ -136,9 +136,36 @@ async function matAll() {
         } catch { m.sets = list; /* shown, not kept */ }
       }
     }
+    // his motion (v6.4): a build older than v6.3 writes whole records from memory and drops m.ruch; the mirror brings it back
+    for (const [id, ru] of await ruchMirrors()) {
+      const m = next.get(id);
+      if (!m || (m.ruch && (m.ruch.at || 0) >= (ru.at || 0))) continue;
+      try {
+        const fresh = await mpatch(id, r => { if (r.ruch && (r.ruch.at || 0) >= (ru.at || 0)) return false; r.ruch = ru; });
+        if (fresh) next.set(id, fresh);
+      } catch { m.ruch = ru; /* shown, not kept */ }
+    }
     MATS = next;
   }
   return MATS;
+}
+/* Ruch (v6.4) is mirrored beside the revisions, as a record "ruch:<id>" in the same second database, which v6.1 and v6.2
+   never open; v6.3 reads that store too and sees an empty revision list under a key that is not a material, which it never
+   shows. Written after the material record, so a reader in between finds the record newer and leaves it as it is. */
+async function ruchMirrorWrite(id, ruch) {
+  try {
+    const db = await sdb();
+    await new Promise((res, rej) => { const tx = db.transaction('sets', 'readwrite'); tx.objectStore('sets').put({ id: 'ruch:' + id, sets: [], ruch }); tx.oncomplete = res; tx.onerror = tx.onabort = () => rej(tx.error || new Error('IndexedDB')); });
+    return true;
+  } catch { return false; /* no second database here: the record alone keeps it */ }
+}
+async function ruchMirrors() {
+  const out = new Map();
+  try {
+    const db = await sdb();
+    await new Promise((res, rej) => { const rq = db.transaction('sets', 'readonly').objectStore('sets').getAll(); rq.onsuccess = () => { for (const r of rq.result || []) if (String(r.id).startsWith('ruch:') && r.ruch) out.set(String(r.id).slice(5), r.ruch); res(); }; rq.onerror = () => rej(rq.error); });
+  } catch { /* none here */ }
+  return out;
 }
 async function matSave(m) { await mput('materialy', m); (await matAll()).set(m.id, m); }
 /* a small change to a record (deleted, back again) made on the record as it is now, never on a window's copy of it:
@@ -555,6 +582,25 @@ function renderMaterialy(box, c) {
 
   let stage = null, cur = null, curObj = null, mixer = null, untickMixer = null, actions = [], walk = null, human = !!(c.view()?.human ?? true), alive = true, token = 0;
   const say = (text, kind) => { msg.hidden = !text; msg.textContent = text || ''; msg.className = 'mt-msg' + (kind ? ' ' + kind : ''); };
+  /* Ruch (v6.4, 57b-ruch.js): his parts, set in motion by his hands; kept on the material record, read by agents */
+  const ruch = ruchWindow(view, {
+    save: async (id, parts) => {
+      const ru = { v: 1, at: Date.now(), parts };
+      const r = await matPatch(id, rec => { rec.ruch = ru; });
+      await ruchMirrorWrite(id, ru); // after the record: an older build that rewrites the record cannot take it away
+      if (r && cur && cur.id === id) cur = r;
+      matEmit({ changed: [id], ruch: true });
+    },
+    saveFile: (name, text) => saveFile(name, text),
+    older: async m => (await matVersions(m)).filter(v => v.id !== m.id && (v.ver || 1) < (m.ver || 1) && v.ruch?.parts?.length).sort((a, b) => (b.ver || 1) - (a.ver || 1))[0] || null,
+    onState: ({ on, n }) => {
+      for (const b of bar.querySelectorAll('.mt-ruchb')) { b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); const i = b.querySelector('.mt-n'); if (i) i.textContent = n ? String(n) : ''; }
+      if (on && actions.some(a => a.isRunning())) { for (const a of actions) a.stop(); stage?.redraw(); } // the file's own animation would fight his hand
+      if (!!c.view()?.ruch !== on) c.setView({ ...(c.view() || {}), ruch: on });
+    },
+  });
+  window.__jkRuch = ruch; // the last Materiały window's Ruch: for the tests and for an agent
+  if (c.view()?.ruch) ruch.start();
   const ensureStage = () => {
     if (stage) return stage;
     try { stage = swStage(view); } catch (err) { say(t('Nie udało się uruchomić 3D: {0}', err.message), 'err'); return null; }
@@ -647,6 +693,9 @@ function renderMaterialy(box, c) {
         title: t('Ostre piksele tekstur, jak w Blockbench (wyłącz, żeby wygładzić). To samo ustawienie jest w Ustawieniach → Wygląd.'),
         onclick: () => setPref('pixels', prefs.pixels === 'gladkie' ? 'ostre' : 'gladkie') }, icon('t_piksele', 13), h('span', { text: t('Ostre piksele') })),
       h('span', { class: 'mt-gap' }),
+      m.kind !== 'tekstura' ? h('button', { class: 'jk-tb mt-ruchb' + (ruch.on ? ' on' : ''), type: 'button', 'aria-pressed': String(ruch.on),
+        title: t('Ruch: kliknij część swojego modelu i powiedz, jak się rusza (obraca się, przesuwa się)'), onclick: () => ruch.toggle() },
+        icon('ruch', 13), h('span', { text: t('Ruch') }), h('i', { class: 'mt-n', text: m.ruch?.parts?.length ? String(m.ruch.parts.length) : '' })) : null,
       h('button', { class: 'jk-tb mt-del', type: 'button', title: t('Usuń z biblioteki (da się cofnąć)'), onclick: () => remove(m) }, icon('trash', 13)),
       h('button', { class: 'mt-go', type: 'button', title: t('Stań obok w skali 1:1 i chodź (WASD, mysz). Esc wychodzi.'), onclick: () => enter() }, icon('t_wejdz', 15), h('span', { text: t('Wejdź') }))].filter(Boolean));
   }
@@ -669,7 +718,7 @@ function renderMaterialy(box, c) {
     if (my !== token || !alive) return;
     cur = m && !m.gone ? m : null;
     for (const tile of grid.children) tile.classList.toggle('on', !!cur && tile.title === cur.name);
-    if (!cur) { cap.replaceChildren(); vers.replaceChildren(); bar.replaceChildren(); if (stage) { stage.set(null); stage.human(false); } curObj = null; drawList(); return; }
+    if (!cur) { ruch.detach(); cap.replaceChildren(); vers.replaceChildren(); bar.replaceChildren(); if (stage) { stage.set(null); stage.human(false); } curObj = null; drawList(); return; }
     drawCap(cur); drawVers(cur);
     bar.replaceChildren(); curObj = null; // nothing can be entered until this one stands on the stage
     const S = ensureStage();
@@ -693,6 +742,7 @@ function renderMaterialy(box, c) {
         untickMixer = S.tick(dt => { mixer.update(dt); return actions.some(a => a.isRunning()); });
       }
       S.human(human, !!keepView);
+      if (cur.kind === 'tekstura') ruch.detach(); else ruch.attach(curObj, cur, S);
       drawBar(cur);
       say('');
     } catch (err) { say(t('Nie dało się pokazać {0}: {1}', cur.name, err.message), 'err'); }
@@ -701,6 +751,7 @@ function renderMaterialy(box, c) {
   function enter() {
     if (!stage || !curObj) return;
     if (walk) { walk.end(); walk = null; return; }
+    if (ruch.on) ruch.off(); // inside, the parts stand where the file put them
     logEv(t('wejście: {0}', cur.name));
     walk = swWalk(stage, { lock: true, onEnd: () => { walk = null; root.classList.remove('walking'); if (window.__jkWalk) delete window.__jkWalk; } });
     window.__jkWalk = walk; // for the tests and for a curious agent: where the body is
@@ -748,6 +799,8 @@ function renderMaterialy(box, c) {
     document.removeEventListener('jk:materialy', onLib);
     document.removeEventListener('jk:pixels', onPx);
     if (walk) walk.end();
+    ruch.dispose();
+    if (window.__jkRuch === ruch) delete window.__jkRuch;
     mixer?.stopAllAction();
     stage?.dispose();
   });

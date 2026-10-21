@@ -53,6 +53,18 @@ const JASKINIA_API = {
     },
     import: files => matImport(files),
     on(fn) { const f = e => fn(e.detail || {}); document.addEventListener('jk:materialy', f); return () => document.removeEventListener('jk:materialy', f); },
+    /* Ruch (v6.4): the parts Jozz set in motion himself, with their axes, pivots and ranges, in the file's own frame.
+       ruch(id) → { jaskinia: 'ruch v1', material, parts: [...] } or null when he set nothing for this material.
+       rig(object, id) → a driver for a copy from object(id): { parts: [{ name, kind }], set(name | index, value), rest() }
+       (radians for a turn, metres of the file for a slide; the rest pose is the file's). */
+    ruch: async id => { const m = (await matAll()).get(id); return m && m.ruch ? ruchJson(m) : null; },
+    async rig(object, id) {
+      const m = (await matAll()).get(id), inner = ruchInner(object);
+      if (!m || !inner) throw new Error('Jaskinia.materialy.rig(object from object(id), id)');
+      const r = ruchRig(inner);
+      r.build((m.ruch?.parts || []).map(ruchPlain));
+      return { parts: r.parts.map(p => ({ name: p.def.name, kind: p.def.kind, range: p.def.range })), set: (key, v) => r.set(key, v), rest: () => r.rest() };
+    },
   },
   /* the shared 3D runtime: three() → { THREE, GLTFLoader, OrbitControls, … } (one copy for the page),
      stage(host) → a lit stage with a metre grid, walk(stage) → first-person at 1:1 */

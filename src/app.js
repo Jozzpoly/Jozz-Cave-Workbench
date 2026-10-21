@@ -829,14 +829,18 @@ function playStrip() {
       h('div', { class: 'side', text: 'Linki złożone z nazw repo; strony nie były otwierane przy budowie zrzutu.' })),
     h('div', { class: 'plays' }, rs.map(r => {
       const lvl = heatOf(r.last_ts);
-      return h('article', { class: 'play-tile', style: { '--tile-heat': `var(${heatVar(lvl)})` } },
+      // the tile says what the game is; when it was last touched is the workshop's business, on call (v6.4)
+      const own = senseOf('repo:' + r.name), fixed = own?.status === 'fix' && !!own.text;
+      return h('article', { class: 'play-tile', title: 'ostatni commit ' + ago(r.last_ts), style: { '--tile-heat': `var(${heatVar(lvl)})` } },
         playA(r, { class: 'pt-sig', tabindex: -1, 'aria-hidden': 'true' }, sigil(r, 48)),
         h('div', { class: 'pt-meta' },
           h('a', { class: 'pt-name', href: routeFor(r.name), text: r.short }),
-          h('span', { class: 'pt-when', text: 'commit ' + ago(r.last_ts) })),
+          h('span', { class: 'pt-sense' + (fixed ? '' : ' hyp'), title: fixed ? 'Twoje zdanie o tym świecie' : 'Zdanie zaproponował Claude. Ty decydujesz.', text: workLine(r) })),
         playA(r, { class: 'pt-play', 'aria-label': `Zagraj: ${r.short}` }, playIcon(), 'Zagraj'));
     })));
 }
+/* what a work is, in one line: its sense without its own name in front (the tile already shows the name) */
+function workLine(r) { const s0 = senseText(r), pre = r.short + ': '; return s0.startsWith(pre) ? s0.slice(pre.length).replace(/^./, c => c.toUpperCase()) : s0; }
 function fact(v, l, small) { return h('div', { class: 'fact' }, h('div', { class: 'v', text: v }), h('div', { class: 'l' }, l, small ? h('small', { text: small }) : null)); }
 
 /* ---------------- generated layer: life, findings, decisions (Kataster v2) ---------------- */
@@ -2003,7 +2007,7 @@ if (JASK) window.__BIB = {
   sigil, drawSigil, redrawSigils, spark, squarify, parcelMap, parcelValue, fitParcelLabels, tip, untip, toast, copyText, openUrl,
   seismo, fitTicks, playStrip, findingsFeed, findingItem, changesStrip, katasterSection, lifeBadge, sevTag, heatChip, mixBar, stateNote, kDetail,
   repoView, forestPanel, forestChart, branchTable, rhythmPanel, clockPanel, clockChart, weekStrip, prPanel, lessonCard,
-  ridgeline, historyView, knowledgeView, agentsView, playA, playIcon, openPlayer, rawRecord, senseText, noteLag, fact,
+  ridgeline, historyView, knowledgeView, agentsView, playA, playIcon, openPlayer, rawRecord, senseText, workLine, noteLag, fact,
 };
 
 (async () => {

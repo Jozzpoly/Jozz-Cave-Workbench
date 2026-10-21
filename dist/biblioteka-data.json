@@ -37,7 +37,7 @@
    "prs_open": 89,
    "prs_merged": 319,
    "ci_runs": 23741,
-   "pages": 10,
+   "pages": 11,
    "active_days": 122,
    "first_ts": 1748036978,
    "busiest_day": [
@@ -1424,9 +1424,13 @@
     "upstream_box3d": false
    },
    "url": "https://github.com/Jozzpoly/cloudflare-multiplayer-lab",
-   "pages": null,
-   "tab": false,
-   "wejscie": null,
+   "pages": "https://cloudflare-multiplayer-lab-staging.jozzpoly.workers.dev/world-v0/",
+   "tab": true,
+   "wejscie": {
+    "dlaczego": "Wczesny Multi_World 2P: wybierz jeden z 3 publicznych Yardów. Wspólna jazda czeka na drugą osobę — brak ruchu przed jej wejściem nie oznacza awarii. Przy powrocie wybierz ten sam Yard i sprawdź Resume. Osobna karta chroni pamięć ActorSession przed podziałem przez iframe.",
+    "sprawdzil": "GPT-6 / GitHub Actions: Jaskinia Chromium 8/8, regresja v6.3 43/43 oraz realny Worker 2P (dwa aktory, ruch, exact-state i Resume tej samej ActorSession) PASS; test człowieka i mobile nadal otwarty",
+    "kiedy": "2026-10-20"
+   },
    "created": "2026-08-29T14:51:53Z",
    "pushed": "2026-10-19T00:37:21Z",
    "default": "main",

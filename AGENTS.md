@@ -1,13 +1,14 @@
 # AGENTS.md: start here
 
 For any agent (Claude, GPT, Codex) working on Jaskinia. **First read the [Jaskinia compass (issue #5)](https://github.com/Jozzpoly/Jozz-Cave-Workbench/issues/5)**, in Polish: what Jaskinia is for, who holds what, and how we work with the owner. It is the one place for that; changes go there, not into new START_HERE files. Then read this file, then these, in order:
-1. [docs/2026-10-19-v63-bezpieczne-wydanie.md](docs/2026-10-19-v63-bezpieczne-wydanie.md): v6.3, a release older tabs cannot undo (the GPT lines' findings on PR #4, answered), material revisions that survive older builds, fresh data and verified play entries.
-2. [docs/2026-10-18-v62-uwagi.md](docs/2026-10-18-v62-uwagi.md): v6.2, the owner's ten remarks from using v6, each answered by behaviour, and **his conventions** (below).
-3. [docs/2026-10-18-v61-fundament.md](docs/2026-10-18-v61-fundament.md): v6.1, the foundation after the owner's look from above (several tabs merge, addresses, the agents window, material settings revisions) and the next steps in order.
-4. [docs/2026-10-16-z-gory.md](docs/2026-10-16-z-gory.md): in Polish, what we are fighting for, the honest state and the next steps.
-5. [docs/2026-10-18-v6-materialy.md](docs/2026-10-18-v6-materialy.md): v6, the owner's own models in 3D and walking inside them; the shared goal with Feniks Studio (Astra) and the `window.Jaskinia` API.
-6. [docs/2026-10-16-szwy.md](docs/2026-10-16-szwy.md): the evening review of 16 Oct, covering the seams found with GPT, Medium and the Studio line, the measurements, and the current order of work.
-7. [docs/design/2026-10-14-jaskinia-v2-decisions.md](docs/design/2026-10-14-jaskinia-v2-decisions.md).
+1. [docs/2026-10-20-v64-ruch.md](docs/2026-10-20-v64-ruch.md): v6.4, Ruch (the owner gives his own parts their axes and motion by hand, kept for agents) and his surfaces speaking about the works first, with the workshop's process on call.
+2. [docs/2026-10-19-v63-bezpieczne-wydanie.md](docs/2026-10-19-v63-bezpieczne-wydanie.md): v6.3, a release older tabs cannot undo (the GPT lines' findings on PR #4, answered), material revisions that survive older builds, fresh data and verified play entries.
+3. [docs/2026-10-18-v62-uwagi.md](docs/2026-10-18-v62-uwagi.md): v6.2, the owner's ten remarks from using v6, each answered by behaviour, and **his conventions** (below).
+4. [docs/2026-10-18-v61-fundament.md](docs/2026-10-18-v61-fundament.md): v6.1, the foundation after the owner's look from above (several tabs merge, addresses, the agents window, material settings revisions) and the next steps in order.
+5. [docs/2026-10-16-z-gory.md](docs/2026-10-16-z-gory.md): in Polish, what we are fighting for, the honest state and the next steps.
+6. [docs/2026-10-18-v6-materialy.md](docs/2026-10-18-v6-materialy.md): v6, the owner's own models in 3D and walking inside them; the shared goal with Feniks Studio (Astra) and the `window.Jaskinia` API.
+7. [docs/2026-10-16-szwy.md](docs/2026-10-16-szwy.md): the evening review of 16 Oct, covering the seams found with GPT, Medium and the Studio line, the measurements, and the current order of work.
+8. [docs/design/2026-10-14-jaskinia-v2-decisions.md](docs/design/2026-10-14-jaskinia-v2-decisions.md).
 
 ## The owner
 
@@ -36,6 +37,11 @@ He judges Jaskinia with his hands. These hold in every window, and a new window 
 
   Never draw a mark with only an SVG `<title>` (it is upgraded automatically, but write the note on purpose). Hover effects fade; nothing flashes. A chart with its own richer note marks itself `data-own-tip`.
 - **Pixels are sharp.** His models are Blockbench pixel art: nearest sampling, no mipmaps, by default. `prefs.pixels` is the one switch for every model (`swPixels`).
+- **His parts move by his hand (v6.4, Materiały → Ruch).**
+  - A click picks the part he most likely means (a wheel with its shaft, its Axis cube, a bone of a skinned glTF); the path in his file picks another level.
+  - Ctrl+click gathers cubes into a part of his own.
+  - A drag on a moving part moves it, and the view stays still meanwhile. A drag anywhere else still turns the view, and the wheel and right buttons still pan.
+  - Every value he sets is one click, never a number to type.
 - **Compact on a desk, large on touch.** Window tools stay quiet until the header is pointed at.
 - **Only his.** Never offer, ship or call "his" a model, asset or text without checking who made it.
 - **His remarks are the strongest signal after his recordings.** Read them in "Dla agentów" (`#agenci`) before working on Jaskinia. When you act on one, add an answer to `private/uwagi_odpowiedzi.json` (keyed by the remark's moment, private layer only), so he sees it under the remark and other agents see it is no longer open.
@@ -63,6 +69,17 @@ He judges Jaskinia with his hands. These hold in every window, and a new window 
 - **Facts and meaning stay apart.** Families and the one-line "why" of each project are Claude's hypotheses (marked "HIPOTEZA CLAUDE" in the interface) until the owner ratifies them. Agents propose; their proposals never silently become the owner's decisions.
 - **"Od początku" starts where real work starts** (`workStart`): a thin prelude (under 10% of commits before a silence longer than 60 days) is left out and named at the chart's edge. The account's whole life is the "od konta" range.
 - **No pretend features.** If something only looks like it works, it is a bug.
+- **His surfaces speak about the works; the workshop's process waits on call (v6.4).**
+  - Where he plays and looks first (the "Do zagrania" shelf, a game's launch card), say what the work is: his own sentence when he fixed one, else Claude's hypothesis, marked as such.
+  - Commits, ages, branches, snapshots and CI go one step away: a closed "Z warsztatu agentów", or a hover.
+  - Do not add new process lines to a first view. Measure the share before and after when you touch one (docs/2026-10-20-v64-ruch.md).
+- **His motion is his decision (v6.4).**
+  - `m.ruch` on a material holds the parts he set in motion, with their axes, pivots and ranges, in the file's frame.
+  - Read it (`Jaskinia.materialy.ruch(id)`) before you guess a pivot; never overwrite it; propose changes to him.
+  - Change it only in one transaction on the record (`matPatch`), like every material change.
+- **Hands before hardening (v6.4).**
+  - A new interaction reaches him early, as a marked try ("próba") he can feel. It gets its safety layers, formats and long docs after he says it is right.
+  - Two things are never deferred: his data is kept whole from the first try, and tests check that.
 - **Every build names itself.** Raise `src/jaskinia/version.txt` for every version the owner gets, and add a row to [docs/VERSIONS.md](docs/VERSIONS.md). His recordings are matched to builds by the number in the top bar.
 - **Where it runs is detected, not assumed.** `PLACE` is `plik` (a downloaded file: `file:` or `content:`), `web` (the owner's own server) or `claude` (the artifact). Games may open in a window only outside claude.ai. Tests set `window.__JASK_PLACE` to pretend.
 - **The data's age is visible.** The top bar says how old the snapshot is; charts never draw the days after the snapshot as empty days.
@@ -88,8 +105,9 @@ He judges Jaskinia with his hands. These hold in every window, and a new window 
 | `56-swiat.js` | the 3D runtime every 3D window shares: `swStage` (light, theme colours, metre grid, framing, the 1.8 m person, adaptive resolution, renders only on change, the owner's mouse), `swPixels` (sharp or smooth texture pixels) and `swWalk` (first person at 1:1, a capsule against a BVH, step-up, jump, fly, phone sticks) |
 | `56b-blockbench.js` | Blockbench's `.bbmodel` read directly into three.js (cubes, meshes, pivots, ZYX rotations, embedded pictures; 16 px = 1 m) and `bbLook()`, the Blockbench material that `.obj` exports get too |
 | `57-materialy.js` | Materiały: the owner's models and pictures in IndexedDB (files by SHA-256, materials with versions, orientation and scale defaults with numbered revisions mirrored in `jaskinia-materialy-ustawienia`), companions by path, the window, file drops anywhere in Jaskinia, his models from his public repositories |
+| `57b-ruch.js` | Ruch (v6.4): his parts set in motion by hand on the Materiały stage (pick, Ctrl+click parts, axis from a cube named Axis or the shape, dial and slide drags, show and stop to the exact rest pose), kept as `m.ruch`, carried to a new version by names; in a skinned glTF (Blockbench's armature export) a part is a bone and empty axis bones mark the axis line; `ruchRig()` also drives copies for agents |
 | `59-adresy.js` | addresses (`#repo~`, `#m~`, `#uklad~`, window names): at start, on `hashchange` and from links in windows; the address follows the selection; the "Dla agentów" window (`agenci`) |
-| `58-api.js` | `window.Jaskinia` v1, the surface other tools may use: `ext.type/icon/strings/open`, `materialy.*`, `swiat.*` (see the v6 doc) |
+| `58-api.js` | `window.Jaskinia` v1, the surface other tools may use: `ext.type/icon/strings/open`, `materialy.*` (with `ruch(id)` and `rig(object, id)` since v6.4), `swiat.*` (see the v6 doc) |
 | `../vendor/swiat3d.js` | three.js 0.180.0 + addons + three-mesh-bvh 0.9.2, bundled by `tools/swiat/build.mjs`; `render.py` puts it before Jaskinia's script; it only defines a factory until a 3D window asks |
 | `55-feedback.js` | the feedback loop: the log (`jaskinia:dziennik`), "To mnie uwiera" notes pinned to the moment (`jaskinia:uwagi`, correctable, merged across tabs, with agents' answers from the private layer as `UW_ODP`), "Paczka dla Claude'a" (file or text), the Settings section "Uwagi i paczka" |
 | `version.txt` | the version number the top bar shows; `render.py` stamps it with the build time into `JASK_BUILD` |
@@ -102,7 +120,7 @@ Interface strings are written in Polish in the source and wrapped in `t('…')`.
 
 ## Before you propose a change
 
-- Run `node tools/jk_test.mjs`, `node tools/jk2_test.mjs`, `node tools/jk4_test.mjs`, `node tools/jk5_test.mjs`, `node tools/jk6_test.mjs [shots] [models]`, `node tools/jk61_test.mjs`, `node tools/jk62_test.mjs`, `node tools/jk63_test.mjs` and `node tools/jk2_chaos.mjs 400 <seed>`. The v6 checks run WebGL in SwiftShader and need a folder of the owner's public models (see the script's header). All must pass. They open the pages over http (`tools/serve.mjs`), because headless Chromium can drop the `localStorage` of `file://` pages across reloads, which would test the browser instead of Jaskinia.
+- Run `node tools/jk_test.mjs`, `node tools/jk2_test.mjs`, `node tools/jk4_test.mjs`, `node tools/jk5_test.mjs`, `node tools/jk6_test.mjs [shots] [models]`, `node tools/jk61_test.mjs`, `node tools/jk62_test.mjs`, `node tools/jk63_test.mjs`, `node tools/jk64_test.mjs` and `node tools/jk2_chaos.mjs 400 <seed>`. The v6 checks run WebGL in SwiftShader and need a folder of the owner's public models (see the script's header). All must pass. They open the pages over http (`tools/serve.mjs`), because headless Chromium can drop the `localStorage` of `file://` pages across reloads, which would test the browser instead of Jaskinia.
 - **A check waits for the state it tests, not for a fixed time.** Poll the record, the style or the element until it is there (with a generous limit) and then assert. Two checks that slept 350 ms and 1.5 s failed on 19 Oct only because the machine was busy; a fixed pause tests the machine, not Jaskinia.
 - **Look for the moment between two writes.** Anything written in two steps (two databases, a number then a record) has a moment where a reader in another tab sees half of it. Write a check that stops there and reads from a second tab (`jk63_test.mjs`, "a tab reading while another applies a change").
 - For anything visible, take screenshots on desktop and phone (`tools/jk4_look.mjs [dir] [scenario]` shows how) and look at them.

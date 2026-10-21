@@ -122,7 +122,7 @@ function renderAgents(box, c) {
   matList().then(list => {
     if (!alive) return;
     mats.replaceChildren(h('h2', { text: t('Materiały') }), list.length
-      ? h('ul', null, list.map(m => h('li', { text: `${m.name}${(m.ver || 1) > 1 ? ' v' + m.ver : ''} (#m~${m.id}): ${m.main?.name || ''}${m.deps?.length ? ', ' + tn(m.deps.length, 'plik towarzyszący', 'pliki towarzyszące', 'plików towarzyszących') : ''}` })))
+      ? h('ul', null, list.map(m => h('li', { text: `${m.name}${(m.ver || 1) > 1 ? ' v' + m.ver : ''} (#m~${m.id}): ${m.main?.name || ''}${m.deps?.length ? ', ' + tn(m.deps.length, 'plik towarzyszący', 'pliki towarzyszące', 'plików towarzyszących') : ''}${m.ruch?.parts?.length ? '. ' + t('Ruch nadany przez Jozza: {0} (Jaskinia.materialy.ruch)', m.ruch.parts.map(p => `${p.name} ${p.kind === 'obrot' ? t('obraca się') : t('przesuwa się')}`).join(', ')) : ''}` })))
       : h('p', { text: t('Biblioteka materiałów jest pusta.') }));
   }).catch(err => { if (alive) mats.replaceChildren(h('h2', { text: t('Materiały') }), h('p', { text: t('Biblioteka materiałów nie działa w tej przeglądarce: {0}', err.message) })); });
   if (B.agentsView) box.append(B.agentsView());

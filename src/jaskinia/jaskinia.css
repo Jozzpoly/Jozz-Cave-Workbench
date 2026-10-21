@@ -480,7 +480,7 @@ body:has(.jk.phone) .jk-toasts { bottom: calc(78px + env(safe-area-inset-bottom,
 .jk .play-sec .sec-h { display: none; }
 .jk .plays { margin-top: 0; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
 .jk .pt-name { overflow-wrap: break-word; word-break: normal; hyphens: manual; }
-.jk .pt-when { overflow-wrap: break-word; }
+.jk .pt-when, .jk .pt-sense { overflow-wrap: break-word; }
 .jk .seismo-wrap { padding-top: 12px; }
 .jk .seismo-h a { color: var(--ink-2); } /* v6.1: #historia opens the Historia window (59-adresy.js) */
 .jk .view.repo .crumbs { display: none; }
@@ -538,6 +538,13 @@ body:has(.jk.phone) .jk-toasts { bottom: calc(78px + env(safe-area-inset-bottom,
 .jl-top { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 18px; align-items: center; }
 .jl-top h2 { font-family: var(--font-display); font-weight: 820; font-stretch: 110%; font-size: clamp(26px, 5cqw, 46px); line-height: 1; overflow-wrap: break-word; }
 .jl-sub { margin-top: 6px; color: var(--ink-2); font-size: 13px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.jl-sense { margin: 6px 0 0; color: var(--ink); font-size: 14.5px; line-height: 1.5; max-width: 60ch; text-wrap: pretty; }
+.jl-sense.hyp { color: var(--ink-2); font-style: italic; } /* Claude's hypothesis, not his sentence: the quiet mark the tooltip explains */
+.jl-proc { border-top: 1px solid var(--rule); padding-top: 8px; display: grid; gap: 10px; }
+.jl-proc > summary { cursor: pointer; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; font-size: 12px; color: var(--ink-3); list-style: revert; }
+.jl-proc > summary > span:first-child { font-weight: 650; color: var(--ink-2); }
+.jl-proc-s { display: inline-flex; align-items: center; gap: 5px; }
+.jl-proc[open] > summary { margin-bottom: 4px; }
 .jl-acts { margin-top: 12px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .jl-play { font-size: 15px; padding: 9px 18px; }
 .jl-play svg { width: 15px; height: 15px; }
@@ -1019,13 +1026,49 @@ body:has(.jk.phone) .jk-toasts { bottom: calc(78px + env(safe-area-inset-bottom,
 .mt-rchip small { color: var(--ink-3); font-size: 10.5px; }
 .mt-rchip.busy { opacity: .55; cursor: progress; }
 .mt-note { color: var(--ink-3); font-size: 11.5px; line-height: 1.45; padding: 0 10px 12px; margin: 0; }
-.mt.walking .mt-cap, .mt.walking .mt-bar, .mt.walking .mt-vers { display: none; }
+.mt.walking .mt-cap, .mt.walking .mt-bar, .mt.walking .mt-vers, .mt.walking .mt-ruch { display: none; }
+/* Ruch (v6.4): a plate on the right of the stage, the stage stays his */
+.mt-ruchb .mt-n { font-style: normal; font-size: 10px; font-weight: 760; min-width: 15px; padding: 0 4px; border-radius: 999px; background: var(--hand); color: var(--ground); text-align: center; }
+.mt-ruchb .mt-n:empty { display: none; }
+.mt-view.ruch .mt-cap { right: calc(min(282px, 48%) + 22px); }
+.mt-view.ruch .mt-vers { top: auto; bottom: 52px; right: auto; left: 12px; justify-content: flex-start; }
+.mt-ruch { position: absolute; right: 10px; top: 10px; width: min(282px, 48%); max-height: calc(100% - 66px); overflow: auto; z-index: 3; display: flex; flex-direction: column; gap: 9px; padding: 10px 11px 10px; border: 1px solid var(--rule-2); border-radius: 12px; background: color-mix(in srgb, var(--plate) 91%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); color: var(--ink); font-size: 12.5px; box-shadow: 0 8px 24px color-mix(in srgb, var(--ground) 45%, transparent); }
+.mt-ruch .jk-tb { padding: 3px 8px; }
+.mt-ruch .jk-tb.hint:not(.on) { border-style: dashed; border-color: var(--hand); color: var(--ink); }
+.mt-ruch .mt-gap { flex: 1; }
+.rc-h { display: flex; align-items: center; gap: 7px; }
+.rc-h b { font-size: 13.5px; font-weight: 760; }
+.rc-try { font-size: 10px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-3); border: 1px dashed var(--rule-2); border-radius: 999px; padding: 0 6px; cursor: help; white-space: nowrap; }
+.rc-play.on { background: color-mix(in srgb, var(--hand) 16%, transparent); }
+.rc-hint, .rc-note { margin: 0; color: var(--ink-2); line-height: 1.5; }
+.rc-note { color: var(--hand); font-size: 12px; }
+.rc-path { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 3px; font-size: 11.5px; }
+.rc-path i { font-style: normal; color: var(--ink-3); }
+.rc-crumb { border: 0; background: none; font: inherit; color: var(--ink-2); padding: 1px 4px; border-radius: 5px; cursor: pointer; max-width: 16ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rc-crumb:hover { color: var(--ink); background: var(--sel-bg); }
+.rc-crumb.on { color: var(--hand); font-weight: 700; }
+.rc-name { display: flex; align-items: baseline; gap: 7px; flex-wrap: wrap; }
+.rc-name b { font-size: 14.5px; font-weight: 760; overflow-wrap: anywhere; }
+.rc-name span { color: var(--ink-2); font-size: 12px; }
+.rc-name .rc-val { margin-left: auto; color: var(--hand); font-weight: 700; font-variant-numeric: tabular-nums; }
+.rc-row { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }
+.rc-k { width: 46px; flex: none; color: var(--ink-3); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
+.rc-src { color: var(--ink-2); font-size: 11.5px; }
+.rc-ax span { font-weight: 800; }
+.rc-ax0 span { color: #e5584f; } .rc-ax1 span { color: #4fae5a; } .rc-ax2 span { color: #4b8fe0; } /* Blockbench's own colours for X, Y, Z */
+.rc-list { display: flex; flex-wrap: wrap; gap: 5px; padding-top: 7px; border-top: 1px solid var(--rule); }
+.rc-list .jk-chip { padding: 2px 9px 2px 7px; font-size: 12px; }
+.rc-list .jk-chip.on { border-color: var(--hand); color: var(--hand); }
+.rc-foot { display: flex; align-items: center; gap: 6px; }
 @container (max-width: 600px) {
   .mt { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(230px, 60%) minmax(0, 1fr); }
   .mt-side { border-left: 0; border-top: 1px solid var(--rule); }
   .mt-grid { grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); }
   .mt-cap { right: 12px; }
   .mt-vers { top: auto; bottom: 52px; }
+  .mt-ruch { left: 8px; right: 8px; width: auto; top: auto; bottom: 50px; max-height: 52%; }
+  .mt-view.ruch .mt-cap { right: 12px; }
+  .mt-view.ruch .mt-vers { display: none; }
 }
 .sw-hud { position: absolute; inset: 0; pointer-events: none; z-index: 4; }
 .sw-hud > * { pointer-events: auto; }
