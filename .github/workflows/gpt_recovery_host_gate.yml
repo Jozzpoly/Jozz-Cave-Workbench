@@ -8,6 +8,7 @@ on:
       - tools/gpt_same_origin_session_gate.mjs
       - tools/gpt_onehome_cross_tool_gate.mjs
       - tools/gpt_onehome_ui_action_probe.mjs
+      - tools/gpt_onehome_cross_origin_gate.mjs
       - .github/workflows/gpt_recovery_host_gate.yml
 permissions:
   contents: read
@@ -44,6 +45,8 @@ jobs:
         run: node tools/gpt_onehome_cross_tool_gate.mjs
       - name: Test actual authoring pointer input and contextual action in Jaskinia
         run: node tools/gpt_onehome_ui_action_probe.mjs
+      - name: Test off-origin scoped action without host inspecting lab memory
+        run: node tools/gpt_onehome_cross_origin_gate.mjs
       - name: Keep UI screenshots and exact host for inspection
         if: always()
         uses: actions/upload-artifact@v4
@@ -54,6 +57,7 @@ jobs:
             dist/_gpt_recovery_real_host_phone.png
             dist/_gpt_onehome_cross_tool.png
             dist/_gpt_onehome_ui_action.png
+            dist/_gpt_onehome_offorigin_action.png
             dist/jaskinia-web.html
           if-no-files-found: ignore
           retention-days: 7
