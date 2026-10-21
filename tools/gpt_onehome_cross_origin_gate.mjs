@@ -9,7 +9,7 @@ const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const dist=path.join(root,'dist'),donor=path.join(root,'medium/experiments/received-workpieces/przesmyk-kowal-2026-10-18');
 if(fs.statSync(path.join(dist,'jaskinia-web.html')).size!==2450637)throw Error('Pinned public Jaskinia host not available');
 const host=await serve(dist),homeOrigin=new URL(host.base).origin;
-const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'onehome-offorigin-'));
+const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'onehome-source-'));const tmpTarget=fs.mkdtempSync(path.join(os.tmpdir(),'onehome-target-'));
 const sourceName='two-instruments-one-world-gpt6.html',targetName='second-life-signal-gpt6.html';
 
 function sourceAdapter(HOST){
@@ -58,13 +58,15 @@ function writeDonor(file,fn){
  fs.writeFileSync(path.join(tmp,file),orig.replace('</body>',script+'</body>'));
 }
 writeDonor(sourceName,sourceAdapter);writeDonor(targetName,receiverAdapter);
-const labs=await serve(tmp),labOrigin=new URL(labs.base).origin;
-if(labOrigin===homeOrigin)throw Error('Unexpected matching origins');
+fs.renameSync(path.join(tmp,targetName),path.join(tmpTarget,targetName));
+const sourceLab=await serve(tmp),targetLab=await serve(tmpTarget);
+const sourceOrigin=new URL(sourceLab.base).origin,targetOrigin=new URL(targetLab.base).origin;
+if(sourceOrigin===homeOrigin||targetOrigin===homeOrigin||sourceOrigin===targetOrigin)throw Error('Expected THREE distinct origins');
 const browser=await chromium.launch({headless:true,args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 const ctx=await browser.newContext({viewport:{width:1490,height:940}});
 await ctx.addInitScript(()=>{window.__JASK_PLACE='web';try{localStorage.setItem('jaskinia:hint','1')}catch{}});
 const page=await ctx.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
-const srcUrl=labs.base+'/'+sourceName,dstUrl=labs.base+'/'+targetName;
+const srcUrl=sourceLab.base+'/'+sourceName,dstUrl=targetLab.base+'/'+targetName;
 let pass=0,fail=0;const check=(cond,msg,d)=>{console.log(cond?'PASS':'FAIL',msg,d?JSON.stringify(d):'');cond?pass++:fail++};
 try{
  await page.goto(host.base+'/jaskinia-web.html',{waitUntil:'domcontentloaded'});
@@ -73,32 +75,32 @@ try{
  for(const url of [srcUrl,dstUrl])ids.push(await page.evaluate(url=>Jaskinia.ext.open('przyrzad',{fresh:true,st:{url,title:'Medium off-origin research'}}),url));
  const [srcId,dstId]=ids;
  await page.waitForFunction(ids=>ids.every(id=>!!document.querySelector('.win[data-id="'+id+'"] iframe')?.contentWindow),ids);
- const started=await page.evaluate(({ids,origin})=>{
+ const started=await page.evaluate(({ids,sourceOrigin,targetOrigin})=>{
    const frame=id=>document.querySelector('.win[data-id="'+id+'"] iframe')?.contentWindow;
    const source=frame(ids[0]),recipient=frame(ids[1]);
    window.__mediumOff={descriptions:[],requests:[],results:[],ignored:[],pending:new Set()};
    const witness=window.__mediumOff;
    window.addEventListener('message',e=>{
-     if(e.origin!==origin||e.data?.mediumOffOrigin!==1)return;
+     if(e.data?.mediumOffOrigin!==1)return;
      const d=e.data;
-     if(e.source===source&&d.type==='description')witness.descriptions.push(d);
-     else if(e.source===source&&d.type==='request'&&d.action==='medium.przesmyk-variant.try-signal-v0'){
+     if(e.origin===sourceOrigin&&e.source===source&&d.type==='description')witness.descriptions.push(d);
+     else if(e.origin===sourceOrigin&&e.source===source&&d.type==='request'&&d.action==='medium.przesmyk-variant.try-signal-v0'){
        if(!Number.isInteger(d.nonce)||d.nonce<1||witness.pending.has(d.nonce)||d.workpiece?.schema!=='medium.przesmyk.variant.v1'||JSON.stringify(d.workpiece).length>120000){
          witness.ignored.push('bad request');return;
        }
        witness.pending.add(d.nonce);witness.requests.push(d.nonce);
-       recipient.postMessage({...d,mediumOffOrigin:1,type:'offer'},origin);
-     }else if(e.source===recipient&&d.type==='outcome'&&witness.pending.has(d.nonce)){
+       recipient.postMessage({...d,mediumOffOrigin:1,type:'offer'},targetOrigin);
+     }else if(e.origin===targetOrigin&&e.source===recipient&&d.type==='outcome'&&witness.pending.has(d.nonce)){
        witness.pending.delete(d.nonce);witness.results.push(d);
-       source.postMessage({...d,mediumOffOrigin:1,type:'receipt'},origin);
+       source.postMessage({...d,mediumOffOrigin:1,type:'receipt'},sourceOrigin);
      }else witness.ignored.push('bad source');
    });
    let blocked=false;
    try{void source.__mediumPortable.get()}catch(e){blocked=e.name==='SecurityError'}
-   source.postMessage({mediumOffOrigin:1,type:'describe'},origin);
-   return {blocked,home:location.origin,labOrigin:origin};
- },{ids,origin:labOrigin});
- check(started.blocked&&started.home!==started.labOrigin,'actual SOP boundary: Jaskinia cannot inspect off-origin lab runtime',started);
+   source.postMessage({mediumOffOrigin:1,type:'describe'},sourceOrigin);
+   return {blocked,home:location.origin,sourceOrigin,targetOrigin};
+ },{ids,sourceOrigin,targetOrigin});
+ check(started.blocked&&started.home!==started.sourceOrigin&&started.home!==started.targetOrigin&&started.sourceOrigin!==started.targetOrigin,'actual THREE-way SOP boundary: neither separate-origin lab is host-accessible',started);
  await page.waitForFunction(()=>window.__mediumOff.descriptions.length===1,{timeout:8000});
  const caps=await page.evaluate(()=>__mediumOff.descriptions[0].actions);
  check(caps.length===1&&caps[0].effect==='new interpretation'&&caps[0].not.includes('not the same world'),'source advertises one bounded useful operation and its semantic boundary',caps);
@@ -144,6 +146,6 @@ try{
  check(errors.length===0,'no Jaskinia script error',errors);
  await page.screenshot({path:path.join(dist,'_gpt_onehome_offorigin_action.png')});
 }catch(err){console.error('OFF_ORIGIN_ABORT',err.stack);fail++}
-finally{await browser.close();await host.close();await labs.close();fs.rmSync(tmp,{recursive:true,force:true})}
+finally{await browser.close();await host.close();await sourceLab.close();await targetLab.close();fs.rmSync(tmp,{recursive:true,force:true});fs.rmSync(tmpTarget,{recursive:true,force:true})}
 console.log('ONE_HOME_OFF_ORIGIN_GATE',JSON.stringify({pass,fail}));
 if(fail)process.exitCode=1;
