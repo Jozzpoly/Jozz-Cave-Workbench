@@ -6,6 +6,7 @@ on:
     paths:
       - tools/gpt_recovery_host_gate.mjs
       - tools/gpt_same_origin_session_gate.mjs
+      - tools/gpt_onehome_cross_tool_gate.mjs
       - .github/workflows/gpt_recovery_host_gate.yml
 permissions:
   contents: read
@@ -15,6 +16,12 @@ jobs:
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
+      - name: Get pinned Medium research donor (no changes)
+        uses: actions/checkout@v4
+        with:
+          repository: Jozzpoly/Shared-Work-Medium-Lab
+          ref: 419b9c9dbf49301ed9fb9bf65e39de33d35f17bb
+          path: medium
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -32,6 +39,8 @@ jobs:
           lifecycle=$?
           echo "TEST_STATUS collision=$collision lifecycle=$lifecycle"
           test "$collision" -eq 0 && test "$lifecycle" -eq 0
+      - name: Test two REAL independent Medium worlds with Jaskinia native instruments
+        run: node tools/gpt_onehome_cross_tool_gate.mjs
       - name: Keep UI screenshots and exact host for inspection
         if: always()
         uses: actions/upload-artifact@v4
@@ -40,6 +49,7 @@ jobs:
           path: |
             dist/_gpt_recovery_real_host_desktop.png
             dist/_gpt_recovery_real_host_phone.png
+            dist/_gpt_onehome_cross_tool.png
             dist/jaskinia-web.html
           if-no-files-found: ignore
           retention-days: 7
