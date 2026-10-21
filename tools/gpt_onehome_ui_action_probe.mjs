@@ -140,13 +140,34 @@ try{
   const rejected=await page.evaluate(([a,b])=>{
     const f=id=>document.querySelector('.win[data-id="'+id+'"] iframe')?.contentWindow;
     return {receiver:f(b).__mediumSignal.get().mediumSignal.receiver,
-      sameTarget:JSON.stringify(f(b).__mediumSignal.get())===window.__mediumProbeBeforeTarget,
+      targetJson:JSON.stringify(f(b).__mediumSignal.get()),
       wall:f(b).__mediumSignal.sample(62,52),receipts:__mediumBridgeProof.receipts,
       label:f(a).document.querySelector('#try-signal-in-home').textContent};
   },[srcId,dstId]);
   test(rejected.receipts[1].ok===false&&rejected.receipts[1].atomic===true&&
-      rejected.wall===0&&rejected.label.includes('niezgodna'),
+      rejected.wall===0&&rejected.targetJson===blocked.before&&rejected.label.includes('niezgodna'),
     'invalid authored meaning rejects transfer atomically with visible in-tool feedback',rejected);
+  // Real author correction without rebooting either tool or discarding previously accepted work.
+  await frm.locator('#lens-cut').click();
+  await paint(62,52);
+  const repairedBefore=await page.evaluate(id=>{
+    const a=document.querySelector('.win[data-id="'+id+'"] iframe').contentWindow;
+    return {wall:a.__kowal.sample(62,52).solid,
+      action:a.document.querySelector('#try-signal-in-home').textContent};
+  },srcId);
+  test(repairedBefore.wall===0,'author can physically correct the invalid topology in the existing editor',repairedBefore);
+  await frm.locator('#try-signal-in-home').click();
+  await page.waitForFunction(()=>window.__mediumBridgeProof?.receipts?.length===3,{timeout:5000});
+  const repairedAfter=await page.evaluate(([a,b])=>{
+    const f=id=>document.querySelector('.win[data-id="'+id+'"] iframe')?.contentWindow;
+    return {source:f(a).__kowal.sample(62,52).solid,peer:f(b).__mediumSignal.sample(62,52),
+      receiver:f(b).__mediumSignal.get().mediumSignal.receiver,
+      receipt:__mediumBridgeProof.receipts[2],
+      action:f(a).document.querySelector('#try-signal-in-home').textContent};
+  },[srcId,dstId]);
+  test(repairedAfter.source===0&&repairedAfter.peer===0&&repairedAfter.receipt.ok&&
+    repairedAfter.receiver.x===62&&repairedAfter.receiver.y===52&&repairedAfter.action.includes('gotowa'),
+    'author repair → accepted new interpretation works without losing target-specific decision',repairedAfter);
 
   const cards=await page.evaluate(()=>Object.values(__JASK.L.wins).filter(w=>w.type==='przyrzad')
     .map(w=>({url:w.st.url,authoringSchema:w.st.authoringSchema||null})));
