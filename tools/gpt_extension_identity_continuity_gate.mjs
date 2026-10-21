@@ -45,7 +45,7 @@ try{
   await p.reload({waitUntil:'domcontentloaded'});
   await p.waitForFunction(()=>!!window.Jaskinia?.ext?.type);
   const missing=await p.evaluate(id=>{
-    const found=store.spaces.flatMap(sp=>Object.entries(sp.L.wins)).find(([wid])=>wid===id);
+    const found=__JASK.store.spaces.flatMap(sp=>Object.entries(sp.L.wins)).find(([wid])=>wid===id);
     if(!found)return {absent:true};
     const w=found[1];
     return {id,type:w.type,lost:w.lost,workpiece:w.st?.workpiece};
@@ -60,7 +60,7 @@ try{
       box.innerHTML='<section data-ext-version="B">'+
         (w.workpiece?.schema==='agentB.signal.v2'?'B valid signal document':'B INCOMPATIBLE SOURCE')+'</section>';
     }});
-    const raw=store.spaces.flatMap(sp=>Object.entries(sp.L.wins)).find(([wid])=>wid===id);
+    const raw=__JASK.store.spaces.flatMap(sp=>Object.entries(sp.L.wins)).find(([wid])=>wid===id);
     const w=raw?.[1], node=document.querySelector('[data-ext-version="B"]');
     return {id,type:w?.type,lost:w?.lost||null,workpiece:w?.st?.workpiece,rendered:node?.textContent};
   },id);
@@ -71,13 +71,13 @@ try{
 
   // Explicit agent-level validation prevents interpretation; host itself does NOT enforce it.
   const validation=await p.evaluate(id=>{
-    const s=store.spaces.flatMap(sp=>Object.entries(sp.L.wins)).find(([wid])=>wid===id)?.[1]?.st;
+    const s=__JASK.store.spaces.flatMap(sp=>Object.entries(sp.L.wins)).find(([wid])=>wid===id)?.[1]?.st;
     return {hostBound:true,moduleAccepts:s?.workpiece?.schema==='agentB.signal.v2',originalSchema:s?.workpiece?.schema};
   },id);
   check(validation.hostBound&&!validation.moduleAccepts,
     'module-local schema guard detects mismatch, while host binding has already happened',validation);
 
-  const status=await p.evaluate(id=>({id,nativeCount:store.spaces.flatMap(sp=>Object.values(sp.L.wins)).filter(w=>w.type==='agentcanvas').length,
+  const status=await p.evaluate(id=>({id,nativeCount:__JASK.store.spaces.flatMap(sp=>Object.values(sp.L.wins)).filter(w=>w.type==='agentcanvas').length,
     source:window.Jaskinia.build}));
   check(status.nativeCount===1,'test left no duplicate host windows and made no product changes',status);
 } catch(e){console.error('EXTENSION_CONTINUITY_ABORT',e.stack);fail++}
