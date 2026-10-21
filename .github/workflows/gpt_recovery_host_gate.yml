@@ -9,6 +9,7 @@ on:
       - tools/gpt_onehome_cross_tool_gate.mjs
       - tools/gpt_onehome_ui_action_probe.mjs
       - tools/gpt_onehome_cross_origin_gate.mjs
+      - tools/gpt_extension_identity_continuity_gate.mjs
       - .github/workflows/gpt_recovery_host_gate.yml
 permissions:
   contents: read
@@ -45,6 +46,8 @@ jobs:
         run: node tools/gpt_onehome_cross_tool_gate.mjs
       - name: Test actual authoring pointer input and contextual action in Jaskinia
         run: node tools/gpt_onehome_ui_action_probe.mjs
+      - name: Test extension identity and authored work continuity across missing/replaced module
+        run: node tools/gpt_extension_identity_continuity_gate.mjs
       - name: Test off-origin scoped action without host inspecting lab memory
         run: node tools/gpt_onehome_cross_origin_gate.mjs
       - name: Keep UI screenshots and exact host for inspection
