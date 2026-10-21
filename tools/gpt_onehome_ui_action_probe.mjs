@@ -54,7 +54,10 @@ try{
         const serialized=JSON.stringify(data);
         if(serialized.length>120000)throw Error('Wariant przekracza ograniczenie importera');
         const restored=dst.__mediumSignal.import(serialized);
-        reply={ok:true,steps:restored.changes.length,receiver:restored.mediumSignal.receiver};
+        const interpretation=dst.__mediumSignal.status();
+        reply={ok:true,steps:restored.changes.length,receiver:restored.mediumSignal.receiver,
+          analysis:{reach:!!interpretation.reach,cost:Number.isFinite(interpretation.travel)?Math.round(interpretation.travel):null,
+            pathLength:interpretation.pathLength}};
       }catch(err){
         reply={ok:false,error:String(err.message),atomic:before===JSON.stringify(dst.__mediumSignal.get())};
       }
@@ -71,15 +74,20 @@ try{
       'const button=document.createElement("button");',
       'button.id="try-signal-in-home";button.type="button";button.className="minor";',
       'button.textContent="Sprawdź tę konstrukcję w ŚLADZIE";',
+      'const output=document.createElement("output");output.id="medium-signal-outcome";',
+      'output.setAttribute("aria-live","polite");output.textContent="Dwa niezależne eksperymenty · przeniesienie na żądanie";',
       'button.addEventListener("click",()=>parent.postMessage({mediumProbe:1,action:"try-signal-workpiece-v0"},trustedOrigin));',
       'addEventListener("message",e=>{',
       'if(e.origin!==trustedOrigin||e.source!==parent||e.data?.mediumProbe!==1||e.data?.action!=="receipt")return;',
       'button.textContent=e.data.ok?"ŚLAD: interpretacja gotowa":"ŚLAD: zmiana niezgodna · "+e.data.error;',
       'button.dataset.ok=String(e.data.ok);',
+      'output.textContent=e.data.ok?',
+      '("ŚLAD: "+(e.data.analysis?.reach?"trasa istnieje · "+e.data.analysis.cost+" kroków siatki":"brak trasy")+" · nowa interpretacja konstrukcji"):',
+      '("ŚLAD: odmowa · "+e.data.error+" · poprzednia interpretacja zachowana");',
       '});',
       'const toolbar=document.querySelector(".utility");',
       'if(!toolbar)throw Error("Missing original Medium toolbar");',
-      'toolbar.append(button);',
+      'toolbar.append(button,output);',
       '})();'
     ].join('\n');
     src.document.body.appendChild(script);script.remove();
@@ -120,12 +128,18 @@ try{
       receiver:f(b).__mediumSignal.get().mediumSignal.receiver,
       receipts:window.__mediumBridgeProof.receipts,
       button:f(a).document.querySelector('#try-signal-in-home').textContent,
+      readout:f(a).document.querySelector('#medium-signal-outcome').textContent,
+      status:f(b).__mediumSignal.status(),
       hostCount:Object.values(__JASK.L.wins).filter(x=>x.type==='przyrzad').length};
   },[srcId,dstId]);
   test(positive.source===1&&positive.signal===1&&positive.receipts[0].ok===true&&positive.hostCount===2,
     'one human-facing action transfers actual edited geometry without new window or clipboard',positive);
   test(positive.button.includes('gotowa')&&positive.receiver.x===62&&positive.receiver.y===52,
     'donor UI reports completed interpretation; receiver-specific intent remains with its owner');
+  test(positive.receipts[0].analysis.reach===!!positive.status.reach&&positive.readout.includes('ŚLAD:')&&
+    (positive.status.reach?positive.readout.includes('kroków siatki'):positive.readout.includes('brak trasy')),
+    'real recipient interpretation is visible within source tool, not only in covered peer window',
+    {visible:positive.readout,analysis:positive.receipts[0].analysis});
 
   // Another real pointer action violates the peer's semantic constraint; peer must reject atomically.
   await paint(62,52);
