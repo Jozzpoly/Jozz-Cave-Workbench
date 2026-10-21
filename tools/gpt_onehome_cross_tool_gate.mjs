@@ -110,6 +110,24 @@ try{
   },{srcId:worldIds[0],sigId:worldIds[1],target:transfer.authoredReceiver});
   judge(stale.isWall&&typeof stale.recipientReject==='string'&&stale.recipientReject.includes('pustej komórce')&&stale.unchanged,
     'preserving opaque receiver data across incompatible topology edits would be invalid; recipient correctly rejects atomically',stale);
+  // Finally distinguish "same authored terrain" from "same ongoing physical simulation".
+  await p.evaluate(id=>{
+    const w=document.querySelector('.win[data-id="'+id+'"] iframe').contentWindow;
+    const b=w.document.querySelector('#pause');
+    if(!b)throw Error('Real PRZESMYK play/pause unavailable');
+    if(w.__kowal.snapshot().paused)b.click();
+  },worldIds[0]);
+  await p.waitForTimeout(700);
+  const replay=await p.evaluate(id=>{
+    const a=document.querySelector('.win[data-id="'+id+'"] iframe').contentWindow;
+    const during=a.__kowal.snapshot(),saved=a.__mediumPortable.get();
+    a.__mediumPortable.apply(JSON.stringify(saved));
+    const restored=a.__kowal.snapshot(),again=a.__mediumPortable.get();
+    return {duringStep:during.step,afterStep:restored.step,afterPaused:restored.paused,
+      sameTopology:JSON.stringify(saved.changes)===JSON.stringify(again.changes)};
+  },worldIds[0]);
+  judge(replay.duringStep>0&&replay.afterStep===0&&replay.afterPaused&&replay.sameTopology,
+    'full topological roundtrip resets living solver history: saved workpiece is NOT a runtime checkpoint',replay);
   const hostRecords=await p.evaluate(()=>Object.values(__JASK.L.wins)
     .filter(w=>w.type==='przyrzad').map(w=>({url:w.st?.url,project:w.st?.project,build:w.st?.build})));
   judge(hostRecords.length===3&&hostRecords.every(x=>!x.build),
