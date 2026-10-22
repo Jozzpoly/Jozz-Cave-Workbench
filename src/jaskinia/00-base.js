@@ -27,13 +27,14 @@ const PREF_CHOICES = {
   theme: ['jaskinia', 'kataster', 'neon', 'piwnica'],
   scheme: ['auto', 'ciemna', 'jasna'],
   life: ['zielen', 'zar'],
-  density: ['zwarta', 'srednia', 'duza'],
+  density: ['auto', 'zwarta', 'srednia', 'duza'],
   lang: ['pl', 'en'],
   wheel: ['zoom', 'pan'],
   motion: ['full', 'less'],
   games: ['auto', 'okno', 'karta'],
+  pixels: ['ostre', 'gladkie'],
 };
-const PREFS_DEF = { theme: 'jaskinia', scheme: 'auto', life: 'zielen', density: 'srednia', cz: 1, lang: 'pl', wheel: 'zoom', tips: true, motion: 'full', games: 'auto' };
+const PREFS_DEF = { theme: 'jaskinia', scheme: 'auto', life: 'zielen', density: 'auto', cz: 1, lang: 'pl', wheel: 'zoom', tips: true, motion: 'full', games: 'auto', pixels: 'ostre', pv: 2 };
 function sanitizePrefs(p) {
   const out = { ...PREFS_DEF };
   if (!p || typeof p !== 'object') return out;
@@ -42,7 +43,9 @@ function sanitizePrefs(p) {
   if (typeof p.tips === 'boolean') out.tips = p.tips;
   return out;
 }
-const prefs = (() => { try { return sanitizePrefs(JSON.parse(localStorage.getItem(PREFS_KEY) || '{}')); } catch { return sanitizePrefs({}); } })();
+/* pv 2 (v6.1): the size of the interface became "auto" (compact with a mouse, larger on touch). Preferences written before
+   held the old default "srednia" without anyone choosing it, so that one value becomes "auto" once. */
+const prefs = (() => { try { const raw = JSON.parse(localStorage.getItem(PREFS_KEY) || '{}'); if (raw && !raw.pv && raw.density === 'srednia') raw.density = 'auto'; return sanitizePrefs(raw); } catch { return sanitizePrefs({}); } })();
 function savePrefs() { try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); return true; } catch { return false; } }
 
 /* ---------- interface language: Polish source strings, English beside them (05-i18n.js) ---------- */

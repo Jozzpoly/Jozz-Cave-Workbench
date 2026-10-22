@@ -193,7 +193,7 @@ function wallFindings(r) { return (r.findings || []).filter(f => (f.sev === 'hig
 /* the red bubble: findings waiting for a decision; it sits on the card's corner, outside the card, so it never hides the name */
 function wallAtt(r, lod) {
   const fs = wallFindings(r);
-  return fs.length && lod !== 'D' ? h('span', { class: 'wc-att' + (fs.some(f => f.sev === 'high') ? ' high' : ''), title: t('{0} do decyzji', tn(fs.length, 'ustalenie', 'ustalenia', 'ustaleń')), text: fs.length }) : null;
+  return fs.length && lod !== 'D' ? h('span', { class: 'wc-att' + (fs.some(f => f.sev === 'high') ? ' high' : ''), 'data-tip': t('{0} do decyzji', tn(fs.length, 'ustalenie', 'ustalenia', 'ustaleń')), text: fs.length }) : null;
 }
 function wallCardInner(r, lod, sw, sh) {
   const att = null;
@@ -219,7 +219,7 @@ function wallCardInner(r, lod, sw, sh) {
   const head = h('div', { class: 'wc-head' }, sigil(r, lod === 'XL' ? 46 : 32),
     h('div', { class: 'wc-tt' }, h('b', { class: 'wc-name', text: r.short }), h('span', { class: 'wc-meta' }, B.lifeBadge(r.life), ' ', r.last_ts ? ago(r.last_ts) : t('bez commitów'))));
   const foot = h('div', { class: 'wc-foot' });
-  if (big || wide) foot.append(h('span', { class: 'wc-nums', text: `${fmt(r.commits)} · ${tn(r.branches.length, 'gałąź', 'gałęzie', 'gałęzi')} · ${r.api === false ? '?' : r.prs.open} PR`, title: r.api === false ? t('Liczby PR nie znam: API GitHuba nie widziało tego repo w tym zrzucie.') : null }));
+  if (big || wide) foot.append(h('span', { class: 'wc-nums', text: `${fmt(r.commits)} · ${tn(r.branches.length, 'gałąź', 'gałęzie', 'gałęzi')} · ${r.api === false ? '?' : r.prs.open} PR`, 'data-tip': r.api === false ? t('Liczby PR nie znam: API GitHuba nie widziało tego repo w tym zrzucie.') : null }));
   if ((big || wide) && r.pages && r.life !== 'zakończone') foot.append(B.playA(r, { class: 'wc-play' }, B.playIcon(), t('Zagraj')));
   if (wide) return [h('div', { class: 'wc-in wide' }, head, sparkSvg(v28, 'wc-sp'), foot.firstChild ? foot : null), att];
   // what fits is decided by the card's real height: the bottom row first, then activity, the state quote, the next step
@@ -424,8 +424,10 @@ function renderWall(box, c) {
     const ta = h('textarea', { class: 'wn-text', placeholder: t('Notatka…'), 'aria-label': t('Notatka na ścianie'), spellcheck: 'true' });
     ta.value = noteText(n.id);
     let tm = 0;
-    ta.addEventListener('input', () => { clearTimeout(tm); tm = setTimeout(() => noteSet(n.id, ta.value), 250); });
-    ta.addEventListener('blur', () => { clearTimeout(tm); noteSet(n.id, ta.value); });
+    let typed = false; // only typed text is written back: an older text shown here never overwrites a newer one (v6.1)
+    const flush = () => { clearTimeout(tm); if (!typed) return; typed = false; noteSet(n.id, ta.value); };
+    ta.addEventListener('input', () => { typed = true; clearTimeout(tm); tm = setTimeout(flush, 250); });
+    ta.addEventListener('blur', flush);
     ta.addEventListener('pointerdown', e => e.stopPropagation()); // typing and selecting text are the textarea's own
     ta.addEventListener('keydown', e => e.stopPropagation());
     ta.addEventListener('wheel', e => { if (ta.scrollHeight > ta.clientHeight) e.stopPropagation(); }, { passive: true });
@@ -801,7 +803,9 @@ function renderWall(box, c) {
       openMenu(anchor, [
         { head: r.short },
         { label: t('Karta projektu'), icon: 't_karta', act: () => { c.select(r.name); c.openType('karta', { free: true }); } },
-        r.pages && r.life !== 'zakończone' ? { label: t('Zagraj'), icon: 'play', act: () => B.openUrl(r.pages) } : null,
+        // the same "Zagraj" as everywhere (v6 opened a new browser tab from here): the game window, Shift-version beside
+        r.pages && r.life !== 'zakończone' ? { label: t('Zagraj'), icon: 'play', act: () => { if (B.HOOK.play?.(r) !== true) B.openUrl(r.pages); } } : null,
+        r.pages && r.life !== 'zakończone' && gamesInWindow() && !r.tab ? { label: t('Zagraj w nowym oknie obok'), icon: 'play', act: () => { if (B.HOOK.play?.(r, { beside: true }) !== true) B.openUrl(r.pages); } } : null,
         { label: t('Otwórz na GitHubie'), icon: 'ext', act: () => B.openUrl(r.url) },
         { sep: true },
         it.hand ? { label: t('Rozmiar z miary'), desc: t('oddaj rozmiar mierze „{0}”', t(WALL_DRV.find(d => d[0] === st.size)?.[1] || '')), icon: 'reset', act: () => { c.commit(t('rozmiar karty {0} z miary', r.short), () => { const c0 = st.cards[r.name]; delete c0.w; delete c0.h; }); c.save(); paint(); } } : null,
