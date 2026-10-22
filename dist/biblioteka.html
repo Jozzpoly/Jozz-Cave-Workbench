@@ -972,19 +972,23 @@ const live = { state: 'idle', pushed: {}, extra: [], checkedAt: null };
 const use = name => (window.claude && typeof window.claude.use === 'function') ? window.claude.use(name).catch(() => null) : Promise.resolve(null);
 
 /* ---------------- tooltip + toast ---------------- */
-let tipEl = null;
+/* tip() returns a number for the note it put up; a chart that lets its note go late (after a short wait on leaving)
+   passes that number to untip(), so it never hides a note another chart has put up meanwhile (v6.4.1: leaving the map
+   onto a chart in a window above it, the map's late goodbye hid the chart's note). untip() without a number hides any. */
+let tipEl = null, tipGen = 0;
 function tip(e, content) {
-  if ((e && e.pointerType === 'touch') || HOOK.noTips) return;
+  if ((e && e.pointerType === 'touch') || HOOK.noTips) return 0;
   if (!tipEl) { tipEl = h('div', { class: 'tip', role: 'tooltip' }); document.body.append(tipEl); }
-  if (content) tipEl.replaceChildren(...[].concat(content)); // null = just follow the pointer
+  if (content) { tipEl.replaceChildren(...[].concat(content)); tipGen++; } // null = just follow the pointer
   tipEl.hidden = false;
   const pad = 14, w = tipEl.offsetWidth, hh = tipEl.offsetHeight;
   let x = e.clientX + pad, y = e.clientY + pad;
   if (x + w > innerWidth - 8) x = e.clientX - w - pad;
   if (y + hh > innerHeight - 8) y = e.clientY - hh - pad;
   tipEl.style.left = Math.max(8, x) + 'px'; tipEl.style.top = Math.max(8, y) + 'px';
+  return tipGen;
 }
-function untip() { if (tipEl) tipEl.hidden = true; }
+function untip(gen) { if (tipEl && (gen == null || gen === tipGen)) tipEl.hidden = true; }
 /* One way of answering what the pointer points at (v6.2; the owner, 18 Oct: the charts were inconsistent — some answered,
    others only through the browser's late plain tooltip). Every chart mark drawn with an SVG <title> loses it (the
    browser's tooltip came after a second, unstyled, on top of ours) and speaks through the same note instead: it lights
@@ -1257,8 +1261,8 @@ function parcelMap(width, height) {
   /* Hover without a disco (the owner, 18 Oct: sweeping the mouse across the map flashed every border it crossed).
      Crossing a gap between plots keeps the current plot lit for a moment; only resting outside the plots, or leaving the
      map, lets the light go. The light itself fades (CSS), so a fast sweep reads as one calm movement. */
-  let tipFor = null, offT = 0;
-  const lightsOff = () => { clearTimeout(offT); offT = 0; tipFor = null; untip(); svg.classList.remove('dimmed'); $$('.parcel.on', svg).forEach(x => x.classList.remove('on')); };
+  let tipFor = null, offT = 0, mine = 0;
+  const lightsOff = () => { clearTimeout(offT); offT = 0; tipFor = null; untip(mine); svg.classList.remove('dimmed'); $$('.parcel.on', svg).forEach(x => x.classList.remove('on')); };
   svg.addEventListener('pointermove', e => {
     const p = e.target.closest?.('.parcel'); if (!p) { if (!offT && tipFor) offT = setTimeout(lightsOff, 180); return; }
     clearTimeout(offT); offT = 0;
@@ -1266,7 +1270,7 @@ function parcelMap(width, height) {
     if (tipFor === r.name) { tip(e, null); return; }
     tipFor = r.name;
     $$('.parcel.on', svg).forEach(x => x !== p && x.classList.remove('on')); p.classList.add('on'); svg.classList.add('dimmed');
-    tip(e, h('div', { class: 'tsig' }, sigil(r, 56), h('div', null,
+    mine = tip(e, h('div', { class: 'tsig' }, sigil(r, 56), h('div', null,
       h('div', { class: 'tt' }, r.short, ' ', lifeBadge(r.life)),
       r.state?.status ? h('div', { class: 'tq', text: '„' + r.state.status + '”' }) : h('div', { class: 'ts', text: senseText(r) }),
       h('div', { class: 'tm', text: `${FAM[r.family]?.name} · nr ${r.no} · ostatni commit ${ago(r.last_ts)} · ${pl(r.commits, 'commit', 'commity', 'commitów')} · ${pl(r.branches.length, 'gałąź', 'gałęzie', 'gałęzi')}${r.pages && r.life !== 'zakończone' ? ' · ▶ Pages' : ''}` }),
@@ -1620,15 +1624,15 @@ function seismo() {
   const dayKey = i => new Date((start + i) * DAY * 1000).toISOString().slice(0, 10);
   const topOf = i => { const k = dayKey(i); return repos.map(r => ({ r, n: (r.days && r.days[k]) || 0 })).filter(x => x.n).sort((a, b) => b.n - a.n); };
   const dayAt = e => { const bb = svg.getBoundingClientRect(); return Math.max(0, Math.min(nk - 1, Math.floor((e.clientX - bb.left) / bb.width * n))); };
-  let lit = null, offT = 0;
-  const off = () => { clearTimeout(offT); offT = 0; guide.setAttribute('visibility', 'hidden'); lit?.classList.remove('on'); lit = null; untip(); };
+  let lit = null, offT = 0, mine = 0;
+  const off = () => { clearTimeout(offT); offT = 0; guide.setAttribute('visibility', 'hidden'); lit?.classList.remove('on'); lit = null; untip(mine); };
   svg.addEventListener('pointermove', e => {
     clearTimeout(offT); offT = 0;
     const i = dayAt(e), x = i * bw + bw / 2;
     guide.setAttribute('x1', x); guide.setAttribute('x2', x); guide.setAttribute('visibility', 'visible');
     if (lit !== bars[i]) { lit?.classList.remove('on'); lit = bars[i] || null; lit?.classList.add('on'); }
     const top = topOf(i);
-    tip(e, [h('div', { class: 'tt', text: pl(vals[i] || 0, 'commit', 'commity', 'commitów') }), h('div', { class: 'ts', text: DS.format(new Date((start + i) * DAY * 1000)) }),
+    mine = tip(e, [h('div', { class: 'tt', text: pl(vals[i] || 0, 'commit', 'commity', 'commitów') }), h('div', { class: 'ts', text: DS.format(new Date((start + i) * DAY * 1000)) }),
       h('div', { class: 'tm', text: top.length ? top.slice(0, 3).map(x => `${x.r.short} ${x.n}`).join(' · ') + (JASK ? ' · kliknij, żeby zaznaczyć' : '') : 'cisza' })]);
   });
   svg.addEventListener('pointerleave', () => { clearTimeout(offT); offT = setTimeout(off, 120); });

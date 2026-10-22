@@ -584,12 +584,22 @@ function renderMaterialy(box, c) {
   const say = (text, kind) => { msg.hidden = !text; msg.textContent = text || ''; msg.className = 'mt-msg' + (kind ? ' ' + kind : ''); };
   /* Ruch (v6.4, 57b-ruch.js): his parts, set in motion by his hands; kept on the material record, read by agents */
   const ruch = ruchWindow(view, {
-    save: async (id, parts) => {
-      const ru = { v: 1, at: Date.now(), parts };
-      const r = await matPatch(id, rec => { rec.ruch = ru; });
+    // touched: the parts this window added, changed or took back since it last read the record. The rest of the record's
+    // parts stay as they are now, so a second window (or tab) on the same model is never overwritten (6.4.1, Medium on PR #4)
+    save: async (id, parts, touched, src) => {
+      const T = new Set(touched || parts.map(p => p.id)), mine = new Map(parts.map(p => [p.id, p]));
+      let ru = null;
+      const r = await matPatch(id, rec => {
+        const have = rec.ruch?.parts || [], out = [];
+        for (const p of have) { if (!T.has(p.id)) out.push(p); else if (mine.has(p.id)) out.push(mine.get(p.id)); }
+        for (const p of parts) if (T.has(p.id) && !have.some(q => q.id === p.id)) out.push(p);
+        ru = { v: 1, at: Date.now(), parts: out };
+        rec.ruch = ru;
+      });
       await ruchMirrorWrite(id, ru); // after the record: an older build that rewrites the record cannot take it away
       if (r && cur && cur.id === id) cur = r;
-      matEmit({ changed: [id], ruch: true });
+      matEmit({ changed: [id], ruch: true, src });
+      return ru.parts;
     },
     saveFile: (name, text) => saveFile(name, text),
     older: async m => (await matVersions(m)).filter(v => v.id !== m.id && (v.ver || 1) < (m.ver || 1) && v.ruch?.parts?.length).sort((a, b) => (b.ver || 1) - (a.ver || 1))[0] || null,
@@ -789,6 +799,8 @@ function renderMaterialy(box, c) {
     }
     // another tab turned, scaled or restored the one shown here: show it as it is now (a walk inside it is not broken)
     if (d.other && cur && !walk && (d.changed || []).includes(cur.id)) show(cur.id, true);
+    // another Materiały window of this tab set the motion of the model shown here: Ruch takes its parts in (6.4.1)
+    else if (!d.other && d.ruch && d.src !== ruch.me && cur && (d.changed || []).includes(cur.id)) { const id = cur.id; matAll().then(all => { if (alive && cur?.id === id) ruch.sync(all.get(id)); }); }
     drawList();
   };
   document.addEventListener('jk:materialy', onLib);

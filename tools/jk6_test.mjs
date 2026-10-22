@@ -53,7 +53,7 @@ const ONLY = process.env.ONLY || ''; // run one part: desk, repo, phone, claude,
 if (!ONLY || ONLY === 'desk') {
   const { ctx, page, J, wait, shot } = await open();
   const api = await J(() => ({ v: window.Jaskinia?.v, build: JASK_BUILD?.v, types: typeof Jaskinia?.ext?.type, mat: !!__JASK && Object.keys(window.Jaskinia.materialy) }));
-  ok(api.v === 1 && /^6(\.\d+)?$/.test(api.build) && api.types === 'function', 'boot: window.Jaskinia v1 in build 6.x', JSON.stringify(api));
+  ok(api.v === 1 && /^6(\.\d+){0,2}$/.test(api.build) && api.types === 'function', 'boot: window.Jaskinia v1 in build 6.x', JSON.stringify(api));
   // open Materiały from the API (what a window chooser does)
   const wid = await J(() => Jaskinia.ext.open('materialy'));
   await wait(600);

@@ -53,7 +53,9 @@ node tools/jk5_test.mjs                            # 43 checks: labs and games r
 node tools/jk6_test.mjs [shots] [models]           # 53 checks: Materiały, the shared 3D stage, Wejdź, window.Jaskinia (needs a folder of public models, see its header)
 node tools/jk61_test.mjs                           # 29 checks: tabs that merge, addresses, the agents window, material revisions
 node tools/jk62_test.mjs                           # 39 checks: the owner's ten remarks from v6 (3D mouse, flying, Zagraj, chart notes, sharp pixels)
-node tools/jk63_test.mjs                           # 41 checks: older tabs (v6, v6.2) cannot undo a release, merges keep both losers, copies when storage is full, materials across tabs, play entries
+node tools/jk63_test.mjs                           # 43 checks: older tabs (v6, v6.2) cannot undo a release, merges keep both losers, copies when storage is full, materials across tabs, play entries
+node tools/jk64_test.mjs                           # 56 checks: Ruch (his own parts set in motion by hand), games that say what they are
+node tools/jk641_test.mjs                          # 27 checks: the PR #4 reviewers' Ruch cases (repeated names, a moved part, two windows, two fingers, the close button)
 node tools/jk2_chaos.mjs 400 7                     # destruction run: hundreds of random actions on desktop and phone, invariants, reload = same state
 ```
 

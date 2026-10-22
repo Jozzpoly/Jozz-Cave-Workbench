@@ -1115,6 +1115,9 @@ body { height: 100%; overflow: hidden; margin: 0; background: var(--ground); }
 .fh-nw { top: 0; left: 0; cursor: nwse-resize; } .fh-se { bottom: 0; right: 0; cursor: nwse-resize; }
 .win.float .fh-se::after { content: ""; position: absolute; right: 4px; bottom: 4px; width: 7px; height: 7px; border-right: 2px solid var(--ink-3); border-bottom: 2px solid var(--ink-3); border-radius: 0 0 2px 0; }
 @media (pointer: coarse) { .fh-n, .fh-s { height: 14px; } .fh-e, .fh-w { width: 14px; } .fh-ne, .fh-nw, .fh-se, .fh-sw { width: 26px; height: 26px; } }
+/* the header's buttons sit above the stretching edges: the top-right corner covered the middle of the close button in a
+   compact floating window (Astra on PR #4, 21 Oct); the corner still stretches outside the button */
+.win.float .wtools { position: relative; z-index: 5; }
 
 /* borders between windows */
 .jk-div { position: absolute; z-index: 5; touch-action: none; }
@@ -1882,6 +1885,7 @@ body:has(.jk.phone) .jk-toasts { bottom: calc(78px + env(safe-area-inset-bottom,
 .rc-play.on { background: color-mix(in srgb, var(--hand) 16%, transparent); }
 .rc-hint, .rc-note { margin: 0; color: var(--ink-2); line-height: 1.5; }
 .rc-note { color: var(--hand); font-size: 12px; }
+.rc-note.rc-warn { color: var(--warn); }
 .rc-path { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 3px; font-size: 11.5px; }
 .rc-path i { font-style: normal; color: var(--ink-3); }
 .rc-crumb { border: 0; background: none; font: inherit; color: var(--ink-2); padding: 1px 4px; border-radius: 5px; cursor: pointer; max-width: 16ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -6115,7 +6119,7 @@ return __SWIAT3D_MOD;
 
 const BIB_HOST = "artifact";
 const BIB_MODE = "jaskinia";
-const JASK_BUILD = {"v": "6.4", "built": "2026-10-21T02:24Z", "host": "artifact"};
+const JASK_BUILD = {"v": "6.4.1", "built": "2026-10-22T15:27Z", "host": "artifact"};
 const LAB_DEMO = "<!doctype html>\n<html lang=\"pl\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n<title>Piłki: przyrząd pokazowy Jaskini</title>\n<style>\n  :root { color-scheme: dark; --bg: #0f1418; --panel: #172027; --ink: #e6edf2; --ink2: #9fb0bd; --line: #2a3640; --hot: #ffb547; --ok: #64d28a; }\n  * { box-sizing: border-box; }\n  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font: 13px/1.4 system-ui, sans-serif; overflow: hidden; }\n  #c { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }\n  .ui { position: absolute; left: 10px; top: 10px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; max-width: calc(100% - 20px); }\n  button { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 4px 10px; cursor: pointer; }\n  button:hover { border-color: var(--ink2); }\n  label { display: inline-flex; align-items: center; gap: 6px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 3px 8px; color: var(--ink2); }\n  .hud { position: absolute; left: 10px; bottom: 10px; color: var(--ink2); font: 12px/1.3 ui-monospace, monospace; }\n  .trace { position: absolute; right: 10px; top: 10px; width: min(300px, 46%); max-height: 45%; overflow: auto; background: color-mix(in srgb, var(--panel) 88%, transparent);\n    border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; display: none; }\n  .trace.on { display: block; }\n  .trace h2 { margin: 0 0 4px; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--ink2); }\n  .trace p { margin: 3px 0; }\n  .trace time { color: var(--hot); font-family: ui-monospace, monospace; margin-right: 6px; }\n  .pause { position: absolute; inset: 0; display: none; place-items: center; color: var(--ink2); font-size: 15px; }\n  .pause.on { display: grid; }\n</style>\n</head>\n<body>\n<canvas id=\"c\" aria-label=\"Piłki odbijające się od podłogi\"></canvas>\n<div class=\"ui\">\n  <button id=\"add\" type=\"button\">Dodaj piłkę</button>\n  <button id=\"shake\" type=\"button\">Potrząśnij</button>\n  <label>sprężystość <input id=\"e\" type=\"range\" min=\"0.5\" max=\"0.98\" step=\"0.01\" value=\"0.86\"></label>\n</div>\n<div class=\"hud\" id=\"hud\"></div>\n<section class=\"trace\" id=\"trace\" aria-live=\"polite\"><h2>Ślad: uwagi z Jaskini</h2></section>\n<div class=\"pause\" id=\"pause\">pauza: okno w Jaskini jest ukryte</div>\n<script>\n/* Jaskinia instrument contract, v1: a drop-in for any lab or game page.\n   Load it with a script tag (src=\"jaskinia-przyrzad.js\") or paste it into an inline script. The contract: docs/przyrzad/KONTRAKT.md\n\n   Jaskinia.hello({ name: 'MiniFeniks', version: 'kampania 04', wants: ['remark'] });   // who you are (once, at start)\n   Jaskinia.state('Dzień 3, 14:20 · Ania niesie deski', { dzien: 3 });                  // what is happening now\n   Jaskinia.signals({ fps: 58, zapas: 12 });                                             // numbers to draw live, a few times a second\n   Jaskinia.event('Ania porzuciła zamiar: brak desek', 'uwaga');                         // something happened ('info' | 'uwaga' | 'blad')\n   Jaskinia.onRemark(r => trace.push(r));      // the owner's remark from Jaskinia's flag: { text, at }\n   Jaskinia.onStateRequest(() => ({ text, data }));   // optional: a fresh state for the moment of the flag\n   Jaskinia.onVisible(v => paused = !v);       // optional: the window was hidden or shown again\n\n   Opened on its own (no Jaskinia around) every call does nothing, so the lab never depends on it. Ctrl+. inside the\n   page asks Jaskinia for the \"To mnie uwiera\" note, pinned to this lab and this second. */\n(() => {\n  if (window.Jaskinia) return;\n  const host = window.parent !== window ? window.parent : null;\n  const send = m => { if (host) try { host.postMessage({ jaskinia: 1, ...m }, '*'); } catch { /* not allowed: fine */ } };\n  let hello = null, last = null, stateFn = null;\n  const remarkFns = [], visFns = [];\n  addEventListener('message', ev => {\n    if (!host || ev.source !== host) return;           // only the page that holds this lab\n    const d = ev.data;\n    if (!d || d.jaskinia !== 1) return;\n    if (d.type === 'hi' && hello) send({ type: 'hello', ...hello });\n    else if (d.type === 'state?') { let s = last; try { if (stateFn) s = stateFn() || last; } catch { /* keep the last one */ } if (s) send({ type: 'state', text: s.text, data: s.data }); }\n    else if (d.type === 'remark') for (const f of remarkFns) try { f({ text: String(d.text || ''), at: String(d.at || '') }); } catch { /* the lab's problem */ }\n    else if (d.type === 'visible') for (const f of visFns) try { f(!!d.visible); } catch { /* the lab's problem */ }\n  });\n  addEventListener('keydown', ev => { if (host && (ev.ctrlKey || ev.metaKey) && ev.key === '.') { ev.preventDefault(); send({ type: 'flag' }); } }, true);\n  window.Jaskinia = {\n    active: !!host,\n    hello(h) { hello = { name: String(h && h.name || ''), version: String(h && h.version || ''), wants: Array.isArray(h && h.wants) ? h.wants : [] }; send({ type: 'hello', ...hello }); },\n    state(text, data) { last = { text: String(text || ''), data }; send({ type: 'state', text: last.text, data }); },\n    signals(values) { send({ type: 'signals', values }); },\n    event(text, level) { send({ type: 'event', text: String(text || ''), level }); },\n    onRemark(fn) { remarkFns.push(fn); },\n    onStateRequest(fn) { stateFn = fn; },\n    onVisible(fn) { visFns.push(fn); },\n  };\n})();\n\n<\/script>\n<script>\n/* A small physics toy that speaks the instrument contract: it tells Jaskinia who it is, what is happening, a few numbers,\n   and what happened; it keeps the owner's remarks in its own trace. Opened on its own, it simply runs. */\nconst cv = document.getElementById('c'), g = cv.getContext('2d');\nconst R = 14, G = 900;              // ball radius (px) and gravity (px/s²); 100 px count as 1 m in the numbers below\nlet W = 0, H = 0, balls = [], restit = 0.86, bounces = [], paused = false, t0 = performance.now(), frames = [];\nfunction size() { const d = devicePixelRatio || 1; W = cv.clientWidth; H = cv.clientHeight; cv.width = Math.round(W * d); cv.height = Math.round(H * d); g.setTransform(d, 0, 0, d, 0, 0); }\naddEventListener('resize', size); size();\nfunction addBall(x, y) {\n  const b = { x: x ?? R + Math.random() * (W - 2 * R), y: y ?? R + Math.random() * H * 0.3, vx: (Math.random() - 0.5) * 420, vy: -Math.random() * 300, still: 0, said: false, hue: 30 + balls.length * 47 % 300 };\n  balls.push(b);\n  Jaskinia.event(`nowa piłka (${balls.length})`);\n  sayState();\n}\ndocument.getElementById('add').onclick = () => addBall();\ndocument.getElementById('shake').onclick = () => { for (const b of balls) { b.vy -= 500 + Math.random() * 300; b.vx += (Math.random() - 0.5) * 400; b.still = 0; b.said = false; } Jaskinia.event('potrząśnięcie'); };\ndocument.getElementById('e').oninput = ev => { restit = +ev.target.value; sayState(); };\ncv.addEventListener('pointerdown', ev => addBall(ev.offsetX, ev.offsetY));\nconst energy = () => balls.reduce((a, b) => a + 0.5 * (b.vx * b.vx + b.vy * b.vy) / 1e4 + G / 100 * (H - R - b.y) / 100, 0);\nfunction sayState() { Jaskinia.state(`${balls.length} piłki, energia ${energy().toFixed(1)} J, sprężystość ${restit.toFixed(2)}`, { pilki: balls.length, energia: +energy().toFixed(2), sprezystosc: restit, czas_s: Math.round((performance.now() - t0) / 1000) }); }\nJaskinia.hello({ name: 'Piłki', version: 'pokaz 1', wants: ['remark'] });\nfor (let i = 0; i < 3; i++) addBall();\nJaskinia.onStateRequest(() => ({ text: `${balls.length} piłki, energia ${energy().toFixed(1)} J, sprężystość ${restit.toFixed(2)}`, data: { pilki: balls.length, energia: +energy().toFixed(2), sprezystosc: restit } }));\nJaskinia.onRemark(r => {\n  const tr = document.getElementById('trace');\n  tr.classList.add('on');\n  const p = document.createElement('p'), tm = document.createElement('time');\n  tm.textContent = (r.at || '').slice(11, 19); p.append(tm, document.createTextNode(r.text));\n  tr.append(p);\n  window.__remarks = (window.__remarks || []).concat(r);\n});\nJaskinia.onVisible(v => { paused = !v; document.getElementById('pause').classList.toggle('on', paused); });\n\nlet last = performance.now(), sigT = 0, stT = 0;\nfunction step(now) {\n  const dt = Math.min(0.033, (now - last) / 1000); last = now;\n  frames.push(now); while (frames.length && now - frames[0] > 1000) frames.shift();\n  if (!paused) for (const b of balls) {\n    b.vy += G * dt; b.vx *= 1 - 0.15 * dt; b.x += b.vx * dt; b.y += b.vy * dt;\n    if (b.x < R) { b.x = R; b.vx = -b.vx * restit; } if (b.x > W - R) { b.x = W - R; b.vx = -b.vx * restit; }\n    if (b.y > H - R) { b.y = H - R; if (b.vy > 60) bounces.push(now); b.vy = -b.vy * restit; b.vx *= 0.98; }\n    const moving = Math.abs(b.vy) > 40 || Math.abs(b.vx) > 25 || b.y < H - R - 2;\n    b.still = moving ? 0 : b.still + dt;\n    if (b.still > 1 && !b.said) { b.said = true; Jaskinia.event('piłka się zatrzymała'); }\n    if (moving) b.said = false;\n  }\n  while (bounces.length && now - bounces[0] > 1000) bounces.shift();\n  g.clearRect(0, 0, W, H);\n  g.strokeStyle = '#2a3640'; g.beginPath(); g.moveTo(0, H - 0.5); g.lineTo(W, H - 0.5); g.stroke();\n  for (const b of balls) { g.fillStyle = `hsl(${b.hue} 80% 62%)`; g.beginPath(); g.arc(b.x, b.y, R, 0, Math.PI * 2); g.fill(); }\n  document.getElementById('hud').textContent = `${balls.length} piłki · ${energy().toFixed(1)} J · ${bounces.length} odbić/s · ${frames.length} kl./s${Jaskinia.active ? ' · w Jaskini' : ''}`;\n  if (now - sigT > 100) { sigT = now; Jaskinia.signals({ energia: +energy().toFixed(2), odbicia: bounces.length, pilki: balls.length, fps: frames.length }); }\n  if (now - stT > 1000) { stT = now; sayState(); }\n  requestAnimationFrame(step);\n}\nrequestAnimationFrame(step);\nwindow.__boot = Math.random().toString(36).slice(2); // lets a check tell a running lab from a restarted one\n<\/script>\n</body>\n</html>\n";
 const UW_ODP = {};
 (() => {
@@ -6230,19 +6234,23 @@ const live = { state: 'idle', pushed: {}, extra: [], checkedAt: null };
 const use = name => (window.claude && typeof window.claude.use === 'function') ? window.claude.use(name).catch(() => null) : Promise.resolve(null);
 
 /* ---------------- tooltip + toast ---------------- */
-let tipEl = null;
+/* tip() returns a number for the note it put up; a chart that lets its note go late (after a short wait on leaving)
+   passes that number to untip(), so it never hides a note another chart has put up meanwhile (v6.4.1: leaving the map
+   onto a chart in a window above it, the map's late goodbye hid the chart's note). untip() without a number hides any. */
+let tipEl = null, tipGen = 0;
 function tip(e, content) {
-  if ((e && e.pointerType === 'touch') || HOOK.noTips) return;
+  if ((e && e.pointerType === 'touch') || HOOK.noTips) return 0;
   if (!tipEl) { tipEl = h('div', { class: 'tip', role: 'tooltip' }); document.body.append(tipEl); }
-  if (content) tipEl.replaceChildren(...[].concat(content)); // null = just follow the pointer
+  if (content) { tipEl.replaceChildren(...[].concat(content)); tipGen++; } // null = just follow the pointer
   tipEl.hidden = false;
   const pad = 14, w = tipEl.offsetWidth, hh = tipEl.offsetHeight;
   let x = e.clientX + pad, y = e.clientY + pad;
   if (x + w > innerWidth - 8) x = e.clientX - w - pad;
   if (y + hh > innerHeight - 8) y = e.clientY - hh - pad;
   tipEl.style.left = Math.max(8, x) + 'px'; tipEl.style.top = Math.max(8, y) + 'px';
+  return tipGen;
 }
-function untip() { if (tipEl) tipEl.hidden = true; }
+function untip(gen) { if (tipEl && (gen == null || gen === tipGen)) tipEl.hidden = true; }
 /* One way of answering what the pointer points at (v6.2; the owner, 18 Oct: the charts were inconsistent — some answered,
    others only through the browser's late plain tooltip). Every chart mark drawn with an SVG <title> loses it (the
    browser's tooltip came after a second, unstyled, on top of ours) and speaks through the same note instead: it lights
@@ -6515,8 +6523,8 @@ function parcelMap(width, height) {
   /* Hover without a disco (the owner, 18 Oct: sweeping the mouse across the map flashed every border it crossed).
      Crossing a gap between plots keeps the current plot lit for a moment; only resting outside the plots, or leaving the
      map, lets the light go. The light itself fades (CSS), so a fast sweep reads as one calm movement. */
-  let tipFor = null, offT = 0;
-  const lightsOff = () => { clearTimeout(offT); offT = 0; tipFor = null; untip(); svg.classList.remove('dimmed'); $$('.parcel.on', svg).forEach(x => x.classList.remove('on')); };
+  let tipFor = null, offT = 0, mine = 0;
+  const lightsOff = () => { clearTimeout(offT); offT = 0; tipFor = null; untip(mine); svg.classList.remove('dimmed'); $$('.parcel.on', svg).forEach(x => x.classList.remove('on')); };
   svg.addEventListener('pointermove', e => {
     const p = e.target.closest?.('.parcel'); if (!p) { if (!offT && tipFor) offT = setTimeout(lightsOff, 180); return; }
     clearTimeout(offT); offT = 0;
@@ -6524,7 +6532,7 @@ function parcelMap(width, height) {
     if (tipFor === r.name) { tip(e, null); return; }
     tipFor = r.name;
     $$('.parcel.on', svg).forEach(x => x !== p && x.classList.remove('on')); p.classList.add('on'); svg.classList.add('dimmed');
-    tip(e, h('div', { class: 'tsig' }, sigil(r, 56), h('div', null,
+    mine = tip(e, h('div', { class: 'tsig' }, sigil(r, 56), h('div', null,
       h('div', { class: 'tt' }, r.short, ' ', lifeBadge(r.life)),
       r.state?.status ? h('div', { class: 'tq', text: '„' + r.state.status + '”' }) : h('div', { class: 'ts', text: senseText(r) }),
       h('div', { class: 'tm', text: `${FAM[r.family]?.name} · nr ${r.no} · ostatni commit ${ago(r.last_ts)} · ${pl(r.commits, 'commit', 'commity', 'commitów')} · ${pl(r.branches.length, 'gałąź', 'gałęzie', 'gałęzi')}${r.pages && r.life !== 'zakończone' ? ' · ▶ Pages' : ''}` }),
@@ -6878,15 +6886,15 @@ function seismo() {
   const dayKey = i => new Date((start + i) * DAY * 1000).toISOString().slice(0, 10);
   const topOf = i => { const k = dayKey(i); return repos.map(r => ({ r, n: (r.days && r.days[k]) || 0 })).filter(x => x.n).sort((a, b) => b.n - a.n); };
   const dayAt = e => { const bb = svg.getBoundingClientRect(); return Math.max(0, Math.min(nk - 1, Math.floor((e.clientX - bb.left) / bb.width * n))); };
-  let lit = null, offT = 0;
-  const off = () => { clearTimeout(offT); offT = 0; guide.setAttribute('visibility', 'hidden'); lit?.classList.remove('on'); lit = null; untip(); };
+  let lit = null, offT = 0, mine = 0;
+  const off = () => { clearTimeout(offT); offT = 0; guide.setAttribute('visibility', 'hidden'); lit?.classList.remove('on'); lit = null; untip(mine); };
   svg.addEventListener('pointermove', e => {
     clearTimeout(offT); offT = 0;
     const i = dayAt(e), x = i * bw + bw / 2;
     guide.setAttribute('x1', x); guide.setAttribute('x2', x); guide.setAttribute('visibility', 'visible');
     if (lit !== bars[i]) { lit?.classList.remove('on'); lit = bars[i] || null; lit?.classList.add('on'); }
     const top = topOf(i);
-    tip(e, [h('div', { class: 'tt', text: pl(vals[i] || 0, 'commit', 'commity', 'commitów') }), h('div', { class: 'ts', text: DS.format(new Date((start + i) * DAY * 1000)) }),
+    mine = tip(e, [h('div', { class: 'tt', text: pl(vals[i] || 0, 'commit', 'commity', 'commitów') }), h('div', { class: 'ts', text: DS.format(new Date((start + i) * DAY * 1000)) }),
       h('div', { class: 'tm', text: top.length ? top.slice(0, 3).map(x => `${x.r.short} ${x.n}`).join(' · ') + (JASK ? ' · kliknij, żeby zaznaczyć' : '') : 'cisza' })]);
   });
   svg.addEventListener('pointerleave', () => { clearTimeout(offT); offT = setTimeout(off, 120); });
@@ -9268,6 +9276,11 @@ const EN = {
   'Próba: kinematyka do wypróbowania, nie fizyka i nie gotowy język Studia': 'A try: kinematics to play with, not physics and not the finished language of Studio',
   'Pokaż ruch': 'Show motion', 'Wszystko wraca do spoczynku': 'Everything goes back to rest', 'Wszystkie części ruszają naraz': 'All parts move at once',
   'Ruch przeniesiony z wersji {0}: {1} z {2}.': 'Motion carried over from version {0}: {1} of {2}.',
+  'Nie przeniosłem z wersji {0}: {1}. Ta nazwa powtarza się w nowym pliku, więc nie wiem, która to część. Wskaż ją i nadaj ruch jeszcze raz.': 'Not carried over from version {0}: {1}. That name repeats in the new file, so I cannot tell which part it is. Point at it and set its motion again.',
+  'Nie ma już w pliku: {0}.': 'No longer in the file: {0}.',
+  'Przesunięte w pliku: {0}. Punkt obrotu przesunąłem razem z częścią; sprawdź, czy tak ma być.': 'Moved in the file: {0}. I moved the pivot along with the part; check that this is what you want.',
+  'Zmieniony kształt: {0}. Sprawdź oś i punkt.': 'Changed shape: {0}. Check the axis and the pivot.',
+  'Ruch zapisany przed wersją 6.4.1: nie sprawdziłem, czy części nie zmieniły miejsca. Pokaż ruch i popatrz na osie.': 'Motion saved before version 6.4.1: I did not check whether the parts moved. Show the motion and look at the axes.',
   'Kliknij część, żeby ją zmienić, albo chwyć ruchomą i przeciągnij.': 'Click a part to change it, or grab a moving one and drag it.',
   'Kliknij część swojego modelu i powiedz, jak się rusza. Ctrl+klik dobiera klocki do Twojej własnej części.': 'Click a part of your model and say how it moves. Ctrl+click gathers cubes into a part of your own.',
   'Poziom w pliku': 'Level in the file', 'Wybierz ten poziom': 'Choose this level', 'Twoja część: {0}': 'Your part: {0}',
@@ -10135,15 +10148,15 @@ function statChart(m, W, H, select) {
   const when0 = b => k === 1 ? diText(b.lo) : `${diText(b.hi, false)} – ${diText(b.lo)}`;
   /* the same answer as Puls and every other chart mark: the bar under the pointer lights softly, the note follows, and
      leaving fades instead of snapping off (the owner, 18 Oct) */
-  let lit = null, offT = 0;
-  const off = () => { clearTimeout(offT); offT = 0; guide.setAttribute('visibility', 'hidden'); lit?.classList.remove('on'); lit = null; B.untip(); };
+  let lit = null, offT = 0, mine = 0;
+  const off = () => { clearTimeout(offT); offT = 0; guide.setAttribute('visibility', 'hidden'); lit?.classList.remove('on'); lit = null; B.untip(mine); };
   svg.addEventListener('pointermove', e => {
     clearTimeout(offT); offT = 0;
     const i = at(e), b = bins[i];
     if (lit !== bars[i]) { lit?.classList.remove('on'); lit = bars[i] || null; lit?.classList.add('on'); }
     guide.setAttribute('x1', i * bw + bw / 2); guide.setAttribute('x2', i * bw + bw / 2); guide.setAttribute('visibility', 'visible');
     const { top, tv } = topIn(b);
-    B.tip(e, [h('div', { class: 'tt', text: tn(b.v, 'commit', 'commity', 'commitów') }), h('div', { class: 'ts', text: when0(b) }),
+    mine = B.tip(e, [h('div', { class: 'tt', text: tn(b.v, 'commit', 'commity', 'commitów') }), h('div', { class: 'ts', text: when0(b) }),
       h('div', { class: 'tm', text: top ? t('najwięcej: {0} ({1})', top.short, tv) + (select ? t(' · kliknij, żeby zaznaczyć') : '') : t('cisza') })]);
   });
   svg.addEventListener('pointerleave', () => { clearTimeout(offT); offT = setTimeout(off, 120); });
@@ -13314,7 +13327,7 @@ function boot() {
   v6Hint();
   routeStart();
   handleLegacy(); // what older builds wrote while this one was closed
-  window.__JASK = { get L() { return L; }, get store() { return store; }, get phone() { return phone; }, RT, WALLS, apply, select, commit, undo, redo, setSpace, layoutRects, leafIds, rects: () => rects, prefs, openSettings, readBackups, persistNow, get log() { return jlog; }, get uwagi() { return uwagi; }, packageData, packageText, deleteSpace, restoreTrash, forgetTrash, restoreBackup, resetAll, setPref, signalsBeside, uwagaPop, noteSet, noteNew, persist, route, matImport, matSweep, matApplySettings, handleLegacy, get dirty() { return dirty; }, get lastText() { return lastText; },
+  window.__JASK = { get L() { return L; }, get store() { return store; }, get phone() { return phone; }, RT, WALLS, apply, select, commit, undo, redo, setSpace, layoutRects, leafIds, rects: () => rects, prefs, openSettings, readBackups, persistNow, get log() { return jlog; }, get uwagi() { return uwagi; }, packageData, packageText, deleteSpace, restoreTrash, forgetTrash, restoreBackup, resetAll, setPref, signalsBeside, uwagaPop, noteSet, noteNew, persist, route, matImport, matSweep, matApplySettings, matPatch, handleLegacy, get dirty() { return dirty; }, get lastText() { return lastText; },
     live: () => [...LIVE.values()].map(e => ({ id: e.id, url: e.url, hello: e.hello, state: e.state, sigs: [...e.sigs.keys()], n: Object.fromEntries([...e.sigs].map(([k, v]) => [k, v.v.length])), evs: e.evs.map(x => x.text), marks: e.marks.length, last: e.last, vis: e.vis })) };
 }
 
@@ -15285,12 +15298,22 @@ function renderMaterialy(box, c) {
   const say = (text, kind) => { msg.hidden = !text; msg.textContent = text || ''; msg.className = 'mt-msg' + (kind ? ' ' + kind : ''); };
   /* Ruch (v6.4, 57b-ruch.js): his parts, set in motion by his hands; kept on the material record, read by agents */
   const ruch = ruchWindow(view, {
-    save: async (id, parts) => {
-      const ru = { v: 1, at: Date.now(), parts };
-      const r = await matPatch(id, rec => { rec.ruch = ru; });
+    // touched: the parts this window added, changed or took back since it last read the record. The rest of the record's
+    // parts stay as they are now, so a second window (or tab) on the same model is never overwritten (6.4.1, Medium on PR #4)
+    save: async (id, parts, touched, src) => {
+      const T = new Set(touched || parts.map(p => p.id)), mine = new Map(parts.map(p => [p.id, p]));
+      let ru = null;
+      const r = await matPatch(id, rec => {
+        const have = rec.ruch?.parts || [], out = [];
+        for (const p of have) { if (!T.has(p.id)) out.push(p); else if (mine.has(p.id)) out.push(mine.get(p.id)); }
+        for (const p of parts) if (T.has(p.id) && !have.some(q => q.id === p.id)) out.push(p);
+        ru = { v: 1, at: Date.now(), parts: out };
+        rec.ruch = ru;
+      });
       await ruchMirrorWrite(id, ru); // after the record: an older build that rewrites the record cannot take it away
       if (r && cur && cur.id === id) cur = r;
-      matEmit({ changed: [id], ruch: true });
+      matEmit({ changed: [id], ruch: true, src });
+      return ru.parts;
     },
     saveFile: (name, text) => saveFile(name, text),
     older: async m => (await matVersions(m)).filter(v => v.id !== m.id && (v.ver || 1) < (m.ver || 1) && v.ruch?.parts?.length).sort((a, b) => (b.ver || 1) - (a.ver || 1))[0] || null,
@@ -15490,6 +15513,8 @@ function renderMaterialy(box, c) {
     }
     // another tab turned, scaled or restored the one shown here: show it as it is now (a walk inside it is not broken)
     if (d.other && cur && !walk && (d.changed || []).includes(cur.id)) show(cur.id, true);
+    // another Materiały window of this tab set the motion of the model shown here: Ruch takes its parts in (6.4.1)
+    else if (!d.other && d.ruch && d.src !== ruch.me && cur && (d.changed || []).includes(cur.id)) { const id = cur.id; matAll().then(all => { if (alive && cur?.id === id) ruch.sync(all.get(id)); }); }
     drawList();
   };
   document.addEventListener('jk:materialy', onLib);
@@ -15582,8 +15607,9 @@ matDropAnywhere();
    Data on the material record: m.ruch = { v: 1, at, parts: [{ id, name, kind: 'obrot' | 'przesuw', axis: [x, y, z],
    pivot: [x, y, z], range: null | [min, max], z, nodes: ['0.1', …], names: [['group', 'cube'], …] }] }. Axis and pivot
    are in the file's own frame (metres, Y up, 16 Blockbench pixels = 1 m), before the material's default turn and scale.
-   nodes are child-index paths from the loaded model's root, names the same paths by name (a new version of the file is
-   matched by names). A turn is in radians, a slide in metres of the file. An empty list means he decided nothing moves.
+   nodes are child-index paths from the loaded model's root, names the same paths by name, boxes (6.4.1) where each node
+   sits in the file (a new version of the file is matched by names, and by boxes where names repeat). A turn is in
+   radians, a slide in metres of the file. An empty list means he decided nothing moves.
    z says where the axis came from ('klocek:<name>' a cube named like an axis, 'bryla' the shape, 'reka' his click), zp
    where the pivot came from (the same, or 'srodek', 'plik' for the group's pivot in Blockbench, 'wskazany' a cube he
    pointed at). What came from a proposal is proposed again when he changes how the part moves; what he chose stays. */
@@ -15611,23 +15637,47 @@ function ruchNodeAt(inner, path) {
   return x !== inner ? x : null;
 }
 function ruchNames(inner, n) { const out = []; for (let x = n; x && x !== inner; x = x.parent) out.unshift(ruchName(x) || '·'); return out; }
-/* the same node in another copy of the model (a new version of the file): by its names, by its place where names repeat */
-function ruchFind(inner, names, path) {
-  const at = path != null ? ruchNodeAt(inner, path) : null;
-  if (at && (!names || JSON.stringify(ruchNames(inner, at)) === JSON.stringify(names))) return at;
-  if (!names?.length) return null;
-  const idx = String(path ?? '').split('.').map(Number);
-  let x = inner;
-  for (let i = 0; i < names.length; i++) {
-    const kids = x.children.filter(c => (ruchName(c) || '·') === names[i]);
-    if (!kids.length) return null;
-    const same = x.children[idx[i]];
-    x = kids.length === 1 || !kids.includes(same) ? kids[0] : same;
-  }
-  return x === inner ? null : x;
-}
 const ruchClean = a => a.map(v => { const r = Math.round(v * 1e6) / 1e6; return Object.is(r, -0) ? 0 : r; });
 const ruchUnit = k => [k === 0 ? 1 : 0, k === 1 ? 1 : 0, k === 2 ? 1 : 0];
+
+/* 6.4.1: knowing a part again in a new version of the file. Names alone are not enough: two groups both called "wheel"
+   swap places and the old path then points at the other wheel (GPT, Astra and Medium on PR #4, 21 Oct). So every part
+   also keeps where each of its nodes sits in the file: the middle and the size of its box, measured in the rest pose
+   (boxes: [[cx, cy, cz, sx, sy, sz], …], metres of the file). A part is carried only when it is known for sure; when two
+   candidates fit, it is not guessed, and he is told which one to point at again. */
+function ruchSig(inner, n) {
+  const b = ruchBox(inner, [n]);
+  if (b.isEmpty()) return null;
+  const { THREE } = swiat();
+  return ruchClean([...b.getCenter(new THREE.Vector3()).toArray(), ...b.getSize(new THREE.Vector3()).toArray()]);
+}
+const ruchSame = (a, b) => !!a && !!b && a.length === b.length && a.every((v, i) => Math.abs(v - b[i]) <= 1e-4 + 1e-4 * Math.abs(b[i]));
+/* every node of the model whose names, from the root down, are exactly these */
+function ruchAll(inner, names) {
+  let level = [inner];
+  for (const nm of names) {
+    const next = [];
+    for (const x of level) for (const c of x.children) if ((ruchName(c) || '·') === nm) next.push(c);
+    level = next;
+    if (!level.length) break;
+  }
+  return level.filter(x => x !== inner);
+}
+/* the nodes of a kept part in this copy of the model, or why not: 'brak' (gone) or 'niejednoznaczne' (more than one fits) */
+function ruchMatch(inner, p) {
+  const out = [];
+  for (let i = 0; i < p.nodes.length; i++) {
+    const names = p.names?.[i];
+    if (!names?.length) { const at = ruchNodeAt(inner, p.nodes[i]); if (!at) return { fail: 'brak' }; out.push(at); continue; }
+    const all = ruchAll(inner, names);
+    if (!all.length) return { fail: 'brak' };
+    if (all.length === 1) { out.push(all[0]); continue; }
+    const sig = p.boxes?.[i], hits = sig ? all.filter(n => ruchSame(ruchSig(inner, n), sig)) : [];
+    if (hits.length !== 1) return { fail: 'niejednoznaczne' };
+    out.push(hits[0]);
+  }
+  return new Set(out).size === out.length ? { nodes: out } : { fail: 'niejednoznaczne' };
+}
 
 /* the box of some nodes in the model's own frame (always measured in the rest pose) */
 function ruchBox(inner, nodes) {
@@ -15805,7 +15855,8 @@ function ruchRig(inner) {
   return rig;
 }
 /* parts as they are kept: plain arrays, nothing of three.js */
-const ruchPlain = d => ({ id: d.id, name: d.name, kind: d.kind, axis: [...d.axis], pivot: [...d.pivot], range: d.range ? [...d.range] : null, z: d.z || '', zp: d.zp || d.z || '', nodes: [...d.nodes], names: (d.names || []).map(x => [...x]) });
+const ruchPlain = d => ({ id: d.id, name: d.name, kind: d.kind, axis: [...d.axis], pivot: [...d.pivot], range: d.range ? [...d.range] : null, z: d.z || '', zp: d.zp || d.z || '', nodes: [...d.nodes], names: (d.names || []).map(x => [...x]), ...(d.boxes ? { boxes: d.boxes.map(b => (b ? [...b] : null)) } : {}) });
+const ruchKey = d => JSON.stringify(ruchPlain(d));
 
 /* what an agent gets: the parts, where they sit in the file, how they move */
 function ruchJson(m, parts) {
@@ -15826,12 +15877,19 @@ function ruchWindow(view, opt) {
   let on = false, stage = null, inner = null, mat = null, rig = null, defs = [], pomoc = null, carried = null;
   let sel = null, custom = [], hoverN = null, playing = false, untick = null, untickPrev = null, pickPivot = false, drag = null, down = null;
   let savedP = Promise.resolve(), tPlay = 0, moveRaf = 0, lastMove = null, valEl = null, gen = 0, hitVer = -1;
+  // base: the parts as the material record held them when this window last read or wrote it. A save sends only what this
+  // window changed since, so two windows on one model add up instead of the later one replacing the other (6.4.1).
+  let base = [];
+  const me = 'rw' + (++ruchSeq).toString(36);
   const saveTs = new Map();
   let THREE = null, ray = null, ndc = null;
   const state = () => opt.onState?.({ on, n: defs.length });
   const api = {
     get on() { return on; }, get defs() { return defs; }, get sel() { return sel; }, get playing() { return playing; }, get rig() { return rig; }, get carried() { return carried; },
-    get saved() { return savedP; }, get inner() { return inner; },
+    get saved() { return savedP; }, get inner() { return inner; }, get me() { return me; }, get dragging() { return !!drag; },
+    /* another window of this tab changed the motion of the model shown here: take its parts in, keep this window's own
+       changes still on their way (they merge into the record when their save lands) */
+    sync(m) { if (!mat || !m || m.id !== mat.id || saveTs.has(mat.id) || drag) return; mat = m; adopt(m.ruch?.parts || []); },
     toggle() { on ? api.off() : api.start(); return on; },
     start() { on = true; panel.hidden = false; view.classList.add('ruch'); if (inner) attachObj(); draw(); state(); },
     off() { halt(); on = false; panel.hidden = true; view.classList.remove('ruch'); clearPomoc(); sel = null; custom = []; pickPivot = false; hoverN = null; if (stage) stage.canvas.style.cursor = ''; stage?.redraw(); state(); },
@@ -15842,6 +15900,7 @@ function ruchWindow(view, opt) {
       stage = st; mat = m; inner = ruchInner(o); rig = null; carried = null; gen++;
       sel = null; custom = []; hoverN = null; pickPivot = false;
       defs = (m?.ruch?.parts || []).map(ruchPlain);
+      base = defs.map(ruchPlain);
       if (on && inner) {
         attachObj();
         if (keep) {
@@ -15854,7 +15913,7 @@ function ruchWindow(view, opt) {
       }
       state();
     },
-    detach() { halt(); clearPomoc(); inner = rig = mat = null; defs = []; sel = null; custom = []; gen++; if (on) draw(); state(); },
+    detach() { halt(); clearPomoc(); inner = rig = mat = null; defs = []; base = []; carried = null; sel = null; custom = []; gen++; if (on) draw(); state(); },
     dispose() { api.detach(); unlisten(); panel.remove(); },
     play: () => play(), stop: () => stop(true),
     json: () => (mat ? ruchJson(mat, defs) : null),
@@ -15868,21 +15927,48 @@ function ruchWindow(view, opt) {
     rig = ruchRig(inner);
     rig.build(defs);
     drawPomoc();
-    if (mat && !mat.ruch && opt.older) { // a new version of a file he already set in motion: his motion comes along, by names
+    if (mat && !mat.ruch && opt.older) { // a new version of a file he already set in motion: his motion comes along when it is sure
       const my = gen;
       opt.older(mat).then(prev => {
         if (my !== gen || !prev?.ruch?.parts?.length || defs.length) return;
-        const moved = [];
+        rig.restPose(); // measured where the file puts the parts
+        const moved = [], why = { brak: [], niejednoznaczne: [], przesuniete: [], zmienione: [], niesprawdzone: 0 };
         for (const p of prev.ruch.parts) {
-          const ns = p.nodes.map((path, i) => ruchFind(inner, p.names?.[i], path));
-          if (ns.length && ns.every(Boolean)) moved.push({ ...ruchPlain(p), nodes: ns.map(n => ruchPathOf(inner, n)), names: ns.map(n => ruchNames(inner, n)) });
+          const m = ruchMatch(inner, p);
+          if (m.fail) { why[m.fail].push(p.name); continue; }
+          const d = { ...ruchPlain(p), nodes: m.nodes.map(n => ruchPathOf(inner, n)), names: m.nodes.map(n => ruchNames(inner, n)) };
+          const now = m.nodes.map(n => ruchSig(inner, n));
+          carryFrame(d, p, m.nodes, now, why);
+          d.boxes = now;
+          moved.push(d);
         }
-        if (!moved.length) return;
-        carried = { from: prev.ver || 1, n: moved.length, of: prev.ruch.parts.length };
-        defs = moved;
-        rig.build(defs); changed(); drawPomoc(); draw(); state();
+        carried = { from: prev.ver || 1, n: moved.length, of: prev.ruch.parts.length, ...why };
+        if (moved.length) { defs = moved; rig.build(defs); changed(); drawPomoc(); } else rig.apply();
+        draw(); state();
       }).catch(() => { /* no older versions here */ });
     }
+  }
+  /* the axis and the point of a carried part follow the part (Medium on PR #4: the right part with the old file's point
+     orbits instead of turning in place). Moved without changing its shape: the point moves with it. Its shape changed: what
+     came from a proposal is proposed again, what he chose stays, and he is asked to look. Kept before 6.4.1 (no boxes):
+     carried as before, and he is told it was not checked. */
+  function carryFrame(d, p, nodes, now, why) {
+    if (!p.boxes || p.boxes.length !== now.length || p.boxes.some(b => !b) || now.some(b => !b)) { why.niesprawdzone++; return; }
+    if (now.every((s, i) => ruchSame(s, p.boxes[i]))) return;
+    const delta = now.map((s, i) => [0, 1, 2].map(k => s[k] - p.boxes[i][k]));
+    const sameSize = now.every((s, i) => ruchSame(s.slice(3), p.boxes[i].slice(3)));
+    if (sameSize && delta.every(dl => ruchSame(dl, delta[0]))) {
+      d.pivot = ruchClean(d.pivot.map((v, k) => v + delta[0][k]));
+      why.przesuniete.push(d.name);
+      return;
+    }
+    const pr = ruchPropose(d.kind, inner, nodes), auto = v => v === 'bryla' || String(v).startsWith('klocek');
+    if (auto(d.z)) { d.axis = pr.axis; d.z = pr.z; }
+    if (auto(d.zp)) { d.pivot = pr.pivot; d.zp = pr.zp; }
+    else if (d.zp === 'srodek') { const { THREE: T3 } = swiat(); d.pivot = ruchClean(ruchBox(inner, nodes).getCenter(new T3.Vector3()).toArray()); }
+    else if (d.zp === 'plik' && nodes.length === 1) { const o = ruchOrigin(inner, nodes[0]); if (o) d.pivot = o; }
+    if (d.kind === 'przesuw' && d.range && auto(d.z)) d.range = pr.range;
+    why.zmienione.push(d.name);
   }
   /* ---- helpers drawn in the model's frame: the part pointed at, the chosen one, the axes ---- */
   function clearPomoc() { if (pomoc) { pomoc.parent?.remove(pomoc); pomoc.traverse(x => { x.geometry?.dispose(); x.material?.dispose(); }); pomoc = null; } }
@@ -15963,6 +16049,8 @@ function ruchWindow(view, opt) {
   }
   function onDown(e) {
     if (!on || !inner || e.button !== 0 || e.target !== stage?.canvas) return;
+    // a second finger while his hand holds a part: it neither takes another part nor turns the view (6.4.1)
+    if (drag) { if (e.pointerId !== drag.pid) { e.stopPropagation(); e.preventDefault(); } return; }
     const x = hit(e);
     if (pickPivot) {
       e.stopPropagation(); e.preventDefault();
@@ -15979,15 +16067,17 @@ function ruchWindow(view, opt) {
       cancelPreview(true);
       stage.controls.enabled = false;
       sel = { part: p.def, nodes: p.nodes.map(y => y.n), custom: false, leaf: elementOf(x.object) }; custom = [];
-      drag = { def: p.def, x0: e.clientX, y0: e.clientY, v0: rig.vals.get(p.def.id) || 0, last: null, acc: 0 };
+      drag = { def: p.def, pid: e.pointerId, x0: e.clientX, y0: e.clientY, v0: rig.vals.get(p.def.id) || 0, last: null, acc: 0 };
       stage.canvas.style.cursor = 'grabbing';
       drawPomoc(); draw();
       return;
     }
-    down = { x: e.clientX, y: e.clientY, t: performance.now(), hit: x, add: e.ctrlKey || e.metaKey };
+    down = { x: e.clientX, y: e.clientY, t: performance.now(), hit: x, add: e.ctrlKey || e.metaKey, pid: e.pointerId };
   }
+  // only the pointer that took the part moves it and lets it go: another finger lifted first ended his gesture (Feniks GPT on PR #4)
+  const other = (e, pid) => pid != null && e.pointerId != null && e.pointerId !== pid;
   function onDrag(e) {
-    if (!drag || !stage || !inner) return;
+    if (!drag || !stage || !inner || other(e, drag.pid)) return;
     e.preventDefault();
     const d = drag.def, cam = stage.camera, r = stage.canvas.getBoundingClientRect();
     inner.updateMatrixWorld(true);
@@ -16019,8 +16109,10 @@ function ruchWindow(view, opt) {
     rig.apply(); stage.redraw(); showVal();
   }
   function onUp(e) {
-    if (drag) { drag = null; if (stage) { stage.controls.enabled = true; stage.canvas.style.cursor = ''; } return; }
-    const d0 = down; down = null;
+    if (drag) { if (other(e, drag.pid)) return; drag = null; if (stage) { stage.controls.enabled = true; stage.canvas.style.cursor = ''; } return; }
+    const d0 = down;
+    if (d0 && other(e, d0.pid)) return; // another finger: not the end of this click
+    down = null;
     if (!d0 || !on) return;
     if (Math.hypot(e.clientX - d0.x, e.clientY - d0.y) > 5 || performance.now() - d0.t > 700) return; // that was a turn of the view
     click(d0);
@@ -16087,7 +16179,7 @@ function ruchWindow(view, opt) {
       if (taken) { jtoast(t('Ten kawałek należy już do części „{0}”. Najpierw ją zatrzymaj (Stoi).', taken.name)); return; }
       const pr = ruchPropose(kind, inner, sel.nodes);
       d = { id: 'r' + Date.now().toString(36) + (++ruchSeq).toString(36), name: selName(),
-        kind, axis: pr.axis, pivot: pr.pivot, range: pr.range, z: pr.z, zp: pr.zp, nodes: sel.nodes.map(n => ruchPathOf(inner, n)), names: sel.nodes.map(n => ruchNames(inner, n)) };
+        kind, axis: pr.axis, pivot: pr.pivot, range: pr.range, z: pr.z, zp: pr.zp, nodes: sel.nodes.map(n => ruchPathOf(inner, n)), names: sel.nodes.map(n => ruchNames(inner, n)), boxes: sel.nodes.map(n => ruchSig(inner, n)) };
       defs = [...defs, d];
       sel = { ...sel, part: d, custom: false };
       custom = [];
@@ -16106,13 +16198,43 @@ function ruchWindow(view, opt) {
   }
   function setPivot(p, z) { const d = sel?.part; if (!d) return; stop(true); d.pivot = ruchClean(p); d.zp = z; rig.build(defs); changed(); drawPomoc(); draw(); preview(d); }
   function setRange(r) { const d = sel?.part; if (!d) return; stop(true); d.range = r ? ruchClean(r) : null; rig.build(defs); changed(); draw(); preview(d); }
-  // kept a moment later (a drag of chips in a row is one write), per material: switching models never drops a change
+  // kept a moment later (a drag of chips in a row is one write), per material: switching models never drops a change.
+  // Only what this window changed since it last read the record is sent (added, changed, or taken back with Stoi): the
+  // record keeps what another window or tab did meanwhile, and this window then shows the parts as the record holds them.
   function changed() {
     if (!mat) return;
+    backfill();
     const id = mat.id, parts = defs.map(ruchPlain);
+    const was = new Map(base.map(b => [b.id, JSON.stringify(b)])), now = new Map(parts.map(p => [p.id, JSON.stringify(p)]));
+    const touched = [...new Set([...was.keys(), ...now.keys()])].filter(k => was.get(k) !== now.get(k));
     mat = { ...mat, ruch: { v: 1, at: Date.now(), parts } };
     clearTimeout(saveTs.get(id));
-    savedP = new Promise(res => { saveTs.set(id, setTimeout(() => { saveTs.delete(id); Promise.resolve().then(() => opt.save(id, parts)).catch(err => jtoast(t('Nie zapisałem ruchu: {0}', err.message))).finally(res); }, 200)); });
+    savedP = new Promise(res => {
+      saveTs.set(id, setTimeout(() => {
+        saveTs.delete(id);
+        Promise.resolve().then(() => opt.save(id, parts, touched, me))
+          .then(merged => { if (Array.isArray(merged) && mat && mat.id === id && !saveTs.has(id)) adopt(merged); })
+          .catch(err => jtoast(t('Nie zapisałem ruchu: {0}', err.message))).finally(res);
+      }, 200));
+    });
+  }
+  /* the parts as the record holds them now: another window's parts come in, this window's stay the same objects */
+  function adopt(parts) {
+    base = parts.map(ruchPlain);
+    if (defs.map(ruchKey).join('\n') === base.map(x => JSON.stringify(x)).join('\n')) return;
+    const byId = new Map(defs.map(d => [d.id, d]));
+    defs = base.map(p => { const d = byId.get(p.id); return d && ruchKey(d) === JSON.stringify(p) ? d : ruchPlain(p); });
+    if (sel?.part) sel = { ...sel, part: defs.find(d => d.id === sel.part.id) || null };
+    if (mat) mat = { ...mat, ruch: { v: 1, at: Date.now(), parts: base.map(ruchPlain) } };
+    if (rig && inner) { stop(true); rig.build(defs); drawPomoc(); }
+    draw(); state();
+  }
+  // parts kept before 6.4.1 learn where they sit the first time he changes anything here (measured in the rest pose)
+  function backfill() {
+    if (!inner || !rig || !defs.some(d => !d.boxes)) return;
+    rig.restPose();
+    for (const d of defs) if (!d.boxes) { const ns = d.nodes.map(p => ruchNodeAt(inner, p)); if (ns.length && ns.every(Boolean)) d.boxes = ns.map(n => ruchSig(inner, n)); }
+    rig.apply();
   }
   /* ---- moving ---- */
   // the moment a part gets its motion it shows it, once, then rests
@@ -16193,7 +16315,15 @@ function ruchWindow(view, opt) {
       h('span', { class: 'mt-gap' }),
       defs.length ? chip(playing ? t('Zatrzymaj') : t('Pokaż ruch'), () => (playing ? stop(true) : play()), { icon: playing ? 'stop' : 'play', on: playing, cls: 'rc-play', title: playing ? t('Wszystko wraca do spoczynku') : t('Wszystkie części ruszają naraz') }) : null,
       close)];
-    if (carried) rows.push(h('p', { class: 'rc-note', text: t('Ruch przeniesiony z wersji {0}: {1} z {2}.', carried.from, carried.n, carried.of) }));
+    if (carried) { // what came along from the older version, and what did not, and why (6.4.1)
+      const names = l => l.map(x => `„${x}”`).join(', ');
+      if (carried.n) rows.push(h('p', { class: 'rc-note', text: t('Ruch przeniesiony z wersji {0}: {1} z {2}.', carried.from, carried.n, carried.of) }));
+      if (carried.niejednoznaczne?.length) rows.push(h('p', { class: 'rc-note rc-warn', text: t('Nie przeniosłem z wersji {0}: {1}. Ta nazwa powtarza się w nowym pliku, więc nie wiem, która to część. Wskaż ją i nadaj ruch jeszcze raz.', carried.from, names(carried.niejednoznaczne)) }));
+      if (carried.brak?.length) rows.push(h('p', { class: 'rc-note rc-warn', text: t('Nie ma już w pliku: {0}.', names(carried.brak)) }));
+      if (carried.przesuniete?.length) rows.push(h('p', { class: 'rc-note', text: t('Przesunięte w pliku: {0}. Punkt obrotu przesunąłem razem z częścią; sprawdź, czy tak ma być.', names(carried.przesuniete)) }));
+      if (carried.zmienione?.length) rows.push(h('p', { class: 'rc-note rc-warn', text: t('Zmieniony kształt: {0}. Sprawdź oś i punkt.', names(carried.zmienione)) }));
+      if (carried.niesprawdzone) rows.push(h('p', { class: 'rc-note', text: t('Ruch zapisany przed wersją 6.4.1: nie sprawdziłem, czy części nie zmieniły miejsca. Pokaż ruch i popatrz na osie.') }));
+    }
     if (!sel) rows.push(h('p', { class: 'rc-hint', text: defs.length ? t('Kliknij część, żeby ją zmienić, albo chwyć ruchomą i przeciągnij.') : t('Kliknij część swojego modelu i powiedz, jak się rusza. Ctrl+klik dobiera klocki do Twojej własnej części.') }));
     else {
       if (!sel.custom || sel.guessed) { // where the part sits in his file: every level can be chosen

@@ -275,6 +275,9 @@ body { height: 100%; overflow: hidden; margin: 0; background: var(--ground); }
 .fh-nw { top: 0; left: 0; cursor: nwse-resize; } .fh-se { bottom: 0; right: 0; cursor: nwse-resize; }
 .win.float .fh-se::after { content: ""; position: absolute; right: 4px; bottom: 4px; width: 7px; height: 7px; border-right: 2px solid var(--ink-3); border-bottom: 2px solid var(--ink-3); border-radius: 0 0 2px 0; }
 @media (pointer: coarse) { .fh-n, .fh-s { height: 14px; } .fh-e, .fh-w { width: 14px; } .fh-ne, .fh-nw, .fh-se, .fh-sw { width: 26px; height: 26px; } }
+/* the header's buttons sit above the stretching edges: the top-right corner covered the middle of the close button in a
+   compact floating window (Astra on PR #4, 21 Oct); the corner still stretches outside the button */
+.win.float .wtools { position: relative; z-index: 5; }
 
 /* borders between windows */
 .jk-div { position: absolute; z-index: 5; touch-action: none; }
@@ -1042,6 +1045,7 @@ body:has(.jk.phone) .jk-toasts { bottom: calc(78px + env(safe-area-inset-bottom,
 .rc-play.on { background: color-mix(in srgb, var(--hand) 16%, transparent); }
 .rc-hint, .rc-note { margin: 0; color: var(--ink-2); line-height: 1.5; }
 .rc-note { color: var(--hand); font-size: 12px; }
+.rc-note.rc-warn { color: var(--warn); }
 .rc-path { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 3px; font-size: 11.5px; }
 .rc-path i { font-style: normal; color: var(--ink-3); }
 .rc-crumb { border: 0; background: none; font: inherit; color: var(--ink-2); padding: 1px 4px; border-radius: 5px; cursor: pointer; max-width: 16ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

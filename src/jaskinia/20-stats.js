@@ -187,15 +187,15 @@ function statChart(m, W, H, select) {
   const when0 = b => k === 1 ? diText(b.lo) : `${diText(b.hi, false)} – ${diText(b.lo)}`;
   /* the same answer as Puls and every other chart mark: the bar under the pointer lights softly, the note follows, and
      leaving fades instead of snapping off (the owner, 18 Oct) */
-  let lit = null, offT = 0;
-  const off = () => { clearTimeout(offT); offT = 0; guide.setAttribute('visibility', 'hidden'); lit?.classList.remove('on'); lit = null; B.untip(); };
+  let lit = null, offT = 0, mine = 0;
+  const off = () => { clearTimeout(offT); offT = 0; guide.setAttribute('visibility', 'hidden'); lit?.classList.remove('on'); lit = null; B.untip(mine); };
   svg.addEventListener('pointermove', e => {
     clearTimeout(offT); offT = 0;
     const i = at(e), b = bins[i];
     if (lit !== bars[i]) { lit?.classList.remove('on'); lit = bars[i] || null; lit?.classList.add('on'); }
     guide.setAttribute('x1', i * bw + bw / 2); guide.setAttribute('x2', i * bw + bw / 2); guide.setAttribute('visibility', 'visible');
     const { top, tv } = topIn(b);
-    B.tip(e, [h('div', { class: 'tt', text: tn(b.v, 'commit', 'commity', 'commitów') }), h('div', { class: 'ts', text: when0(b) }),
+    mine = B.tip(e, [h('div', { class: 'tt', text: tn(b.v, 'commit', 'commity', 'commitów') }), h('div', { class: 'ts', text: when0(b) }),
       h('div', { class: 'tm', text: top ? t('najwięcej: {0} ({1})', top.short, tv) + (select ? t(' · kliknij, żeby zaznaczyć') : '') : t('cisza') })]);
   });
   svg.addEventListener('pointerleave', () => { clearTimeout(offT); offT = setTimeout(off, 120); });

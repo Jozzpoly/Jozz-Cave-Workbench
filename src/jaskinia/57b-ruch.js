@@ -13,8 +13,9 @@
    Data on the material record: m.ruch = { v: 1, at, parts: [{ id, name, kind: 'obrot' | 'przesuw', axis: [x, y, z],
    pivot: [x, y, z], range: null | [min, max], z, nodes: ['0.1', …], names: [['group', 'cube'], …] }] }. Axis and pivot
    are in the file's own frame (metres, Y up, 16 Blockbench pixels = 1 m), before the material's default turn and scale.
-   nodes are child-index paths from the loaded model's root, names the same paths by name (a new version of the file is
-   matched by names). A turn is in radians, a slide in metres of the file. An empty list means he decided nothing moves.
+   nodes are child-index paths from the loaded model's root, names the same paths by name, boxes (6.4.1) where each node
+   sits in the file (a new version of the file is matched by names, and by boxes where names repeat). A turn is in
+   radians, a slide in metres of the file. An empty list means he decided nothing moves.
    z says where the axis came from ('klocek:<name>' a cube named like an axis, 'bryla' the shape, 'reka' his click), zp
    where the pivot came from (the same, or 'srodek', 'plik' for the group's pivot in Blockbench, 'wskazany' a cube he
    pointed at). What came from a proposal is proposed again when he changes how the part moves; what he chose stays. */
@@ -42,23 +43,47 @@ function ruchNodeAt(inner, path) {
   return x !== inner ? x : null;
 }
 function ruchNames(inner, n) { const out = []; for (let x = n; x && x !== inner; x = x.parent) out.unshift(ruchName(x) || '·'); return out; }
-/* the same node in another copy of the model (a new version of the file): by its names, by its place where names repeat */
-function ruchFind(inner, names, path) {
-  const at = path != null ? ruchNodeAt(inner, path) : null;
-  if (at && (!names || JSON.stringify(ruchNames(inner, at)) === JSON.stringify(names))) return at;
-  if (!names?.length) return null;
-  const idx = String(path ?? '').split('.').map(Number);
-  let x = inner;
-  for (let i = 0; i < names.length; i++) {
-    const kids = x.children.filter(c => (ruchName(c) || '·') === names[i]);
-    if (!kids.length) return null;
-    const same = x.children[idx[i]];
-    x = kids.length === 1 || !kids.includes(same) ? kids[0] : same;
-  }
-  return x === inner ? null : x;
-}
 const ruchClean = a => a.map(v => { const r = Math.round(v * 1e6) / 1e6; return Object.is(r, -0) ? 0 : r; });
 const ruchUnit = k => [k === 0 ? 1 : 0, k === 1 ? 1 : 0, k === 2 ? 1 : 0];
+
+/* 6.4.1: knowing a part again in a new version of the file. Names alone are not enough: two groups both called "wheel"
+   swap places and the old path then points at the other wheel (GPT, Astra and Medium on PR #4, 21 Oct). So every part
+   also keeps where each of its nodes sits in the file: the middle and the size of its box, measured in the rest pose
+   (boxes: [[cx, cy, cz, sx, sy, sz], …], metres of the file). A part is carried only when it is known for sure; when two
+   candidates fit, it is not guessed, and he is told which one to point at again. */
+function ruchSig(inner, n) {
+  const b = ruchBox(inner, [n]);
+  if (b.isEmpty()) return null;
+  const { THREE } = swiat();
+  return ruchClean([...b.getCenter(new THREE.Vector3()).toArray(), ...b.getSize(new THREE.Vector3()).toArray()]);
+}
+const ruchSame = (a, b) => !!a && !!b && a.length === b.length && a.every((v, i) => Math.abs(v - b[i]) <= 1e-4 + 1e-4 * Math.abs(b[i]));
+/* every node of the model whose names, from the root down, are exactly these */
+function ruchAll(inner, names) {
+  let level = [inner];
+  for (const nm of names) {
+    const next = [];
+    for (const x of level) for (const c of x.children) if ((ruchName(c) || '·') === nm) next.push(c);
+    level = next;
+    if (!level.length) break;
+  }
+  return level.filter(x => x !== inner);
+}
+/* the nodes of a kept part in this copy of the model, or why not: 'brak' (gone) or 'niejednoznaczne' (more than one fits) */
+function ruchMatch(inner, p) {
+  const out = [];
+  for (let i = 0; i < p.nodes.length; i++) {
+    const names = p.names?.[i];
+    if (!names?.length) { const at = ruchNodeAt(inner, p.nodes[i]); if (!at) return { fail: 'brak' }; out.push(at); continue; }
+    const all = ruchAll(inner, names);
+    if (!all.length) return { fail: 'brak' };
+    if (all.length === 1) { out.push(all[0]); continue; }
+    const sig = p.boxes?.[i], hits = sig ? all.filter(n => ruchSame(ruchSig(inner, n), sig)) : [];
+    if (hits.length !== 1) return { fail: 'niejednoznaczne' };
+    out.push(hits[0]);
+  }
+  return new Set(out).size === out.length ? { nodes: out } : { fail: 'niejednoznaczne' };
+}
 
 /* the box of some nodes in the model's own frame (always measured in the rest pose) */
 function ruchBox(inner, nodes) {
@@ -236,7 +261,8 @@ function ruchRig(inner) {
   return rig;
 }
 /* parts as they are kept: plain arrays, nothing of three.js */
-const ruchPlain = d => ({ id: d.id, name: d.name, kind: d.kind, axis: [...d.axis], pivot: [...d.pivot], range: d.range ? [...d.range] : null, z: d.z || '', zp: d.zp || d.z || '', nodes: [...d.nodes], names: (d.names || []).map(x => [...x]) });
+const ruchPlain = d => ({ id: d.id, name: d.name, kind: d.kind, axis: [...d.axis], pivot: [...d.pivot], range: d.range ? [...d.range] : null, z: d.z || '', zp: d.zp || d.z || '', nodes: [...d.nodes], names: (d.names || []).map(x => [...x]), ...(d.boxes ? { boxes: d.boxes.map(b => (b ? [...b] : null)) } : {}) });
+const ruchKey = d => JSON.stringify(ruchPlain(d));
 
 /* what an agent gets: the parts, where they sit in the file, how they move */
 function ruchJson(m, parts) {
@@ -257,12 +283,19 @@ function ruchWindow(view, opt) {
   let on = false, stage = null, inner = null, mat = null, rig = null, defs = [], pomoc = null, carried = null;
   let sel = null, custom = [], hoverN = null, playing = false, untick = null, untickPrev = null, pickPivot = false, drag = null, down = null;
   let savedP = Promise.resolve(), tPlay = 0, moveRaf = 0, lastMove = null, valEl = null, gen = 0, hitVer = -1;
+  // base: the parts as the material record held them when this window last read or wrote it. A save sends only what this
+  // window changed since, so two windows on one model add up instead of the later one replacing the other (6.4.1).
+  let base = [];
+  const me = 'rw' + (++ruchSeq).toString(36);
   const saveTs = new Map();
   let THREE = null, ray = null, ndc = null;
   const state = () => opt.onState?.({ on, n: defs.length });
   const api = {
     get on() { return on; }, get defs() { return defs; }, get sel() { return sel; }, get playing() { return playing; }, get rig() { return rig; }, get carried() { return carried; },
-    get saved() { return savedP; }, get inner() { return inner; },
+    get saved() { return savedP; }, get inner() { return inner; }, get me() { return me; }, get dragging() { return !!drag; },
+    /* another window of this tab changed the motion of the model shown here: take its parts in, keep this window's own
+       changes still on their way (they merge into the record when their save lands) */
+    sync(m) { if (!mat || !m || m.id !== mat.id || saveTs.has(mat.id) || drag) return; mat = m; adopt(m.ruch?.parts || []); },
     toggle() { on ? api.off() : api.start(); return on; },
     start() { on = true; panel.hidden = false; view.classList.add('ruch'); if (inner) attachObj(); draw(); state(); },
     off() { halt(); on = false; panel.hidden = true; view.classList.remove('ruch'); clearPomoc(); sel = null; custom = []; pickPivot = false; hoverN = null; if (stage) stage.canvas.style.cursor = ''; stage?.redraw(); state(); },
@@ -273,6 +306,7 @@ function ruchWindow(view, opt) {
       stage = st; mat = m; inner = ruchInner(o); rig = null; carried = null; gen++;
       sel = null; custom = []; hoverN = null; pickPivot = false;
       defs = (m?.ruch?.parts || []).map(ruchPlain);
+      base = defs.map(ruchPlain);
       if (on && inner) {
         attachObj();
         if (keep) {
@@ -285,7 +319,7 @@ function ruchWindow(view, opt) {
       }
       state();
     },
-    detach() { halt(); clearPomoc(); inner = rig = mat = null; defs = []; sel = null; custom = []; gen++; if (on) draw(); state(); },
+    detach() { halt(); clearPomoc(); inner = rig = mat = null; defs = []; base = []; carried = null; sel = null; custom = []; gen++; if (on) draw(); state(); },
     dispose() { api.detach(); unlisten(); panel.remove(); },
     play: () => play(), stop: () => stop(true),
     json: () => (mat ? ruchJson(mat, defs) : null),
@@ -299,21 +333,48 @@ function ruchWindow(view, opt) {
     rig = ruchRig(inner);
     rig.build(defs);
     drawPomoc();
-    if (mat && !mat.ruch && opt.older) { // a new version of a file he already set in motion: his motion comes along, by names
+    if (mat && !mat.ruch && opt.older) { // a new version of a file he already set in motion: his motion comes along when it is sure
       const my = gen;
       opt.older(mat).then(prev => {
         if (my !== gen || !prev?.ruch?.parts?.length || defs.length) return;
-        const moved = [];
+        rig.restPose(); // measured where the file puts the parts
+        const moved = [], why = { brak: [], niejednoznaczne: [], przesuniete: [], zmienione: [], niesprawdzone: 0 };
         for (const p of prev.ruch.parts) {
-          const ns = p.nodes.map((path, i) => ruchFind(inner, p.names?.[i], path));
-          if (ns.length && ns.every(Boolean)) moved.push({ ...ruchPlain(p), nodes: ns.map(n => ruchPathOf(inner, n)), names: ns.map(n => ruchNames(inner, n)) });
+          const m = ruchMatch(inner, p);
+          if (m.fail) { why[m.fail].push(p.name); continue; }
+          const d = { ...ruchPlain(p), nodes: m.nodes.map(n => ruchPathOf(inner, n)), names: m.nodes.map(n => ruchNames(inner, n)) };
+          const now = m.nodes.map(n => ruchSig(inner, n));
+          carryFrame(d, p, m.nodes, now, why);
+          d.boxes = now;
+          moved.push(d);
         }
-        if (!moved.length) return;
-        carried = { from: prev.ver || 1, n: moved.length, of: prev.ruch.parts.length };
-        defs = moved;
-        rig.build(defs); changed(); drawPomoc(); draw(); state();
+        carried = { from: prev.ver || 1, n: moved.length, of: prev.ruch.parts.length, ...why };
+        if (moved.length) { defs = moved; rig.build(defs); changed(); drawPomoc(); } else rig.apply();
+        draw(); state();
       }).catch(() => { /* no older versions here */ });
     }
+  }
+  /* the axis and the point of a carried part follow the part (Medium on PR #4: the right part with the old file's point
+     orbits instead of turning in place). Moved without changing its shape: the point moves with it. Its shape changed: what
+     came from a proposal is proposed again, what he chose stays, and he is asked to look. Kept before 6.4.1 (no boxes):
+     carried as before, and he is told it was not checked. */
+  function carryFrame(d, p, nodes, now, why) {
+    if (!p.boxes || p.boxes.length !== now.length || p.boxes.some(b => !b) || now.some(b => !b)) { why.niesprawdzone++; return; }
+    if (now.every((s, i) => ruchSame(s, p.boxes[i]))) return;
+    const delta = now.map((s, i) => [0, 1, 2].map(k => s[k] - p.boxes[i][k]));
+    const sameSize = now.every((s, i) => ruchSame(s.slice(3), p.boxes[i].slice(3)));
+    if (sameSize && delta.every(dl => ruchSame(dl, delta[0]))) {
+      d.pivot = ruchClean(d.pivot.map((v, k) => v + delta[0][k]));
+      why.przesuniete.push(d.name);
+      return;
+    }
+    const pr = ruchPropose(d.kind, inner, nodes), auto = v => v === 'bryla' || String(v).startsWith('klocek');
+    if (auto(d.z)) { d.axis = pr.axis; d.z = pr.z; }
+    if (auto(d.zp)) { d.pivot = pr.pivot; d.zp = pr.zp; }
+    else if (d.zp === 'srodek') { const { THREE: T3 } = swiat(); d.pivot = ruchClean(ruchBox(inner, nodes).getCenter(new T3.Vector3()).toArray()); }
+    else if (d.zp === 'plik' && nodes.length === 1) { const o = ruchOrigin(inner, nodes[0]); if (o) d.pivot = o; }
+    if (d.kind === 'przesuw' && d.range && auto(d.z)) d.range = pr.range;
+    why.zmienione.push(d.name);
   }
   /* ---- helpers drawn in the model's frame: the part pointed at, the chosen one, the axes ---- */
   function clearPomoc() { if (pomoc) { pomoc.parent?.remove(pomoc); pomoc.traverse(x => { x.geometry?.dispose(); x.material?.dispose(); }); pomoc = null; } }
@@ -394,6 +455,8 @@ function ruchWindow(view, opt) {
   }
   function onDown(e) {
     if (!on || !inner || e.button !== 0 || e.target !== stage?.canvas) return;
+    // a second finger while his hand holds a part: it neither takes another part nor turns the view (6.4.1)
+    if (drag) { if (e.pointerId !== drag.pid) { e.stopPropagation(); e.preventDefault(); } return; }
     const x = hit(e);
     if (pickPivot) {
       e.stopPropagation(); e.preventDefault();
@@ -410,15 +473,17 @@ function ruchWindow(view, opt) {
       cancelPreview(true);
       stage.controls.enabled = false;
       sel = { part: p.def, nodes: p.nodes.map(y => y.n), custom: false, leaf: elementOf(x.object) }; custom = [];
-      drag = { def: p.def, x0: e.clientX, y0: e.clientY, v0: rig.vals.get(p.def.id) || 0, last: null, acc: 0 };
+      drag = { def: p.def, pid: e.pointerId, x0: e.clientX, y0: e.clientY, v0: rig.vals.get(p.def.id) || 0, last: null, acc: 0 };
       stage.canvas.style.cursor = 'grabbing';
       drawPomoc(); draw();
       return;
     }
-    down = { x: e.clientX, y: e.clientY, t: performance.now(), hit: x, add: e.ctrlKey || e.metaKey };
+    down = { x: e.clientX, y: e.clientY, t: performance.now(), hit: x, add: e.ctrlKey || e.metaKey, pid: e.pointerId };
   }
+  // only the pointer that took the part moves it and lets it go: another finger lifted first ended his gesture (Feniks GPT on PR #4)
+  const other = (e, pid) => pid != null && e.pointerId != null && e.pointerId !== pid;
   function onDrag(e) {
-    if (!drag || !stage || !inner) return;
+    if (!drag || !stage || !inner || other(e, drag.pid)) return;
     e.preventDefault();
     const d = drag.def, cam = stage.camera, r = stage.canvas.getBoundingClientRect();
     inner.updateMatrixWorld(true);
@@ -450,8 +515,10 @@ function ruchWindow(view, opt) {
     rig.apply(); stage.redraw(); showVal();
   }
   function onUp(e) {
-    if (drag) { drag = null; if (stage) { stage.controls.enabled = true; stage.canvas.style.cursor = ''; } return; }
-    const d0 = down; down = null;
+    if (drag) { if (other(e, drag.pid)) return; drag = null; if (stage) { stage.controls.enabled = true; stage.canvas.style.cursor = ''; } return; }
+    const d0 = down;
+    if (d0 && other(e, d0.pid)) return; // another finger: not the end of this click
+    down = null;
     if (!d0 || !on) return;
     if (Math.hypot(e.clientX - d0.x, e.clientY - d0.y) > 5 || performance.now() - d0.t > 700) return; // that was a turn of the view
     click(d0);
@@ -518,7 +585,7 @@ function ruchWindow(view, opt) {
       if (taken) { jtoast(t('Ten kawałek należy już do części „{0}”. Najpierw ją zatrzymaj (Stoi).', taken.name)); return; }
       const pr = ruchPropose(kind, inner, sel.nodes);
       d = { id: 'r' + Date.now().toString(36) + (++ruchSeq).toString(36), name: selName(),
-        kind, axis: pr.axis, pivot: pr.pivot, range: pr.range, z: pr.z, zp: pr.zp, nodes: sel.nodes.map(n => ruchPathOf(inner, n)), names: sel.nodes.map(n => ruchNames(inner, n)) };
+        kind, axis: pr.axis, pivot: pr.pivot, range: pr.range, z: pr.z, zp: pr.zp, nodes: sel.nodes.map(n => ruchPathOf(inner, n)), names: sel.nodes.map(n => ruchNames(inner, n)), boxes: sel.nodes.map(n => ruchSig(inner, n)) };
       defs = [...defs, d];
       sel = { ...sel, part: d, custom: false };
       custom = [];
@@ -537,13 +604,43 @@ function ruchWindow(view, opt) {
   }
   function setPivot(p, z) { const d = sel?.part; if (!d) return; stop(true); d.pivot = ruchClean(p); d.zp = z; rig.build(defs); changed(); drawPomoc(); draw(); preview(d); }
   function setRange(r) { const d = sel?.part; if (!d) return; stop(true); d.range = r ? ruchClean(r) : null; rig.build(defs); changed(); draw(); preview(d); }
-  // kept a moment later (a drag of chips in a row is one write), per material: switching models never drops a change
+  // kept a moment later (a drag of chips in a row is one write), per material: switching models never drops a change.
+  // Only what this window changed since it last read the record is sent (added, changed, or taken back with Stoi): the
+  // record keeps what another window or tab did meanwhile, and this window then shows the parts as the record holds them.
   function changed() {
     if (!mat) return;
+    backfill();
     const id = mat.id, parts = defs.map(ruchPlain);
+    const was = new Map(base.map(b => [b.id, JSON.stringify(b)])), now = new Map(parts.map(p => [p.id, JSON.stringify(p)]));
+    const touched = [...new Set([...was.keys(), ...now.keys()])].filter(k => was.get(k) !== now.get(k));
     mat = { ...mat, ruch: { v: 1, at: Date.now(), parts } };
     clearTimeout(saveTs.get(id));
-    savedP = new Promise(res => { saveTs.set(id, setTimeout(() => { saveTs.delete(id); Promise.resolve().then(() => opt.save(id, parts)).catch(err => jtoast(t('Nie zapisałem ruchu: {0}', err.message))).finally(res); }, 200)); });
+    savedP = new Promise(res => {
+      saveTs.set(id, setTimeout(() => {
+        saveTs.delete(id);
+        Promise.resolve().then(() => opt.save(id, parts, touched, me))
+          .then(merged => { if (Array.isArray(merged) && mat && mat.id === id && !saveTs.has(id)) adopt(merged); })
+          .catch(err => jtoast(t('Nie zapisałem ruchu: {0}', err.message))).finally(res);
+      }, 200));
+    });
+  }
+  /* the parts as the record holds them now: another window's parts come in, this window's stay the same objects */
+  function adopt(parts) {
+    base = parts.map(ruchPlain);
+    if (defs.map(ruchKey).join('\n') === base.map(x => JSON.stringify(x)).join('\n')) return;
+    const byId = new Map(defs.map(d => [d.id, d]));
+    defs = base.map(p => { const d = byId.get(p.id); return d && ruchKey(d) === JSON.stringify(p) ? d : ruchPlain(p); });
+    if (sel?.part) sel = { ...sel, part: defs.find(d => d.id === sel.part.id) || null };
+    if (mat) mat = { ...mat, ruch: { v: 1, at: Date.now(), parts: base.map(ruchPlain) } };
+    if (rig && inner) { stop(true); rig.build(defs); drawPomoc(); }
+    draw(); state();
+  }
+  // parts kept before 6.4.1 learn where they sit the first time he changes anything here (measured in the rest pose)
+  function backfill() {
+    if (!inner || !rig || !defs.some(d => !d.boxes)) return;
+    rig.restPose();
+    for (const d of defs) if (!d.boxes) { const ns = d.nodes.map(p => ruchNodeAt(inner, p)); if (ns.length && ns.every(Boolean)) d.boxes = ns.map(n => ruchSig(inner, n)); }
+    rig.apply();
   }
   /* ---- moving ---- */
   // the moment a part gets its motion it shows it, once, then rests
@@ -624,7 +721,15 @@ function ruchWindow(view, opt) {
       h('span', { class: 'mt-gap' }),
       defs.length ? chip(playing ? t('Zatrzymaj') : t('Pokaż ruch'), () => (playing ? stop(true) : play()), { icon: playing ? 'stop' : 'play', on: playing, cls: 'rc-play', title: playing ? t('Wszystko wraca do spoczynku') : t('Wszystkie części ruszają naraz') }) : null,
       close)];
-    if (carried) rows.push(h('p', { class: 'rc-note', text: t('Ruch przeniesiony z wersji {0}: {1} z {2}.', carried.from, carried.n, carried.of) }));
+    if (carried) { // what came along from the older version, and what did not, and why (6.4.1)
+      const names = l => l.map(x => `„${x}”`).join(', ');
+      if (carried.n) rows.push(h('p', { class: 'rc-note', text: t('Ruch przeniesiony z wersji {0}: {1} z {2}.', carried.from, carried.n, carried.of) }));
+      if (carried.niejednoznaczne?.length) rows.push(h('p', { class: 'rc-note rc-warn', text: t('Nie przeniosłem z wersji {0}: {1}. Ta nazwa powtarza się w nowym pliku, więc nie wiem, która to część. Wskaż ją i nadaj ruch jeszcze raz.', carried.from, names(carried.niejednoznaczne)) }));
+      if (carried.brak?.length) rows.push(h('p', { class: 'rc-note rc-warn', text: t('Nie ma już w pliku: {0}.', names(carried.brak)) }));
+      if (carried.przesuniete?.length) rows.push(h('p', { class: 'rc-note', text: t('Przesunięte w pliku: {0}. Punkt obrotu przesunąłem razem z częścią; sprawdź, czy tak ma być.', names(carried.przesuniete)) }));
+      if (carried.zmienione?.length) rows.push(h('p', { class: 'rc-note rc-warn', text: t('Zmieniony kształt: {0}. Sprawdź oś i punkt.', names(carried.zmienione)) }));
+      if (carried.niesprawdzone) rows.push(h('p', { class: 'rc-note', text: t('Ruch zapisany przed wersją 6.4.1: nie sprawdziłem, czy części nie zmieniły miejsca. Pokaż ruch i popatrz na osie.') }));
+    }
     if (!sel) rows.push(h('p', { class: 'rc-hint', text: defs.length ? t('Kliknij część, żeby ją zmienić, albo chwyć ruchomą i przeciągnij.') : t('Kliknij część swojego modelu i powiedz, jak się rusza. Ctrl+klik dobiera klocki do Twojej własnej części.') }));
     else {
       if (!sel.custom || sel.guessed) { // where the part sits in his file: every level can be chosen
