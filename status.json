@@ -2,13 +2,13 @@
   "schema": "jaskinia-public-preview-v1",
   "preview": true,
   "public": true,
-  "title": "Jaskinia v6.3 — publiczny podgląd: uwagi z v6 i wydanie, którego stara karta nie cofnie; bez prywatnej warstwy",
+  "title": "Jaskinia v6.4.1 — publiczny podgląd: Ruch (własne części poruszane ręką) z poprawkami z przeglądu PR #4; bez prywatnej warstwy",
   "source": {
     "repository": "Jozzpoly/Jozz-Cave-Workbench",
     "ref": "v6-materialy",
-    "commit": "dd47f3253dbcf522b4cd671c794599d32cbe79b9",
+    "commit": "85aaaaec7334428cbc85ce9379930e17b4f5d6cb",
     "pull_request": 4,
-    "html_blob": "3ff64ec0cb25b94c1fa1381b86f45e3c7c3c59e9"
+    "html_blob": "2d444132b64fbc7b8936790a47726e25b21b5c70"
   },
   "data": {
     "repository_count": 26,
@@ -33,7 +33,8 @@
   "provenance": {
     "packaged_by": "Claude (Opus), Jaskinia line",
     "authored_through": "Jozzpoly GitHub, Claude Code session",
-    "owner_approval": "Owner approved updating the public preview (18 Oct 2026, 18:21 Warsaw)",
-    "previous_preview": "v6 (79c0b5f, packaged by Claude), with GPT's verified VAW play entry (099788b)"
+    "owner_approval": "owner's standing approval for Pages and Cloudflare previews, given on 22 Oct 2026",
+    "previous_preview": "v6.3 (dd47f32, gh-pages 8e0186d, packaged by Claude)",
+    "agent": "Claude Opus 5.5, Jaskinia line"
   }
 }
