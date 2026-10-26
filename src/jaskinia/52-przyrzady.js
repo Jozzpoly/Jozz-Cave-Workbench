@@ -204,7 +204,7 @@ function livePicker(c) {
     c.commit(t('przyrząd: {0}', title || hostOf(url)), () => { Object.assign(c.win.st, { url, title: lstr(title, 60), project: project || null }); });
   };
   const urlIn = h('input', { class: 'jk-in', type: 'text', inputmode: 'url', placeholder: 'https://…', 'aria-label': t('Adres strony do uruchomienia'), autocomplete: 'off', spellcheck: 'false' });
-  const pages = REPOS.filter(r => r.pages && r.life !== 'zakończone').sort((a, b) => (b.last_ts || 0) - (a.last_ts || 0));
+  const pages = REPOS.filter(r => r.pages && r.life !== 'zakończone' && !r.tab).sort((a, b) => (b.last_ts || 0) - (a.last_ts || 0));
   const recent = liveRecent();
   return h('div', { class: 'jk-pad lv-pick' },
     h('p', { class: 'ch-lead', text: t('Co uruchomić w tym oknie?') }),

@@ -44,11 +44,45 @@ function logEv(what, extra) {
   clearTimeout(logT); logT = setTimeout(saveLog, 700);
   lastLogged = a;
 }
+/* Several tabs (v6.1): each tab keeps the log and the notes in memory, and the last one to write used to win, so a note
+   made in one tab could vanish when another tab wrote. Now a write takes in what is stored first (a note is known by
+   its moment, t; an edit carries its own time), and a tab hears the other tabs' writes. */
+const uwGone = new Set(); // notes deleted in this tab: never brought back from what another tab still had
+const uwKey = u => String(u.t);
+function mergeUwagi(a, b) {
+  const by = new Map();
+  for (const u of [...a, ...b]) { if (!u || !u.t || typeof u.text !== 'string' || uwGone.has(uwKey(u))) continue; const k = uwKey(u), o = by.get(k); if (!o || (u.edited || u.t) > (o.edited || o.t)) by.set(k, u); }
+  return [...by.values()].sort((x, y) => x.t - y.t);
+}
+/* Answers (v6.2): what was done about a remark, written by the agent who did it, shown under the remark here and in
+   "Dla agentów", so Jozz sees it where he wrote it and every agent sees which remarks are still open. They come from the
+   private layer (private/uwagi_odpowiedzi.json through tools/render.py); a public build has none. */
+const UW_ANS = (typeof UW_ODP !== 'undefined' && UW_ODP) || {};
+const UW_STAN = { zrobione: 'zrobione', 'częściowo': 'częściowo', 'myśl': 'myśl, nie zbudowane', pytanie: 'pytanie do Ciebie' };
+const uwAnswer = u => UW_ANS[uwKey(u)] || null;
+function uwAnswerEl(u) {
+  const a = uwAnswer(u);
+  return a ? h('p', { class: 'uw-ans' }, h('span', { class: 'uw-st', 'data-st': a.stan, text: t(UW_STAN[a.stan] || a.stan) }), h('span', { text: ' ' + (a.v ? 'v' + a.v + ': ' : '') + a.odp })) : null;
+}
+const readUw = () => { try { return arr(JSON.parse(lsGet(KEY_UW) || '[]')); } catch { return []; } };
+const logKey = e => e.t + '|' + e.a;
+function mergeLog(a, b) {
+  const by = new Map();
+  for (const e of [...a, ...b]) if (e && e.t && e.a) { const o = by.get(logKey(e)); if (!o || (e.n || 1) > (o.n || 1)) by.set(logKey(e), e); }
+  return [...by.values()].sort((x, y) => x.t - y.t).slice(-LOG_MAX);
+}
 function saveLog() {
   clearTimeout(logT);
+  let stored = []; try { stored = arr(JSON.parse(lsGet(KEY_LOG) || '[]')); } catch { stored = []; }
+  jlog = mergeLog(jlog, stored);
   if (lsSet(KEY_LOG, JSON.stringify(jlog)) !== true) { jlog = jlog.slice(-200); lsSet(KEY_LOG, JSON.stringify(jlog)); }
 }
-function saveUwagi() { return lsSet(KEY_UW, JSON.stringify(uwagi)) === true; }
+function saveUwagi() { uwagi = mergeUwagi(uwagi, readUw()); const ok = lsSet(KEY_UW, JSON.stringify(uwagi)) === true; document.dispatchEvent(new CustomEvent('jk:stan')); return ok; }
+addEventListener('storage', e => {
+  if (e.storageArea !== localStorage) return;
+  if (e.key === KEY_UW && e.newValue) { try { uwagi = mergeUwagi(uwagi, arr(JSON.parse(e.newValue))); document.dispatchEvent(new CustomEvent('jk:stan')); } catch { /* fine */ } }
+  if (e.key === KEY_LOG && e.newValue) { try { jlog = mergeLog(jlog, arr(JSON.parse(e.newValue))); } catch { /* fine */ } }
+});
 
 /* the moment, in the owner's own clock: 2026-10-16 06:52:13.412 +02:00 */
 function isoLocal(ms) {
@@ -102,6 +136,30 @@ function uwagaPop(anchor, liveId) {
     h('div', { class: 'jk-row' }, h('button', { class: 'btn', type: 'button', text: t('Zapisz'), onclick: ok }), h('button', { class: 'btn ghost', type: 'button', text: t('Anuluj'), onclick: () => close() }),
       h('small', { class: 'uw-hint', text: phone ? '' : 'Ctrl+Enter' })));
   close = showPopover(el, anchor || bar.querySelector('.jk-uw-b') || bar);
+  inp.focus();
+}
+
+/* a note can be corrected later (the owner, 18 Oct: remarks could not be edited); it keeps its moment and context */
+function uwagaEdit(anchor, u, after) {
+  let close = null;
+  const inp = h('textarea', { class: 'jk-in', rows: 7, maxlength: 4000, 'aria-label': t('Uwaga') });
+  inp.value = u.text;
+  const ok = () => {
+    const v = inp.value.trim(); close();
+    if (!v || v === u.text) return;
+    const cur = uwagi.find(x => uwKey(x) === uwKey(u)) || u; // the list may have been refreshed from another tab meanwhile
+    cur.text = v; cur.edited = Date.now();
+    if (!uwagi.includes(cur)) uwagi.push(cur);
+    saveUwagi(); logEv(t('uwaga poprawiona: {0}', noteTitle(v))); after?.();
+  };
+  inp.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); ok(); } else if (e.key === 'Escape') { e.preventDefault(); close(); } });
+  const el = h('div', { class: 'jk-menu jk-confirm jk-uwaga', role: 'dialog', 'aria-label': t('Popraw uwagę') },
+    h('h3', { text: t('Popraw uwagę') }),
+    h('p', { class: 'uw-ctx', text: t('Chwila {0}', isoLocal(u.t).slice(0, 19)) + [u.u, u.okno, u.projekt].filter(Boolean).map(x => ' · ' + x).join('') }),
+    inp,
+    h('div', { class: 'jk-row' }, h('button', { class: 'btn', type: 'button', text: t('Zapisz'), onclick: ok }), h('button', { class: 'btn ghost', type: 'button', text: t('Anuluj'), onclick: () => close() }),
+      h('small', { class: 'uw-hint', text: phone ? '' : 'Ctrl+Enter' })));
+  close = showPopover(el, anchor);
   inp.focus();
 }
 
@@ -189,13 +247,14 @@ SET_SECTIONS.uwagi = (c, draw) => {
       h('p', { class: 'set-note', text: t('Szybka uwaga przypięta do chwili: zapisuje godzinę co do sekundy, układ, okno, projekt i rozmiar ekranu. Przycisk z chorągiewką u góry albo Ctrl+. (na telefonie: menu pod logo).') }),
       h('div', { class: 'set-acts' }, h('button', { class: 'btn', type: 'button', onclick: e => uwagaPop(e.currentTarget) }, icon('flag', 14), t('Nowa uwaga'))),
       list.length ? h('ul', { class: 'set-list' }, list.map(u => h('li', null,
-        h('div', { class: 'sl-main' }, h('b', { text: u.text }), h('small', { text: [isoLocal(u.t).slice(0, 19), u.u, u.okno, u.przyrzad && (u.przyrzad.nazwa || u.przyrzad.adres), u.projekt, u.ekran + (u.telefon ? ' · ' + t('telefon') : ''), u.v].filter(Boolean).join(' · ') })),
+        h('div', { class: 'sl-main' }, h('b', { text: u.text }), h('small', { text: [isoLocal(u.t).slice(0, 19), u.u, u.okno, u.przyrzad && (u.przyrzad.nazwa || u.przyrzad.adres), u.projekt, u.ekran + (u.telefon ? ' · ' + t('telefon') : ''), u.v].filter(Boolean).join(' · ') }), uwAnswerEl(u)),
         h('div', { class: 'sl-acts' },
+          ibtn('pencil', t('Popraw uwagę'), e => uwagaEdit(e.currentTarget, u, draw)),
           ibtn('copy', t('Kopiuj'), () => B.copyText(u.text, t('Skopiowane'))),
           ibtn('trash', t('Usuń uwagę'), () => {
-            const i = uwagi.indexOf(u); if (i < 0) return;
-            uwagi.splice(i, 1); saveUwagi(); draw();
-            jtoast(t('Uwaga usunięta.'), { label: t('Cofnij'), act: () => { uwagi.splice(i, 0, u); saveUwagi(); draw(); } });
+            const i = uwagi.findIndex(x => uwKey(x) === uwKey(u)); if (i < 0) return;
+            uwagi.splice(i, 1); uwGone.add(uwKey(u)); saveUwagi(); draw();
+            jtoast(t('Uwaga usunięta.'), { label: t('Cofnij'), act: () => { uwGone.delete(uwKey(u)); uwagi.splice(i, 0, u); saveUwagi(); draw(); } });
           })))))
         : h('p', { class: 'set-note', text: t('Jeszcze żadnej uwagi.') })),
     setCard(t('Paczka dla Claude\'a'),
