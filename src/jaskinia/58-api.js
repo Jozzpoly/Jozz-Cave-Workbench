@@ -1,0 +1,78 @@
+/* ---------- window.Jaskinia: what other tools may use (v6) ----------
+   A small, deliberate surface, so that work living in another repository (Feniks Studio first) can add its own windows
+   and use Jozz's materials and the shared 3D look without editing src/jaskinia/*. `JASK` is already the Library's flag,
+   hence the full name. Version 1; anything not listed here is internal and may change. */
+const JASKINIA_API = {
+  v: 1,
+  build: JASK_BUILD,
+  /* register a window type. def: { name, glyph?, desc?, group? ('studio' by default), render(box, c), ctx?(c), live?, liveKey?, fill?, noZoom? }
+     Windows of this type saved earlier (kept aside as "lost" by a build that did not know it) come back. */
+  ext: {
+    type(key, def) {
+      if (!/^[a-z][a-z0-9_-]{1,31}$/.test(key)) throw new Error('Jaskinia.ext.type: key must be a short lowercase name');
+      if (TYPES[key] && !TYPES[key].ext) throw new Error('Jaskinia.ext.type: "' + key + '" is a built-in window type');
+      if (typeof def?.render !== 'function') throw new Error('Jaskinia.ext.type: render(box, c) is required');
+      TYPES[key] = { group: 'studio', glyph: 't_wybor', desc: '', ...def, key, ext: true };
+      if (typeof store !== 'undefined' && store) {
+        let back = 0;
+        for (const sp of store.spaces) for (const w of Object.values(sp.L.wins)) if (w.type === 'wybor' && w.lost && w.lost.type === key) { w.type = key; delete w.lost.type; if (!w.lost.pin) delete w.lost; back++; }
+        if (back && typeof L !== 'undefined' && L) { persist(); for (const id of allIds()) { const rt = RT.get(id); if (rt) rt.key = null; refreshWin(id); } }
+      }
+      return TYPES[key];
+    },
+    /* a 16×16 icon drawn with currentColor: one SVG path */
+    icon(name, d) { if (!/^[a-z][a-z0-9_]{1,31}$/.test(name) || typeof d !== 'string') throw new Error('Jaskinia.ext.icon(name, pathData)'); ICONS[name] = d; },
+    /* English beside Polish source strings, for t() */
+    strings(dict) { if (typeof EN !== 'undefined') for (const [k, v] of Object.entries(dict || {})) if (EN[k] == null) EN[k] = v; },
+    t: (s, ...a) => t(s, ...a),
+    toast: (msg, action, ms) => jtoast(msg, action, ms),
+    open: (type, opts) => openWinOfType(type, opts || {}),
+  },
+  /* Jozz's materials: list(), get(id), object(id, {ground, set}) → Promise<THREE.Object3D> (a fresh copy turned and
+     scaled by the material's settings; with ground: true it also stands on the ground in the middle), import(files),
+     versions(id), settings(id).
+     An id is "m" + the start of the SHA-256 of the material's bytes: the same bytes are the same material, everywhere.
+     Settings (turns and scale) have numbered revisions (v6.1): object(id, {set: n}) gives the look a place was built
+     with, object(id) the newest; userData.set says which one it is. Changing the settings never changes an old revision.
+     on(fn) hears every change as { added, changed, removed } ids, with other: true when another tab of this Jaskinia made it. */
+  materialy: {
+    list: () => matList(),
+    get: async id => (await matAll()).get(id) || null,
+    versions: async id => { const m = (await matAll()).get(id); return m ? matVersions(m) : []; },
+    settings: async id => { const m = (await matAll()).get(id); return m ? matSets(m).map(s => ({ ...s, rot: [...s.rot] })) : []; },
+    async object(id, o = {}) {
+      const m = (await matAll()).get(id);
+      if (!m) throw new Error('no material ' + id);
+      const s = matSetting(m, o.set);
+      const { object, animations } = await matLoad(m);
+      const g = matWrap(object, m, s);
+      g.userData.material = id;
+      g.userData.set = s.n;
+      g.userData.animations = animations;
+      return o.ground ? matGround(g) : g;
+    },
+    import: files => matImport(files),
+    on(fn) { const f = e => fn(e.detail || {}); document.addEventListener('jk:materialy', f); return () => document.removeEventListener('jk:materialy', f); },
+    /* Ruch (v6.4): the parts Jozz set in motion himself, with their axes, pivots and ranges, in the file's own frame.
+       ruch(id) → { jaskinia: 'ruch v1', material, parts: [...] } or null when he set nothing for this material.
+       rig(object, id) → a driver for a copy from object(id): { parts: [{ name, kind }], set(name | index, value), rest() }
+       (radians for a turn, metres of the file for a slide; the rest pose is the file's). */
+    ruch: async id => { const m = (await matAll()).get(id); return m && m.ruch ? ruchJson(m) : null; },
+    async rig(object, id) {
+      const m = (await matAll()).get(id), inner = ruchInner(object);
+      if (!m || !inner) throw new Error('Jaskinia.materialy.rig(object from object(id), id)');
+      const r = ruchRig(inner);
+      r.build((m.ruch?.parts || []).map(ruchPlain));
+      return { parts: r.parts.map(p => ({ name: p.def.name, kind: p.def.kind, range: p.def.range })), set: (key, v) => r.set(key, v), rest: () => r.rest() };
+    },
+  },
+  /* the shared 3D runtime: three() → { THREE, GLTFLoader, OrbitControls, … } (one copy for the page),
+     stage(host) → a lit stage with a metre grid, walk(stage) → first-person at 1:1 */
+  swiat: {
+    three: () => swiat(),
+    stage: (host, o) => swStage(host, o || {}),
+    walk: (stage, o) => swWalk(stage, o || {}),
+    human: SW_HUMAN,
+  },
+};
+window.Jaskinia = JASKINIA_API;

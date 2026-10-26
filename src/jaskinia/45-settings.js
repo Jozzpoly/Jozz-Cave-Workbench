@@ -8,7 +8,7 @@ const THEMES = {
   piwnica: { name: 'Piwnica', desc: 'Warsztat: drewno, blacha, taśma z etykieciarki, zielone diody.', fonts: 'family=Barlow+Condensed:wght@500;600;700;800&family=VT323' },
 };
 const LIFE_RAMPS = { zielen: { name: 'Zieleń', desc: 'Im żywszy projekt, tym bardziej zielony; stare uspokajają się do błękitu i tła.' }, zar: { name: 'Żar', desc: 'Jak dawna Biblioteka: świeże świeci pomarańczem.' } };
-const DENSITY = { zwarta: 'Zwarty', srednia: 'Średni', duza: 'Duży' };
+const DENSITY = { auto: 'Sam', zwarta: 'Zwarty', srednia: 'Średni', duza: 'Duży' };
 function applyLook() {
   const de = document.documentElement, th = THEMES[prefs.theme] ? prefs.theme : 'jaskinia';
   de.dataset.jk = th;
@@ -17,7 +17,7 @@ function applyLook() {
   else if (th !== 'jaskinia') de.dataset.theme = 'dark';
   else delete de.dataset.theme;
   de.dataset.life = prefs.life;
-  de.dataset.density = prefs.density;
+  de.dataset.density = prefs.density === 'auto' ? (matchMedia('(pointer: coarse)').matches ? 'srednia' : 'zwarta') : prefs.density;
   de.dataset.motion = prefs.motion;
   de.lang = prefs.lang === 'en' ? 'en' : 'pl';
   B.HOOK.noTips = !prefs.tips;
@@ -28,6 +28,7 @@ function applyLook() {
 /* a preference changed: apply it, keep it, redraw what depends on it */
 function setPref(k, v) {
   if (prefs[k] === v) return;
+  logEv(t('ustawienie: {0} = {1}', k, v));
   prefs[k] = v;
   const p = sanitizePrefs(prefs);
   Object.assign(prefs, p, { recent: prefs.recent });
@@ -37,6 +38,8 @@ function setPref(k, v) {
   if (k === 'cz') { for (const [id, rt] of RT) { const w = L.wins[id]; if (w) rt.zoomer.style.zoom = zEff(w); } B.HOOK.refresh(); }
   if (k === 'density') { apply(); B.HOOK.refresh(); }
   if (k === 'theme' || k === 'scheme' || k === 'life') setTimeout(() => B.HOOK.refresh(), 30);
+  if (k === 'games') B.HOOK.refresh();
+  if (k === 'pixels') document.dispatchEvent(new CustomEvent('jk:pixels'));
 }
 /* rebuild the whole interface (after a language change): the store and the layouts stay as they are */
 function relaunch() {
@@ -107,13 +110,20 @@ const SET_SECTIONS = {
           h('span', { class: 'ramp-s', 'data-life': k }, ['--h5', '--h4', '--h3', '--h2', '--h1', '--h0'].map(v => h('i', { style: { background: `var(${v})` } }))),
           h('b', { text: t(X.name) }), h('small', { text: t(X.desc) }))))),
       setCard(t('Rozmiar'),
-        setRow(t('Rozmiar interfejsu'), t('Paski, przyciski i zakładki. Na dotyku przyciski i tak są duże.'), setSeg(t('Rozmiar interfejsu'), prefs.density, Object.entries(DENSITY), v => { setPref('density', v); draw(); })),
-        setRow(t('Powiększenie treści okien'), t('Ile znaczy „100%” w oknie. Każde okno możesz dalej przybliżać po swojemu (Ctrl+kółko).'), zoomSlider(draw))));
+        setRow(t('Rozmiar interfejsu'), t('Paski, przyciski i zakładki. „Sam”: zwarty przy myszy, jak w Blenderze, żeby miejsce należało do treści; na dotyku większy.'), setSeg(t('Rozmiar interfejsu'), prefs.density, Object.entries(DENSITY), v => { setPref('density', v); draw(); })),
+        setRow(t('Powiększenie treści okien'), t('Ile znaczy „100%” w oknie. Każde okno możesz dalej przybliżać po swojemu (Ctrl+kółko).'), zoomSlider(draw))),
+      setCard(t('Modele 3D'),
+        setRow(t('Piksele tekstur'), t('„Ostre”: każdy piksel tekstury widać tak, jak w Blockbench; tak są pomyślane modele pixel-art. „Gładkie”: tekstury się wygładzają, lepiej dla zdjęć i dużych tekstur.'),
+          setSeg(t('Piksele tekstur'), prefs.pixels, [['ostre', 'Ostre'], ['gladkie', 'Gładkie']], v => { setPref('pixels', v); draw(); }))));
   },
   zachowanie(c, draw) {
     return h('div', { class: 'set-body' },
       setCard(t('Ściana'), setRow(t('Kółko myszy na ścianie'), t('Przybliża jak w Blenderze i na mapach, albo przesuwa widok jak na touchpadzie. Ctrl+kółko zawsze przybliża.'),
         setSeg(t('Kółko myszy'), prefs.wheel, [['zoom', 'Przybliża'], ['pan', 'Przesuwa']], v => { setPref('wheel', v); draw(); }))),
+      setCard(t('Gry'), B.HOSTED
+        ? setRow(t('Gdzie otwierać gry'), t('„Samo”: na komputerze w oknie obok mapy, na telefonie w nowej karcie, gdzie gra ma cały ekran.'),
+          setSeg(t('Gry'), prefs.games, [['auto', 'Samo'], ['okno', 'W oknie'], ['karta', 'W nowej karcie']], v => { setPref('games', v); draw(); }))
+        : h('p', { class: 'set-note', text: t('W claude.ai gry zawsze otwierają się w nowej karcie: ta strona nie może pokazać innej strony w oknie. W Jaskini pobranej jako plik albo na własnym serwerze możesz grać w oknie.') })),
       setCard(t('Podpowiedzi i ruch'),
         setRow(t('Dymki z podpowiedziami'), t('Dymki nad mapą, wykresem i lasem gałęzi. Na dotyku nie pokazują się nigdy.'), setSeg(t('Dymki'), prefs.tips ? 'on' : 'off', [['on', 'Pokazuj'], ['off', 'Ukryj']], v => { setPref('tips', v === 'on'); draw(); })),
         setRow(t('Animacje'), t('Płynne przejścia kart i stref upuszczania.'), setSeg(t('Animacje'), prefs.motion, [['full', 'Pełne'], ['less', 'Oszczędne']], v => { setPref('motion', v); draw(); }))));
@@ -157,7 +167,7 @@ const SET_SECTIONS = {
     return h('div', { class: 'set-body' },
       setCard(t('Kopie automatyczne'),
         h('p', { class: 'set-note', text: t('Jaskinia robi kopię co kilka godzin (przy otwarciu) i zawsze przed resetem, importem, wczytaniem całości i usuwaniem na zawsze. Trzyma {0} ostatnich. Żyją w tej przeglądarce, obok samej Jaskini.', BAK_MAX) }),
-        h('div', { class: 'set-acts' }, h('button', { class: 'btn', type: 'button', onclick: () => { makeBackup('ręczna'); draw(); jtoast(t('Kopia zrobiona.')); } }, icon('archive', 14), t('Zrób kopię teraz')),
+        h('div', { class: 'set-acts' }, h('button', { class: 'btn', type: 'button', onclick: () => { const b = makeBackup('ręczna'); draw(); jtoast(b ? t('Kopia zrobiona.') : storageOK ? t('Nie udało się zrobić kopii. Pamięć przeglądarki jest pełna: wyeksportuj Jaskinię albo usuń stare kopie.') : t('Ta przeglądarka nie pozwala tej stronie zapisywać, więc kopii nie ma. Eksportuj Jaskinię (Menu → Eksport), żeby ją zachować.')); } }, icon('archive', 14), t('Zrób kopię teraz')),
           h('button', { class: 'btn warn', type: 'button', onclick: e => askReset(e.currentTarget) }, icon('reset', 14), t('Zresetuj całą Jaskinię…'))),
         list.length ? h('ul', { class: 'set-list' }, list.map(b => h('li', null,
           h('div', { class: 'sl-main' }, h('b', { text: when2(b.at) }), h('small', { text: why(b.why) + ' · ' + tn(b.n || arr(b.data.spaces).length, 'układ', 'układy', 'układów') + ' · ' + arr(b.data.spaces).map(sp => sp.name).slice(0, 5).join(', ') })),
@@ -191,7 +201,8 @@ const SET_SECTIONS = {
           h('button', { class: 'jk-tb danger', type: 'button', onclick: e => forever(e.currentTarget, it.name || kindLabel(it), () => { forgetTrash(it.id); draw(); }) }, t('Usuń na zawsze'))))))) : null,
       empty ? setCard(null, h('p', { class: 'jk-empty', text: t('Kosz jest pusty.') })) : null,
       !empty ? h('div', { class: 'set-danger' }, h('button', { class: 'btn danger big', type: 'button', onclick: e => askPop(e.currentTarget, { title: t('Opróżnić cały kosz?'), text: t('Wszystko w koszu ({0}) zniknie na zawsze. Zanim to zrobię, zapiszę kopię automatyczną.', items.length + orphans.length), ok: t('Opróżnij kosz na zawsze'), okClass: 'danger big' }, () => {
-        makeBackup('przed usunięciem na zawsze'); store.trash = []; for (const n of orphanNotes()) delete store.notes[n.id]; persist(); draw(); jtoast(t('Kosz jest pusty.'));
+        if (storageOK && !makeBackup('przed usunięciem na zawsze', store.trash)) { jtoast(t('Nie udało się zrobić kopii przed usunięciem, więc nic nie usunąłem. Pamięć przeglądarki jest pełna: wyeksportuj Jaskinię albo usuń stare kopie.')); return; }
+        store.trash = []; for (const n of orphanNotes()) delete store.notes[n.id]; persist(); draw(); jtoast(t('Kosz jest pusty.'));
       }) }, icon('trash', 15), t('Opróżnij kosz…'))) : null);
   },
   dane(c, draw) {
@@ -221,7 +232,7 @@ const SET_SECTIONS = {
     };
     file.addEventListener('change', () => { const f = file.files && file.files[0]; if (!f) return; f.text().then(tryImport, () => fill(res, h('p', { class: 'set-err', text: t('Nie da się przeczytać tego pliku.') }))); file.value = ''; });
     return h('div', { class: 'set-body' },
-      setCard(t('Eksport'), h('p', { class: 'set-note', text: t('Plik z układami, notatkami i zapisami. Na innym urządzeniu (albo po wyczyszczeniu przeglądarki) wczytasz go w imporcie.') }),
+      setCard(t('Eksport'), h('p', { class: 'set-note', text: t('Plik z układami, notatkami i zapisami. Na innym urządzeniu (albo po wyczyszczeniu przeglądarki) wczytasz go w imporcie. Modeli z Materiałów w nim nie ma: zostają w bibliotece tej przeglądarki, a ich pliki masz u siebie na dysku.') }),
         h('div', { class: 'set-acts' },
           h('button', { class: 'btn', type: 'button', onclick: () => offer('all') }, icon('download', 14), t('Cała Jaskinia')),
           h('button', { class: 'btn ghost', type: 'button', onclick: () => offer('space') }, icon('download', 14), t('Tylko „{0}”', spaceName(space)))), out),
@@ -253,8 +264,12 @@ const SET_SECTIONS = {
         h('li', null, h('span', { text: t('pokrycie') }), h('b', { text: `${C.collected}/${C.expected} repo` })),
         h('li', null, h('span', { text: t('razem') }), h('b', { text: `${fmt(T.commits)} commitów · ${T.branches} gałęzi` })),
         h('li', null, h('span', { text: t('zapis Jaskini w tej przeglądarce') }), h('b', { text: storageOK ? `${Math.round(bytes / 1024)} KB` : t('niedostępny') })))),
-      setCard(t('Gdzie to wszystko jest'), h('p', { class: 'set-note', text: t('Układy, notatki, zapisy, kopie i kosz są tylko w tej przeglądarce, na tym urządzeniu. Nigdzie ich nie wysyłam. Żeby przenieść Jaskinię, użyj eksportu. Dane o projektach to zrzut z GitHuba wbudowany w stronę: odświeża go Claude (regen).') })),
-      setCard(t('Wersja'), h('p', { class: 'set-note', text: t('Jaskinia v2 · 14 paź 2026 · zbudowana na panelach Biblioteki.') })));
+      setCard(t('Gdzie to wszystko jest'), h('p', { class: 'set-note', text: t('Układy, notatki, zapisy, kopie, kosz i Materiały są tylko w tej przeglądarce, na tym urządzeniu. Nigdzie ich nie wysyłam. Kilka kart Jaskini naraz scala swoje zmiany. Żeby przenieść Jaskinię, użyj eksportu (bez modeli). Dane o projektach to zrzut z GitHuba wbudowany w stronę: odświeża go Claude (regen).') })),
+      setCard(t('Wersja'), h('ul', { class: 'set-facts' },
+        h('li', null, h('span', { text: t('wersja') }), h('b', { text: 'Jaskinia ' + VER })),
+        h('li', null, h('span', { text: t('zbudowana') }), h('b', { text: builtShort() })),
+        h('li', null, h('span', { text: t('działa jako') }), h('b', { text: t(PLACE_NAME[PLACE]) }))),
+        h('p', { class: 'set-note', text: PLACE === 'plik' ? t('To plik na tym urządzeniu: nowa wersja Jaskini to nowy plik. Twój zapis zostaje w przeglądarce, ale jeśli nowa kopia go nie widzi, przenieś go eksportem i importem.') : PLACE === 'claude' ? t('Jaskinia działa w claude.ai: nowa wersja pojawia się pod tym samym linkiem.') : t('Jaskinia działa na Twoim serwerze.') })));
   },
 };
 function zoomSlider(draw) {
@@ -301,6 +316,7 @@ function importAdd(o) {
 }
 function importReplace(o) {
   const before = makeBackup('przed importem');
+  if (storageOK && !before) return noCopy();
   const d = o.data;
   for (const [id, n] of Object.entries(obj(d.notes))) store.notes[id] = typeof n === 'string' ? { text: n, upd: Date.now() } : n;
   store.spaces = arr(d.spaces); store.cur = d.cur; if (R[d.sel]) store.sel = d.sel;

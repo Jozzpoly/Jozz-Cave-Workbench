@@ -18,7 +18,7 @@ P = lambda *a: os.path.join(ROOT, *a)
 D = lambda *a: os.path.join(DEST, *a)
 
 COPY = ["src", "tools", "docs", "README.md", "AGENTS.md", "GENERATOR.md", "package.json", "package-lock.json", ".gitignore"]
-SKIP = re.compile(r"(__pycache__|\.pyc$|^tools/_|/_[^/]*\.mjs$)")
+SKIP = re.compile(r"(__pycache__|\.pyc$|^tools/_|/_[^/]*\.mjs$|(^|/)node_modules/)")
 
 conn = json.load(open(P("data", "connector_repos.json"), encoding="utf-8"))
 private = sorted(r["name"] for r in conn["repos"] if r.get("visibility") == "private")
@@ -56,6 +56,8 @@ w("prev_library.json", {"estate": {k: prev["estate"].get(k) for k in ("generated
                                   for r in prev["repos"] if r["name"] in public]})
 hist = J("history.json")
 w("history.json", [dict(e, repos={n: v for n, v in e["repos"].items() if n in public}) for e in hist])
+if os.path.exists(P("data", "wejscia.json")):  # verified play entries, for the public repositories only
+    w("wejscia.json", {k: v for k, v in J("wejscia.json").items() if k.startswith("_") or k in public})
 
 # 3. rebuild everything from the public data (fonts come from node_modules, linked, never copied)
 if not os.path.exists(D("node_modules")):

@@ -40,7 +40,28 @@ if A.app == "jaskinia":
     shell = "\n".join(open(os.path.join(J, f), encoding="utf-8").read() for f in parts)
     tpl = open(os.path.join(J, "index.html"), encoding="utf-8").read()
     jcss = open(os.path.join(J, "jaskinia.css"), encoding="utf-8").read()
-    script = (f'const BIB_HOST = "{A.host}";\nconst BIB_MODE = "jaskinia";\n' + app + "\n(() => {\n'use strict';\n" + shell + "\n})();\n")
+    # the build says who it is, so a screen recording identifies its own version (docs/VERSIONS.md)
+    import datetime
+    ver = open(os.path.join(J, "version.txt"), encoding="utf-8").read().strip()
+    epoch = os.environ.get("SOURCE_DATE_EPOCH")
+    built = (datetime.datetime.fromtimestamp(int(epoch), datetime.timezone.utc) if epoch else datetime.datetime.now(datetime.timezone.utc)).strftime("%Y-%m-%dT%H:%MZ")
+    build = json.dumps({"v": ver, "built": built, "host": A.host})
+    # the demo lab that speaks the instrument contract (docs/przyrzad), carried inside, so the owner can try it offline
+    demo_dir = P("docs", "przyrzad")
+    demo = open(os.path.join(demo_dir, "demo.html"), encoding="utf-8").read().replace(
+        '<script src="jaskinia-przyrzad.js"></script>',
+        "<script>\n" + open(os.path.join(demo_dir, "jaskinia-przyrzad.js"), encoding="utf-8").read().replace("</script", "<\\/script") + "\n</script>")
+    lab_demo = "const LAB_DEMO = " + json.dumps(demo, ensure_ascii=False) + ";\n"
+    # answers to the owner's remarks (55-feedback.js) live in the private layer: a public build carries none
+    odp_p = P("private", "uwagi_odpowiedzi.json")
+    odp = {k: v for k, v in json.load(open(odp_p, encoding="utf-8")).items() if not k.startswith("_")} if os.path.exists(odp_p) and os.environ.get("BIB_PUBLIC") != "1" else {}
+    lab_demo += "const UW_ODP = " + json.dumps(odp, ensure_ascii=False) + ";\n"
+    script = (f'const BIB_HOST = "{A.host}";\nconst BIB_MODE = "jaskinia";\nconst JASK_BUILD = {build};\n' + lab_demo + app + "\n(() => {\n'use strict';\n" + shell + "\n})();\n")
+    # the 3D runtime (tools/swiat/build.mjs): three.js and a few addons; it only defines a factory, so a Jaskinia
+    # without 3D windows pays the parse and nothing else (56-swiat.js starts it when a 3D window first asks)
+    vend = P("src", "vendor", "swiat3d.js")
+    if os.path.exists(vend):
+        script = open(vend, encoding="utf-8").read().replace("<!--", "<\\!--") + "\n" + script
     out = (tpl.replace("/*N*/", str(n)).replace("/*FONTS*/", fonts).replace("/*CSS*/", css).replace("/*JCSS*/", jcss)
            .replace("/*DATA*/", payload).replace("/*APP*/", script.replace("</script", "<\\/script")))
     name = "jaskinia.html" if A.host == "artifact" else "jaskinia-web.html"
@@ -49,6 +70,11 @@ else:
     out = (tpl.replace("/*N*/", str(n)).replace("/*FONTS*/", fonts).replace("/*CSS*/", css).replace("/*DATA*/", payload)
            .replace("/*APP*/", f'const BIB_HOST = "{A.host}";\n' + app.replace("</script", "<\\/script")))
     name = "biblioteka.html" if A.host == "artifact" else "biblioteka-web.html"
+if A.host == "artifact":
+    # Opened straight from a disk, the fragment has no HTTP header to name its encoding, and Chromium may then read the
+    # UTF-8 as an 8-bit code page and break the script (GPT's real file:// check on PR #1). Inside claude.ai the page's
+    # own head already says utf-8, so this line changes nothing there.
+    out = '<meta charset="utf-8">\n' + out
 if A.host == "web":
     # self-hosted: a complete document (the claude.ai artifact host adds this wrapper itself)
     import re

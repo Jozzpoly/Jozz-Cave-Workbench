@@ -12,6 +12,7 @@ const coarse = matchMedia('(pointer: coarse)');
 /* ---------- undo ---------- */
 const H = () => hist[space.id] || (hist[space.id] = { undo: [], redo: [] });
 function pushUndo(label, before) {
+  logEv(label);
   const hh = H();
   hh.undo.push({ label, L: before });
   if (hh.undo.length > 120) hh.undo.shift();
@@ -31,6 +32,7 @@ function undo() {
   if (!s0) { jtoast(t('Nie ma czego cofnąć')); return; }
   H().redo.push({ label: s0.label, L: clone(L) });
   replaceL(s0.L);
+  logEv(t('cofnięte: {0}', s0.label));
   jtoast(t('Cofnięte: {0}', s0.label));
 }
 function redo() {
@@ -38,6 +40,7 @@ function redo() {
   if (!s0) { jtoast(t('Nie ma czego ponowić')); return; }
   H().undo.push({ label: s0.label, L: clone(L) });
   replaceL(s0.L);
+  logEv(t('ponowione: {0}', s0.label));
   jtoast(t('Ponowione: {0}', s0.label));
 }
 function replaceL(nl) { space.L = L = nl; afterChange(); }
@@ -65,7 +68,7 @@ const spaceName = sp => sp.preset && sp.name === PRESETS[sp.preset] ? t(sp.name)
 function buildChrome() {
   root = h('div', { class: 'jk' });
   const brand = h('button', { class: 'jk-brand', type: 'button', 'aria-haspopup': 'menu', title: t('Menu Jaskini: ustawienia, zapisane układy, kopie, kosz'), onclick: e => mainMenu(e.currentTarget) },
-    h('span', { class: 'mark', 'aria-hidden': 'true' }), h('b', { text: 'Jaskinia' }), icon('chev', 12, 'cv'));
+    h('span', { class: 'mark', 'aria-hidden': 'true' }), h('b', { text: 'Jaskinia' }), h('small', { class: 'jk-ver', text: VER, title: t('Wersja Jaskini: {0}, zbudowana {1}', VER, builtShort()) }), icon('chev', 12, 'cv'));
   const snap = h('button', { class: 'jk-snap', type: 'button', onclick: e => snapInfo(e.currentTarget) });
   tabsEl = h('div', { class: 'jk-tabs', role: 'tablist', 'aria-label': t('Twoje układy okien') });
   tabsEl.addEventListener('wheel', e => { if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { tabsEl.scrollLeft += e.deltaY; e.preventDefault(); } }, { passive: false });
@@ -82,8 +85,9 @@ function buildChrome() {
   statusEl = h('div', { class: 'jk-status' });
   selBox = h('div', { class: 'jk-selbox' });
   const helpBtn = h('button', { class: 'jk-help-b', type: 'button', onclick: e => openHelp(e.currentTarget) }, icon('help', 15), h('span', { text: t('Jak to działa') }));
+  const uwBtn = h('button', { class: 'jk-uw-b', type: 'button', title: t('To mnie uwiera: zapisz uwagę przypiętą do tej chwili (Ctrl+.)'), 'aria-label': t('To mnie uwiera'), onclick: e => uwagaPop(e.currentTarget) }, icon('flag', 15));
   bar = h('header', { class: 'jk-bar' }, brand, snap, spaceBtn, tabsW,
-    h('div', { class: 'jk-tools' }, statusEl, undoBtn, redoBtn, h('span', { class: 'jk-sep' }), selBox, helpBtn));
+    h('div', { class: 'jk-tools' }, statusEl, undoBtn, redoBtn, h('span', { class: 'jk-sep' }), selBox, uwBtn, helpBtn));
   stage = h('main', { class: 'jk-stage', 'aria-label': t('Okna') });
   dropEl = h('div', { class: 'jk-drop', hidden: true }, h('span'));
   compassEl = h('div', { class: 'jk-compass', hidden: true }, ['top', 'left', 'center', 'right', 'bottom'].map(z => h('i', { 'data-z': z }, icon(z === 'center' ? 'swap' : 'chev', 14))));
@@ -98,11 +102,20 @@ function buildChrome() {
   document.head.append(selStyle);
   renderSnap();
 }
+/* how old the snapshot is, said in the bar itself: a day-old snapshot must not pass for today */
+function snapAgeText() {
+  const age = snapAgeDays();
+  if (age < 1 / 24) return t('sprzed chwili');
+  if (age < 1) return t('sprzed {0} godz.', Math.max(1, Math.round(age * 24)));
+  return t('sprzed {0}', tn(Math.max(1, Math.round(age)), 'dnia', 'dni', 'dni'));
+}
+function builtShort() { return BUILD.built ? dshort(new Date(BUILD.built.replace('Z', ':00Z'))) : '?'; }
 function renderSnap() {
   const el = bar.querySelector('.jk-snap'), age = snapAgeDays();
-  fill(el, h('small', { text: t('zrzut') }), h('b', { text: dshort(new Date(SNAP * 1000)) }));
+  fill(el, h('small', { text: t('zrzut') + ' · ' + snapAgeText() }), h('b', { text: dshort(new Date(SNAP * 1000)) }));
+  el.classList.toggle('stale', age >= 1);
   el.classList.toggle('old', age > 7);
-  el.title = t('Dane: zrzut repozytoriów z {0}. Kolory pokazują stan z tamtej chwili.', dshort(new Date(SNAP * 1000)));
+  el.title = t('Dane: zrzut repozytoriów z {0} ({1}). Commitów zrobionych później Jaskinia nie zna. Kolory pokazują stan z chwili zrzutu.', dshort(new Date(SNAP * 1000)), snapAgeText());
 }
 
 /* ---------- layout on screen ---------- */
@@ -135,9 +148,10 @@ function apply() {
     drawDividers(L.max ? [] : rects.divs);
   }
   root.classList.toggle('has-max', !phone && !!L.max);
-  if (was !== phone) { for (const id of ids) updateHead(id); hideSheet(); }
+  if (was !== phone) { for (const id of ids) updateHead(id); hideSheet(); logEv(phone ? t('tryb telefonu: jedno okno naraz ({0})', `${W}×${Hh}`) : t('tryb biurka ({0})', `${W}×${Hh}`)); }
   renderDock();
   tabArrows();
+  liveVisibility();
 }
 function phoneCurrent() { const ids = allIds(); return ids.includes(L.focus) ? L.focus : ids[0]; }
 function floatPx(f, W, Hh) {
@@ -211,7 +225,12 @@ function makeWin(id) {
   head.addEventListener('pointerdown', e => headDown(e, id));
   head.addEventListener('contextmenu', e => { if (e.target.closest('input, textarea, select')) return; e.preventDefault(); winMenu(id, null, { x: e.clientX, y: e.clientY }); });
   head.addEventListener('dblclick', e => { if (!phone && !e.target.closest('button, select, input, a, label')) toggleMax(id); });
-  el.addEventListener('pointerdown', () => { focusWin(id); if (isFloat(id)) raiseFloat(id); }, true);
+  el.addEventListener('pointerdown', e => {
+    const was = L.focus === id, ty = L.wins[id]?.type;
+    focusWin(id); if (isFloat(id)) raiseFloat(id);
+    // a click on a game window's frame gives the game the keys back (a click inside the game does that by itself)
+    if (was && (ty === 'gra' || ty === 'przyrzad') && !e.target.closest('button, a, input, textarea, select')) setTimeout(() => focusGame(id), 0);
+  }, true);
   el.addEventListener('wheel', e => {
     if (!e.ctrlKey) return;
     const w = L.wins[id];
@@ -219,6 +238,21 @@ function makeWin(id) {
     e.preventDefault();
     setZoom(id, w.z * Math.exp(-clamp(e.deltaY, -120, 120) * 0.0011), true);
   }, { passive: false });
+  // two fingers over a window zoom its content, like Ctrl + wheel on the desk (the page itself never zooms: 05_MOBILE 01:03)
+  let pin = null;
+  const span = e => Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY) || 1;
+  body.addEventListener('touchstart', e => {
+    const w = L.wins[id];
+    if (e.touches.length === 2 && w && !typeOf(w).noZoom) pin = { d0: span(e), z0: w.z || 1 };
+  }, { passive: true });
+  body.addEventListener('touchmove', e => {
+    if (!pin || e.touches.length !== 2) return;
+    if (e.cancelable) e.preventDefault();
+    setZoom(id, pin.z0 * span(e) / pin.d0, true);
+  }, { passive: false });
+  const pinEnd = e => { if (pin && e.touches.length < 2) pin = null; };
+  body.addEventListener('touchend', pinEnd, { passive: true });
+  body.addEventListener('touchcancel', pinEnd, { passive: true });
   const ro = new ResizeObserver(() => { const rt = RT.get(id); if (!rt) return; clearTimeout(rt.timer); rt.timer = setTimeout(() => { if (RT.get(id) && L.wins[id] && rt.space === space.id) refreshWin(id); }, 120); });
   ro.observe(body);
   stage.insertBefore(el, dropEl);
@@ -231,9 +265,11 @@ function dropWin(id) { const rt = RT.get(id); if (!rt) return; dispose(rt); rt.r
 function wantKey(id) {
   const w = L.wins[id], T = typeOf(w), rt = RT.get(id);
   const repo = T.follows ? (w.pin || store.sel) : null;
+  // a running page is rebuilt only when what it runs changes, never for the language, the zoom or the window's size
+  if (T.live) return JSON.stringify([w.type, repo, T.liveKey ? T.liveKey(w.st) : w.st]);
   let sz = '';
   if (T.sized) { const s0 = innerSize(rt, w); sz = Math.round(s0.w) + 'x' + Math.round(s0.h); }
-  return JSON.stringify([w.type, repo, w.st, sz, T.stats ? L.stats : null, prefs.lang, T.zoomKey ? zEff(w) : 0]);
+  return JSON.stringify([w.type, repo, w.st, sz, T.stats ? L.stats : null, prefs.lang, T.zoomKey ? zEff(w) : 0, w.type === 'gra' ? gamesInWindow() : 0]);
 }
 function refreshWin(id) {
   const rt = RT.get(id), w = L.wins[id];
@@ -281,7 +317,7 @@ function renderWin(id, key) {
   rt.zoomer.style.zoom = zEff(w);
   let after = null;
   try { after = T.render(rt.zoomer, ctxFor(id, innerSize(rt, w), repo)); }
-  catch (err) { console.error(err); rt.zoomer.replaceChildren(h('p', { class: 'jk-err', text: t('To okno nie dało się narysować: {0}', err.message) })); }
+  catch (err) { console.error(err); logEv(t('błąd okna {0}: {1}', w.type, err.message)); rt.zoomer.replaceChildren(h('p', { class: 'jk-err', text: t('To okno nie dało się narysować: {0}', err.message) })); }
   fixIds(rt.zoomer, id);
   rt.key = wantKey(id); // after drawing: a renderer may settle its own state (the wall places new cards once)
   void key;
@@ -338,7 +374,7 @@ function setType(id, type) {
   commit(t('zmiana okna na {0}', t(TYPES[type].name)), () => {
     const w = L.wins[id];
     if (w.type === type) return false;
-    w.type = type; w.st = {};
+    w.type = type; w.st = {}; delete w.lost; // Jozz chose something else for this window
     if (type === 'notatki') w.st.note = noteNew();
     if (!TYPES[type].follows) w.pin = null;
   });
@@ -350,11 +386,43 @@ function rememberType(type) {
   savePrefs();
 }
 function split(id, side, type = 'wybor') {
-  if (isFloat(id)) { jtoast(t('Pływające okno najpierw wstaw do układu, potem dziel.')); return null; }
+  if (isFloat(id)) return splitFloat(id, side, type);
   const nid = newWinId();
   if (phone) side = 'bottom';
   if (commit(t('podział okna {0}', tname(id)), () => { if (!splitWin(L, id, side, nid, type)) return false; if (type === 'notatki') L.wins[nid].st.note = noteNew(); })) { focusWin(nid); if (phone) apply(); return nid; }
   return null;
+}
+/* dividing a floating window: the new window floats beside it (04_PC 00:50: "Pływające okno najpierw wstaw do układu" twice).
+   Halves of a big float; a small one gets a twin next to it. */
+function splitFloat(id, side, type) {
+  const W = stage.clientWidth || 1600, Hh = stage.clientHeight || 900, nid = newWinId();
+  const ok = commit(t('podział pływającego okna {0}', tname(id)), () => {
+    const f = L.floats.find(x => x.id === id);
+    if (!f) return false;
+    L.wins[nid] = { type, z: 1, pin: null, st: {} };
+    if (type === 'notatki') L.wins[nid].st.note = noteNew();
+    let n;
+    if (side === 'right') {
+      if (f.w * W / 2 >= 260) { f.w /= 2; n = { x: f.x + f.w, y: f.y, w: f.w, h: f.h }; }
+      else n = { x: Math.min(f.x + f.w, Math.max(0, 1 - f.w)), y: f.y, w: f.w, h: f.h };
+    } else {
+      if (f.h * Hh / 2 >= 150) { f.h /= 2; n = { x: f.x, y: f.y + f.h, w: f.w, h: f.h }; }
+      else n = { x: f.x, y: Math.min(f.y + f.h, Math.max(0, 1 - f.h)), w: f.w, h: f.h };
+    }
+    L.floats.push({ id: nid, ...n, anchor: null });
+  });
+  if (!ok) return null;
+  focusWin(nid);
+  return nid;
+}
+/* after a session of splitting (04_PC: about 20 "Pusty" windows), the empty ones go in one step */
+function emptyWins() { return allIds().filter(id => L.wins[id] && L.wins[id].type === 'wybor'); }
+function closeEmpty() {
+  const ids = emptyWins();
+  if (!ids.length) { jtoast(t('Nie ma pustych okien.')); return; }
+  let n = 0;
+  if (commit(t('zamknięcie pustych okien'), () => { for (const id of ids) if (L.wins[id] && allIds().length > 1 && closeWin(L, id)) n++; return n ? undefined : false; }))
+    jtoast(t('Zamknięte puste okna: {0}.', n), { label: t('Cofnij'), act: () => undo() });
 }
 function closeW(id) {
   const name = tname(id);
@@ -379,18 +447,34 @@ function raiseFloat(id) {
 function toggleMax(id) {
   if (!L.wins[id] || phone) return;
   L.max = L.max === id ? null : id;
+  logEv(L.max ? t('na cały ekran: {0}', tname(id)) : t('powrót do układu z {0}', tname(id)));
   closeMenus(); apply();
   for (const x of allIds()) updateHead(x);
   persist();
   if (L.max) RT.get(id)?.back.focus({ preventScroll: true });
 }
+let lastGameWin = null; // the game window Jozz used last: where a plain "Zagraj" goes
 function focusWin(id) {
+  if (L.wins[id]?.type === 'gra') lastGameWin = id;
   if (L.focus === id) return;
   const prev = L.focus;
   L.focus = id;
   if (prev) RT.get(prev)?.el.classList.remove('focused');
   RT.get(id)?.el.classList.add('focused');
   persist();
+  // a game window taken into use takes the keyboard too (a click on its header, a phone switch, a layout change)
+  const ty = L.wins[id]?.type;
+  if ((ty === 'gra' || ty === 'przyrzad') && !/^(input|textarea|select)$/i.test(document.activeElement?.tagName || '')) setTimeout(() => focusGame(id), 0);
+}
+/* a game gets the keyboard (the owner, 18 Oct: WASD and the arrows moved Jaskinia instead of JV Web until fullscreen) */
+function focusGame(id, tries = 24) {
+  const rt = RT.get(id), w = L.wins[id];
+  if (!rt || !w || (w.type !== 'gra' && w.type !== 'przyrzad')) return;
+  const fr = rt.body.querySelector('iframe');
+  if (!fr) { if (tries > 0) setTimeout(() => focusGame(id, tries - 1), 150); return; }
+  const go = () => { if (L.focus !== id) return; try { fr.focus(); fr.contentWindow?.focus(); } catch { /* a click inside the game still gives it the keys */ } };
+  go();
+  if (!fr.dataset.jkKeys) { fr.dataset.jkKeys = '1'; fr.addEventListener('load', go); }
 }
 function phoneSwitch(id) {
   if (!L.wins[id]) return;
@@ -434,7 +518,8 @@ function setStats(patch) {
 function select(name, via) {
   if (!R[name]) return;
   const changed = store.sel !== name;
-  if (changed) { store.sel = name; updateSelStyle(); renderSelBox(); persist(); }
+  if (changed) { store.sel = name; updateSelStyle(); renderSelBox(); persist(); logEv(t('zaznaczony: {0}', R[name].short)); }
+  setAddress('#repo~' + name);
   for (const id of allIds()) { refreshWin(id); RT.get(id)?.onSel?.(name); }
   if (changed && phone && via === 'win') showSelSheet(name);
 }
@@ -470,6 +555,21 @@ function openWinOfType(type, opts = {}) {
   focusWin(id);
   if (phone) phoneSwitch(id);
   return id;
+}
+/* put a new window beside another (inside a commit): tiled windows split, a floating one gets a neighbour, the phone stacks */
+function winBeside(anchor, nid, side, share) {
+  if (phone || !L.wins[anchor]) { const host = hasLeaf(L.tree, anchor) ? anchor : (phoneCurrent() && hasLeaf(L.tree, phoneCurrent()) ? phoneCurrent() : leafIds(L.tree)[0]); L.tree = splitAt(L.tree, host, 'bottom', nid, 0.5); return; }
+  if (isFloat(anchor)) {
+    // room on the right: the neighbour goes there; no room: the two share the width, side by side, nothing covered
+    const f = L.floats.find(x => x.id === anchor);
+    if (f.x + f.w * 2 <= 1.02) { L.floats.push({ id: nid, x: clamp(f.x + f.w, 0, 0.9), y: f.y, w: f.w, h: f.h, anchor: null }); return; }
+    const w2 = 0.5;
+    f.x = 0; f.w = w2;
+    L.floats.push({ id: nid, x: w2, y: f.y, w: w2, h: f.h, anchor: null });
+    return;
+  }
+  if (L.max) L.max = null;
+  L.tree = splitAt(L.tree, anchor, side, nid, share);
 }
 
 /* ---------- gestures: borders ---------- */
@@ -662,10 +762,23 @@ function resizeDown(e, id, dir) {
 
 /* ---------- menus and pop-ups ---------- */
 let openPop = null;
+/* On a phone, Back closes the sheet on top instead of leaving Jaskinia (05_MOBILE 02:45: Back took Jozz out of Jaskinia
+   while a sheet was open). One history entry of our own stands under the sheets. It is pushed when the first sheet opens and is never
+   taken back by code (a history.back() racing a new sheet once walked out of the page): after a sheet closes by a tap, the
+   entry simply stays, so the next sheet reuses it, and a Back with nothing open only steps off it. */
+const backGuard = { on: (() => { try { return !!(history.state && history.state.jkSheet); } catch { return false; } })() };
+function guardBack() {
+  if (backGuard.on) return;
+  try { history.pushState({ jkSheet: 1 }, ''); backGuard.on = true; } catch { /* a host that forbids history: Back stays the browser's */ }
+}
+addEventListener('popstate', e => {
+  backGuard.on = !!(e.state && e.state.jkSheet);
+  if (openPop) openPop.close(true);
+});
 function showPopover(el, anchor, at, opts = {}) {
   closeMenus();
   const asSheet = phone && opts.sheet !== false;
-  if (asSheet) el.classList.add('sheet');
+  if (asSheet) { el.classList.add('sheet'); guardBack(); }
   document.body.append(el);
   if (!asSheet) {
     const r = at ? { left: at.x, right: at.x, top: at.y, bottom: at.y } : anchor.getBoundingClientRect();
@@ -695,6 +808,8 @@ function showPopover(el, anchor, at, opts = {}) {
 function closeMenus() { if (openPop) openPop.close(); }
 function openMenu(anchor, items, at, cls = '', opts = {}) {
   const el = h('div', { class: 'jk-menu ' + cls, role: 'menu' });
+  const head0 = items.find(it => it && it.head);
+  logEv(t('menu: {0}', head0 ? head0.head : (() => { const it = items.find(x => x && x.label); return it ? it.log || it.label : '…'; })()));
   const btns = [];
   let close = null;
   for (const it of items) {
@@ -704,7 +819,7 @@ function openMenu(anchor, items, at, cls = '', opts = {}) {
     if (it.note) { el.append(h('p', { class: 'mi-note', text: it.note })); continue; }
     const b = h('button', { class: 'mi' + (it.checked ? ' on' : '') + (it.danger ? ' danger' : '') + (it.sub ? ' has-sub' : ''), type: 'button', disabled: !!it.disabled,
       role: it.checked != null ? 'menuitemradio' : 'menuitem', 'aria-checked': it.checked != null ? String(!!it.checked) : null,
-      onclick: () => { if (it.sub) { it.sub(b); return; } close(); it.act?.(); } },
+      onclick: () => { if (it.sub) { it.sub(b); return; } logEv(t('wybrane: {0}', it.log || it.label)); close(); it.act?.(); } },
       h('span', { class: 'mi-i' }, it.icon ? icon(it.icon, 15) : it.checked ? icon('check', 15) : null),
       h('span', { class: 'mi-l' }, h('span', { text: it.label }), it.desc ? h('small', { text: it.desc }) : null),
       it.hint ? h('kbd', { class: 'mi-h', text: it.hint }) : it.sub ? icon('arrowR', 13, 'mi-sub') : null);
@@ -757,14 +872,19 @@ function winMenu(id, anchor, at) {
     { label: t('Zmień nazwę okna…'), icon: 'pencil', hint: 'F2', act: () => renameWin(id) },
     w.title ? { label: t('Przywróć nazwę „{0}”', t(T.name)), icon: 'reset', act: () => commit(t('nazwa okna'), () => { delete w.title; }) } : null,
     { sep: true },
-    !fl && !phone ? { label: t('Podziel: nowe okno obok'), icon: 'splitRow', act: () => split(id, 'right') } : null,
-    !fl ? { label: phone ? t('Dodaj okno pod tym') : t('Podziel: nowe okno pod spodem'), icon: 'splitCol', act: () => split(id, 'bottom') } : null,
+    !phone ? { label: t('Podziel: nowe okno obok'), icon: 'splitRow', act: () => split(id, 'right') } : null,
+    { label: phone ? t('Dodaj okno pod tym') : t('Podziel: nowe okno pod spodem'), icon: 'splitCol', act: () => split(id, 'bottom') },
     !phone ? { label: mx ? t('Wróć do układu') : t('Na cały ekran'), icon: mx ? 'restore' : 'max', hint: mx ? 'Esc' : 'Ctrl+Spacja', act: () => toggleMax(id) } : null,
     !phone ? (fl ? { label: t('Wstaw z powrotem do układu'), icon: 'dock', act: () => dock(id) }
       : { label: t('Wyjmij: niech pływa nad resztą'), icon: 'float', disabled: leafIds(L.tree).length < 2, act: () => floatWin(id) }) : null,
     T.follows ? { label: w.pin ? t('Odepnij od {0}', R[w.pin]?.short) : t('Przypnij do {0}', R[store.sel]?.short), icon: 'pin', act: () => togglePin(id) } : null,
+    w.type === 'sciana' ? { sep: true } : null,
+    w.type === 'sciana' ? { label: t('Pokaż wszystko'), icon: 'fit', hint: '0', act: () => WALLS.get(id)?.fit() } : null,
+    w.type === 'sciana' ? { label: t('Nowa notatka'), icon: 'note', act: () => WALLS.get(id)?.addNote() } : null,
+    w.type === 'sciana' ? { label: t('Ułóż…'), icon: 'grid4', sub: b => arrangeMenu(b, ctxFor(id, innerSize(RT.get(id), w), null)) } : null,
+    w.type === 'sciana' ? { label: t('Widok ściany…'), icon: 'eye', sub: b => wallViewMenu(b, ctxFor(id, innerSize(RT.get(id), w), null)) } : null,
     { sep: true },
-    !T.noZoom ? { label: t('Przybliż zawartość'), icon: 'plus', hint: 'Ctrl+kółko', act: () => zoomBy(id, 0.1) } : null,
+    !T.noZoom ? { label: t('Przybliż zawartość'), icon: 'plus', hint: phone ? t('dwa palce') : 'Ctrl+kółko', act: () => zoomBy(id, 0.1) } : null,
     !T.noZoom ? { label: t('Oddal zawartość'), icon: 'minus', act: () => zoomBy(id, -0.1) } : null,
     !T.noZoom ? { label: t('Powiększenie 100%'), icon: 'reset', disabled: w.z === 1, act: () => setZoom(id, 1) } : null,
     { sep: true },
@@ -869,6 +989,7 @@ function hideSheet() { clearTimeout(sheetT); if (sheetEl) sheetEl.hidden = true;
 
 /* ---------- toasts that can take a step back ---------- */
 function jtoast(msg, action, ms) {
+  logEv(t('komunikat: {0}', msg));
   const el = h('div', { class: 'jk-toast', role: 'status' }, h('span', { text: msg }),
     action ? h('button', { class: 'jk-toast-b', type: 'button', text: action.label, onclick: () => { el.remove(); action.act(); } }) : null);
   toastBox.append(el);
@@ -888,6 +1009,9 @@ function mainMenu(anchor) {
     { label: nTrash ? t('Kosz ({0})', nTrash) : t('Kosz'), desc: t('usunięte układy i notatki bez okna'), icon: 'trash', act: () => openSettings('kosz') },
     { label: t('Eksport i import…'), desc: t('przenieś Jaskinię na inne urządzenie'), icon: 'download', act: () => openSettings('dane') },
     { sep: true },
+    { label: t('To mnie uwiera…'), desc: t('uwaga przypięta do tej chwili'), icon: 'flag', hint: 'Ctrl+.', act: () => uwagaPop(anchor) },
+    { label: t('Uwagi i paczka dla Claude\'a…'), desc: uwagi.length ? tn(uwagi.length, 'uwaga', 'uwagi', 'uwag') : t('dziennik, wersja, urządzenie'), icon: 'archive', act: () => openSettings('uwagi') },
+    { sep: true },
     { label: t('Zresetuj całą Jaskinię…'), desc: t('układy startowe; najpierw zrobię kopię'), icon: 'reset', act: () => askReset(anchor) },
     { sep: true },
     { label: t('Jak to działa'), icon: 'help', act: () => openHelp(anchor) },
@@ -898,8 +1022,9 @@ function snapInfo(anchor) {
   const C = D.estate.coverage, age = snapAgeDays();
   const el = h('div', { class: 'jk-menu jk-helpbox', role: 'dialog', 'aria-label': t('O danych') },
     h('h3', { text: t('Skąd są dane') }),
-    h('p', null, t('Zrzut repozytoriów z {0} ({1}). Pokrycie: {2} z {3} repo.', dshort(new Date(SNAP * 1000)), age < 1 ? t('dziś') : tn(Math.floor(age), 'dzień', 'dni', 'dni') + ' ' + t('temu'), C.collected, C.expected)),
-    h('p', null, t('Kolory życia pokazują stan w chwili zrzutu, nie dziś: stary zrzut nie udaje, że projekty umarły. Czego nie ma w zrzucie, tego Jaskinia nie wie.')),
+    h('p', { class: 'hb-ver' }, h('b', { text: 'Jaskinia ' + VER }), ' · ' + t('zbudowana {0}', builtShort()) + ' · ' + t('działa jako: {0}', t(PLACE_NAME[PLACE]))),
+    h('p', null, t('Zrzut repozytoriów z {0} ({1}). Pokrycie: {2} z {3} repo.', dshort(new Date(SNAP * 1000)), snapAgeText(), C.collected, C.expected)),
+    h('p', null, t('Kolory życia pokazują stan w chwili zrzutu, nie dziś: stary zrzut nie udaje, że projekty umarły. Czego nie ma w zrzucie, tego Jaskinia nie wie: commity zrobione później tu nie istnieją, a na Pulsie dni po zrzucie są zakreskowane.')),
     age > 7 ? h('p', { class: 'warn', text: t('Zrzut ma ponad tydzień. Poproś Claude o odświeżenie (regen), żeby zobaczyć nowe commity.') }) : null);
   showPopover(el, anchor);
 }
@@ -908,6 +1033,7 @@ function askReset(anchor) {
 }
 function resetAll() {
   const b = makeBackup('przed resetem');
+  if (storageOK && !b) return noCopy();
   const f = freshStore();
   store.spaces = f.spaces; store.cur = f.cur;
   rebuildAll();
@@ -922,16 +1048,78 @@ function rebuildAll() {
   setSpace(store.cur);
   updateSelStyle(); renderSelBox();
 }
+/* ---------- another tab wrote (15-store.js: several tabs) ----------
+   The merged state comes on screen the way switching layouts does: windows that still exist keep running, windows the
+   other tab closed go, a window whose note text changed is redrawn unless Jozz is typing in it. Undo history of a
+   layout the other tab changed is dropped (undoing here would quietly undo that tab's work). */
+function takeForeign(text) {
+  let theirs;
+  try { theirs = JSON.parse(text); } catch { return; }
+  if (!theirs || typeof theirs !== 'object' || !Array.isArray(theirs.spaces)) return;
+  theirs = repair(theirs);
+  const mine = store, m = mergeStores(ancestorFor(theirs), store, theirs);
+  synced(text, theirs);
+  if (m.lost.length) {
+    // what lost a real conflict stays in an automatic copy, each side on its own: the other tab's state when something of
+    // it lost, and this tab's state when something of this one lost (both can lose in one merge: GPT and Medium, 18 Oct)
+    const kT = m.lost.some(x => x.side === 'theirs') ? makeBackup(t('z innej karty'), null, theirs) : true;
+    const kO = m.lost.some(x => x.side === 'ours') ? makeBackup(t('z tej karty, przed scaleniem'), null, mine) : true;
+    logEv(t('dwie karty zmieniły to samo: {0}', m.lost.map(x => x.name || (x.kind === 'note' ? t('notatka') : t('układ'))).join(', ')));
+    if (kT && kO) jtoast(t('To samo zmieniło się w dwóch kartach naraz. Nowsza notatka i układ z tej karty zostały, a druga wersja czeka w kopiach automatycznych.'), { label: t('Pokaż'), act: () => openSettings('kopie') }, 9000);
+    else jtoast(t('To samo zmieniło się w dwóch kartach naraz, a pamięć przeglądarki jest pełna: drugiej wersji nie dało się odłożyć do kopii. Zapisz całą Jaskinię do pliku (Ustawienia → Eksport).'), { label: t('Pokaż'), act: () => openSettings('dane') }, 15000);
+  }
+  adoptStore(repair(m.st));
+  if (!sameParts(store, theirs)) dirty = true; // this tab still holds something the other one has not seen
+}
+/* an older build (before v6.3) wrote its own key: its whole state goes to a copy, newer notes come in (15-store.js) */
+let legacyTold = false;
+function handleLegacy() {
+  const r = legacyWrite();
+  if (!r) return;
+  logEv(t('starsza wersja Jaskini zapisała swój stan') + (r.notes.length ? ': ' + t('nowsze notatki: {0}', r.notes.length) : ''));
+  if (r.notes.length) for (const id of allIds()) { const w = L.wins[id], rt = RT.get(id); if (rt && (w.type === 'notatki' || w.type === 'sciana')) { rt.key = null; refreshWin(id); } }
+  if (legacyTold && !r.notes.length) return;
+  legacyTold = true;
+  jtoast((r.notes.length ? t('Starsza karta Jaskini zapisała swój stan, z nowszymi notatkami: {0}. Notatki wziąłem tutaj.', r.notes.join(', ')) : t('Starsza karta Jaskini zapisała swój stan.'))
+    + ' ' + t('Tej Jaskini nie nadpisała: jej stan czeka w kopiach automatycznych. Zamknij stare karty Jaskini.'), { label: t('Pokaż'), act: () => openSettings('kopie') }, 15000);
+}
+function adoptStore(next) {
+  const prevNotes = store.notes;
+  for (const sp of next.spaces) { const old = store.spaces.find(x => x.id === sp.id); if (!old || JSON.stringify(old.L) !== JSON.stringify(sp.L)) delete hist[sp.id]; }
+  store = next;
+  const keep = allWinIds(store);
+  for (const id of [...RT.keys()]) if (!keep.has(id)) dropWin(id);
+  space = store.spaces.find(sp => sp.id === store.cur) || store.spaces[0];
+  store.cur = space.id; L = space.L;
+  const changedNotes = new Set(Object.keys(store.notes).filter(id => !prevNotes[id] || prevNotes[id].text !== store.notes[id].text));
+  const typingIn = document.activeElement && document.activeElement.closest?.('.win');
+  for (const id of allIds()) {
+    const w = L.wins[id], rt = RT.get(id);
+    if (!rt || !changedNotes.size || (typingIn && rt.el.contains(typingIn))) continue;
+    const ids = w.type === 'notatki' ? [w.st && w.st.note] : w.type === 'sciana' ? arr(w.st && w.st.notes).map(n => n && n.id) : [];
+    if (ids.some(n => n && changedNotes.has(n))) rt.key = null;
+  }
+  closeMenus();
+  renderTabs(); updateUndoUI(); updateSelStyle(); renderSelBox(); renderDock();
+  apply();
+  for (const id of allIds()) refreshWin(id);
+  document.dispatchEvent(new CustomEvent('jk:stan'));
+}
 function restoreBackup(id, quiet) {
   const b = readBackups().find(x => x.id === id);
   if (!b) { jtoast(t('Tej kopii już nie ma.')); return; }
   const before = makeBackup('przed przywróceniem kopii');
+  if (storageOK && !before) return noCopy();
   const d = clone(b.data);
   store.spaces = arr(d.spaces); store.cur = d.cur; store.sel = d.sel;
   for (const [k, n] of Object.entries(obj(d.notes))) if (!store.notes[k] || (n.upd || 0) > (store.notes[k].upd || 0)) store.notes[k] = n;
   Object.assign(store.views, obj(d.views));
+  for (const it of arr(d.saved)) if (it && it.id && !store.saved.some(x => x.id === it.id)) store.saved.push(it); // since v6.3 a copy holds them too
+  store.saved.sort((a, b) => (b.at || 0) - (a.at || 0));
+  let back = 0; // what was deleted for good after this copy goes back to the trash, not straight into the layouts
+  for (const it of arr(d.forgotten)) if (it && it.id && !store.trash.some(x => x.id === it.id)) { store.trash.unshift(it); back++; }
   rebuildAll();
-  if (!quiet) jtoast(t('Przywrócona kopia z {0}.', dshort(new Date(b.at))), before ? { label: t('Cofnij'), act: () => restoreBackup(before.id, true) } : null);
+  if (!quiet) jtoast(t('Przywrócona kopia z {0}.', dshort(new Date(b.at))) + (back ? ' ' + t('Usunięte na zawsze wróciło do kosza: {0}.', back) : ''), before ? { label: t('Cofnij'), act: () => restoreBackup(before.id, true) } : null);
 }
 function saveCurrent(name) {
   const it = saveSpaceState(space, name);
@@ -989,6 +1177,7 @@ function tabArrows() {
 function setSpace(id) {
   const sp = store.spaces.find(x => x.id === id) || store.spaces[0];
   closeMenus(); hideSheet();
+  if (!space || space.id !== sp.id) logEv(t('układ: {0}', spaceName(sp)), { u: spaceName(sp) });
   store.cur = sp.id; space = sp; L = sp.L;
   renderTabs(); updateUndoUI();
   apply();
@@ -1027,6 +1216,7 @@ function allSpacesMenu(anchor) {
     ...store.spaces.map(sp => ({ label: spaceName(sp), desc: sp.purpose || tn(leafIds(sp.L.tree).length + sp.L.floats.length, 'okno', 'okna', 'okien'), checked: sp.id === store.cur, act: () => setSpace(sp.id) })),
     { sep: true },
     { label: t('Nowy układ…'), icon: 'plus', act: () => newSpaceMenu(anchor) },
+    emptyWins().length > 1 ? { label: t('Zamknij puste okna ({0})', emptyWins().length), icon: 'close', act: () => closeEmpty() } : null,
     { label: t('Ten układ: więcej…'), icon: 'more', act: () => spaceMenu(space.id, anchor) },
   ], null, 'spaces');
 }
@@ -1049,6 +1239,7 @@ function spaceMenu(id, anchor, at) {
       { sep: true }, { label: t('Wszystkie zapisane…'), icon: 'archive', act: () => openSettings('uklady') },
     ]) },
     { label: t('Powiel'), icon: 'copy', act: () => addSpace(spaceName(sp) + ' ' + t('(kopia)'), remapLayout(sp.L, new Set(), store.views), null, id, sp.purpose) },
+    id === store.cur ? { label: t('Zamknij puste okna'), desc: emptyWins().length ? tn(emptyWins().length, 'okno „Pusty”', 'okna „Pusty”', 'okien „Pusty”') : t('nie ma pustych'), icon: 'close', disabled: !emptyWins().length, act: () => closeEmpty() } : null,
     { label: t('Eksportuj ten układ…'), icon: 'download', act: () => openSettings('dane') },
     { sep: true },
     i > 0 ? { label: t('Przesuń w lewo'), icon: 'arrowL', act: () => moveSpace(id, -1) } : null,
@@ -1095,6 +1286,7 @@ function openSaved(savedId) {
 }
 function restoreSavedAll(x) {
   const before = makeBackup('przed wczytaniem zapisu');
+  if (storageOK && !before) return noCopy();
   const d = clone(x.data);
   for (const [k, text] of Object.entries(obj(d.notes))) if (!store.notes[k]) store.notes[k] = { text: typeof text === 'string' ? text : text.text || '', upd: Date.now() };
   store.spaces = arr(d.spaces); store.cur = d.cur; if (R[d.sel]) store.sel = d.sel;
@@ -1180,14 +1372,14 @@ function restoreTrash(trId) {
 function forgetTrash(trId) {
   const i = store.trash.findIndex(x => x.id === trId);
   if (i < 0) return;
-  makeBackup('przed usunięciem na zawsze');
+  if (storageOK && !makeBackup('przed usunięciem na zawsze', [store.trash[i]])) { jtoast(t('Nie udało się zrobić kopii przed usunięciem, więc nic nie usunąłem. Pamięć przeglądarki jest pełna: wyeksportuj Jaskinię albo usuń stare kopie.')); return; }
   const [it] = store.trash.splice(i, 1);
   if (it.kind === 'wallnote' && it.data?.note?.id && !notesReferenced().has(it.data.note.id)) delete store.notes[it.data.note.id];
   persist();
 }
 function forgetNote(noteId) {
   if (notesReferenced().has(noteId)) return;
-  makeBackup('przed usunięciem notatki na zawsze');
+  if (storageOK && !makeBackup('przed usunięciem notatki na zawsze')) { jtoast(t('Nie udało się zrobić kopii przed usunięciem, więc nic nie usunąłem. Pamięć przeglądarki jest pełna: wyeksportuj Jaskinię albo usuń stare kopie.')); return; }
   delete store.notes[noteId];
   persist();
 }
@@ -1267,6 +1459,7 @@ function bindKeys() {
     }
     if (mod && !e.altKey && e.key.toLowerCase() === 's') { e.preventDefault(); saveCurrent(); return; }
     if (mod && e.key === ',') { e.preventDefault(); openSettings('wyglad'); return; }
+    if (mod && e.key === '.') { e.preventDefault(); uwagaPop(); return; }
     if (typing) return;
     const k = e.key.toLowerCase();
     if (mod && !e.altKey && k === 'z') { e.preventDefault(); if (e.shiftKey) redo(); else undo(); return; }
@@ -1274,6 +1467,13 @@ function bindKeys() {
     if (e.key === 'F2' && L.focus && L.wins[L.focus]) { e.preventDefault(); renameWin(L.focus); }
   });
 }
+
+/* a game opens inside a window only where frames are possible (a downloaded file, Jozz's own server) and he wants it there;
+   by default the desk opens a window and the phone a new tab, where the game gets the whole screen */
+/* "Samo": a window everywhere except on a phone-sized touch screen. Decided by the device, not by the window's width,
+   so making the browser narrow never turns a running game into a link (that restarted it). */
+const phoneDevice = () => coarse.matches && Math.min(screen.width, screen.height) < 700;
+function gamesInWindow() { return !!B.HOSTED && (prefs.games === 'okno' || (prefs.games !== 'karta' && !phoneDevice())); }
 
 /* ---------- start ---------- */
 function firstHint() {
@@ -1288,27 +1488,61 @@ function boot() {
   applyLook();
   buildChrome();
   store = loadStore();
+  onForeign = takeForeign;
+  if (dirty) persistNow(); // a first start or a repaired state is written at once: a second tab opened next reads the same windows
+  addEventListener('storage', e => { // another tab of this Jaskinia (or another page at this address) wrote
+    if (e.storageArea !== localStorage) return;
+    if (e.key === null || (e.key === KEY && e.newValue == null)) { // the state was wiped from outside: this tab still holds it
+      dirty = true; persistNow();
+      logEv(t('pamięć wyczyszczona z zewnątrz, Jaskinia zapisana z powrotem'));
+      jtoast(t('Inna strona pod tym adresem wyczyściła pamięć przeglądarki. Zapisałem Jaskinię z powrotem z tej karty.'), null, 9000);
+      return;
+    }
+    if (e.key === KEY && e.newValue !== lastText) takeForeign(e.newValue);
+    if (e.key === KEY_V2) handleLegacy(); // an older build in another tab
+  });
+  logEv(t('start: Jaskinia {0}, {1}, okno {2}', VER, t(PLACE_NAME[PLACE]), `${innerWidth}×${innerHeight}`), { v: VER, place: PLACE });
   space = store.spaces.find(sp => sp.id === store.cur) || store.spaces[0];
   L = space.L;
   updateSelStyle(); renderSelBox(); renderTabs(); updateUndoUI();
   bindKeys();
   onSaveProblem = () => renderStatus();
   renderStatus();
-  stage.addEventListener('click', e => { // links inside windows select instead of navigating away
+  stage.addEventListener('click', e => { // links inside windows go to that thing in Jaskinia instead of navigating away
     const a = e.target.closest('a[href^="#"]');
-    if (!a) return;
+    if (!a || e.defaultPrevented) return;
     e.preventDefault();
-    const href = decodeURIComponent(a.getAttribute('href'));
-    if (href.startsWith('#repo~')) select(href.slice(6), 'win');
+    if (!route(a.getAttribute('href'), true)) logEv(t('link bez celu: {0}', a.getAttribute('href')));
   });
-  B.HOOK.go = hash => { const m = /^#repo~(.+)$/.exec(decodeURIComponent(hash)); if (m && R[m[1]]) select(m[1], 'win'); };
-  B.HOOK.refresh = () => { for (const id of allIds()) { const rt = RT.get(id); if (rt) rt.key = null; refreshWin(id); } };
-  B.HOOK.play = r => {
-    select(r.name);
-    if (!B.HOSTED) return false; // the link opens the game in a new tab
-    const gid = allIds().find(id => L.wins[id].type === 'gra');
-    if (gid) { const w = L.wins[gid]; if (w.pin && w.pin !== r.name) commit(t('gra: {0}', r.short), () => { w.pin = r.name; }); focusWin(gid); if (phone) phoneSwitch(gid); }
-    else openWinOfType('gra', { pin: r.name, fresh: true, w: 0.72, h: 0.86 });
+  B.HOOK.go = hash => route(hash, true); // the Library's own links and clicks inside windows
+  B.HOOK.refresh = () => { for (const id of allIds()) { const rt = RT.get(id); if (rt && !typeOf(L.wins[id]).live) rt.key = null; refreshWin(id); } }; // a theme change never restarts a running lab
+  /* "Zagraj" (the owner's note, 18 Oct): the plain click changes the game in the game window he is using, so he can try
+     many games quickly; Shift+Zagraj opens the game in a new window beside the last one (v6's way, M1, for playing two
+     at once). Ctrl+click stays the browser's new tab. Other game windows that follow the selection are pinned to what
+     they show before the selection moves, so only the chosen window changes. The game then gets the keyboard. */
+  B.HOOK.play = (r, o = {}) => {
+    const prev = store.sel, inWin = gamesInWindow();
+    const games = inWin ? allIds().filter(id => L.wins[id].type === 'gra') : [];
+    const pinOthers = keep => { const following = games.filter(id => id !== keep && !L.wins[id].pin); if (following.length && prev && prev !== r.name && R[prev]) for (const id of following) L.wins[id].pin = prev; };
+    logEv(t('zagraj: {0} ({1})', r.short, !inWin ? t('w nowej karcie') : o.beside ? t('w nowym oknie obok') : t('w oknie gry')));
+    if (!inWin || r.tab) { select(r.name); return false; } // the link opens the game in a new tab (some games work only there: data/wejscia.json)
+    const shows = id => (L.wins[id].pin || store.sel) === r.name;
+    const flash = id => { RT.get(id)?.el.classList.add('flash'); setTimeout(() => RT.get(id)?.el.classList.remove('flash'), 700); };
+    const bring = id => { focusWin(id); if (phone) phoneSwitch(id); else if (isFloat(id)) { raiseFloat(id); apply(); } else if (L.max && L.max !== id) toggleMax(id); flash(id); focusGame(id); };
+    const same = games.find(shows);
+    if (same && !o.beside) { select(r.name); bring(same); return true; }
+    if (!o.beside && games.length) {
+      const target = games.includes(L.focus) ? L.focus : games.includes(lastGameWin) ? lastGameWin : games[games.length - 1];
+      commit(t('gra w oknie: {0}', r.short), () => { pinOthers(target); L.wins[target].pin = r.name; });
+      select(r.name);
+      bring(target);
+      return true;
+    }
+    if (!games.length) { select(r.name); const id = openWinOfType('gra', { pin: r.name, fresh: true, w: 0.72, h: 0.86 }); focusGame(id); return true; }
+    // Shift: a new window beside the last game window (tiled, so nothing covers anything)
+    const last = games.includes(lastGameWin) ? lastGameWin : games[games.length - 1];
+    const nid = newWinId(), rr = rects.wins[last];
+    if (commit(t('gra obok: {0}', r.short), () => { pinOthers(null); L.wins[nid] = { type: 'gra', z: 1, pin: r.name, st: {} }; winBeside(last, nid, rr && rr.h > rr.w * 1.1 ? 'bottom' : 'right', 0.5); })) { select(r.name); focusWin(nid); if (phone) phoneSwitch(nid); focusGame(nid); }
     return true;
   };
   new ResizeObserver(() => apply()).observe(stage);
@@ -1319,5 +1553,9 @@ function boot() {
   maybeAutoBackup();
   showNotices();
   firstHint();
-  window.__JASK = { get L() { return L; }, get store() { return store; }, get phone() { return phone; }, RT, apply, select, commit, undo, redo, setSpace, layoutRects, leafIds, rects: () => rects, prefs, openSettings, readBackups, persistNow };
+  v6Hint();
+  routeStart();
+  handleLegacy(); // what older builds wrote while this one was closed
+  window.__JASK = { get L() { return L; }, get store() { return store; }, get phone() { return phone; }, RT, WALLS, apply, select, commit, undo, redo, setSpace, layoutRects, leafIds, rects: () => rects, prefs, openSettings, readBackups, persistNow, get log() { return jlog; }, get uwagi() { return uwagi; }, packageData, packageText, deleteSpace, restoreTrash, forgetTrash, restoreBackup, resetAll, setPref, signalsBeside, uwagaPop, noteSet, noteNew, persist, route, matImport, matSweep, matApplySettings, matPatch, handleLegacy, get dirty() { return dirty; }, get lastText() { return lastText; },
+    live: () => [...LIVE.values()].map(e => ({ id: e.id, url: e.url, hello: e.hello, state: e.state, sigs: [...e.sigs.keys()], n: Object.fromEntries([...e.sigs].map(([k, v]) => [k, v.v.length])), evs: e.evs.map(x => x.text), marks: e.marks.length, last: e.last, vis: e.vis })) };
 }

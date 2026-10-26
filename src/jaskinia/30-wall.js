@@ -37,7 +37,8 @@ function wallSizeOf(st, r, vmax) {
   return { w, h: Math.round(w * 0.62) };
 }
 /* level of detail from the size ON SCREEN */
-const wallLod = (sw, sh) => sw < 36 || sh < 26 ? 'D' : sw < 150 || sh < 92 ? 'S' : sw < 240 || sh < 150 ? 'M' : sw < 340 || sh < 222 ? 'L' : 'XL';
+/* a narrow card stays a named badge as long as it has room for a name (02_PC 03:52: a strip-shaped ReflexBrain became a nameless dot) */
+const wallLod = (sw, sh) => (sw < 36 && sh < 36) || sw < 16 || sh < 16 ? 'D' : sw < 150 || sh < 92 ? 'S' : sw < 240 || sh < 150 ? 'M' : sw < 340 || sh < 222 ? 'L' : 'XL';
 const LOD_NAME = { D: 'kropka', S: 'znaczek', M: 'karta', L: 'karta ze stanem', XL: 'pełna karta' };
 
 /* ---- arranging (only when asked) ---- */
@@ -146,9 +147,27 @@ function wallPrepare(st, aspect = 1.6) {
   return changed;
 }
 /* push overlapping cards apart, only as much as needed (asked for, never automatic) */
+/* after arranging, no card may stay under a note (02_PC 03:51: ReflexBrain vanished under "Test notatka").
+   Notes that cover a card move to a column right of everything else, in their order from the top. */
+function wallNotesAside(st) {
+  const vmax = wallVmax(st.size);
+  const cards = REPOS.filter(r => st.cards[r.name] && Number.isFinite(st.cards[r.name].x)).map(r => { const sz = wallSizeOf(st, r, vmax), c0 = st.cards[r.name]; return { x: c0.x - sz.w / 2, y: c0.y - sz.h / 2, w: sz.w, h: sz.h }; });
+  const hit = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+  const notes = arr(st.notes), covering = notes.filter(n => cards.some(c => hit(n, c)));
+  if (!covering.length) return 0;
+  let x1 = -Infinity, y0 = Infinity;
+  for (const c of cards) { x1 = Math.max(x1, c.x + c.w); y0 = Math.min(y0, c.y); }
+  if (st.showFrames !== false) for (const f of arr(st.frames)) { x1 = Math.max(x1, f.x + f.w); y0 = Math.min(y0, f.y); }
+  for (const n of notes) if (!covering.includes(n)) x1 = Math.max(x1, n.x + n.w);
+  let y = y0;
+  for (const n of covering.sort((a, b) => a.y - b.y || a.x - b.x)) { n.x = Math.round(x1 + 60); n.y = Math.round(y); y += n.h + 18; }
+  return covering.length;
+}
+/* "Rozsuń": only as much as needed. Cards and notes both move; frames stay (they are Jozz's structure). */
 function wallSeparate(st) {
   const vmax = wallVmax(st.size);
-  const its = REPOS.map(r => { const c0 = st.cards[r.name], sz = wallSizeOf(st, r, vmax); return { n: r.name, x: c0.x, y: c0.y, w: sz.w, h: sz.h }; });
+  const its = REPOS.map(r => { const c0 = st.cards[r.name], sz = wallSizeOf(st, r, vmax); return { n: r.name, x: c0.x, y: c0.y, w: sz.w, h: sz.h }; })
+    .concat(arr(st.notes).map(n => ({ note: n, x: n.x + n.w / 2, y: n.y + n.h / 2, w: n.w, h: n.h })));
   let moved = 0;
   for (let k = 0; k < 400; k++) {
     let any = false;
@@ -162,7 +181,10 @@ function wallSeparate(st) {
     }
     if (!any) break;
   }
-  for (const it of its) { const c0 = st.cards[it.n]; if (Math.abs(c0.x - it.x) > 0.5 || Math.abs(c0.y - it.y) > 0.5) { c0.x = Math.round(it.x); c0.y = Math.round(it.y); moved++; } }
+  for (const it of its) {
+    if (it.note) { const nx = Math.round(it.x - it.w / 2), ny = Math.round(it.y - it.h / 2); if (Math.abs(it.note.x - nx) > 0.5 || Math.abs(it.note.y - ny) > 0.5) { it.note.x = nx; it.note.y = ny; moved++; } continue; }
+    const c0 = st.cards[it.n]; if (Math.abs(c0.x - it.x) > 0.5 || Math.abs(c0.y - it.y) > 0.5) { c0.x = Math.round(it.x); c0.y = Math.round(it.y); moved++; }
+  }
   return moved;
 }
 
@@ -171,22 +193,33 @@ function wallFindings(r) { return (r.findings || []).filter(f => (f.sev === 'hig
 /* the red bubble: findings waiting for a decision; it sits on the card's corner, outside the card, so it never hides the name */
 function wallAtt(r, lod) {
   const fs = wallFindings(r);
-  return fs.length && lod !== 'D' ? h('span', { class: 'wc-att' + (fs.some(f => f.sev === 'high') ? ' high' : ''), title: t('{0} do decyzji', tn(fs.length, 'ustalenie', 'ustalenia', 'ustaleń')), text: fs.length }) : null;
+  return fs.length && lod !== 'D' ? h('span', { class: 'wc-att' + (fs.some(f => f.sev === 'high') ? ' high' : ''), 'data-tip': t('{0} do decyzji', tn(fs.length, 'ustalenie', 'ustalenia', 'ustaleń')), text: fs.length }) : null;
 }
 function wallCardInner(r, lod, sw, sh) {
   const att = null;
   if (lod === 'D') return [h('i', { class: 'wc-dot' })];
   if (lod === 'S') {
-    const two = sh >= 40 && r.short.length * 6.6 > sw - 14, nameH = two ? 28 : 15;
+    // a tall strip writes its name upright, like a narrow parcel on the map
+    if (sw < 58 && sh > sw * 1.5) return [h('div', { class: 'wc-sname vert', style: { fontSize: clamp((sh - 12) / (r.short.length * 0.6), 8.5, 11.5).toFixed(1) + 'px' }, text: r.short }), att];
+    // words are never broken in the middle ("Gloopipela go", 02_PC 03:52): the font gets smaller first, then a word that
+    // still does not fit ends with an ellipsis; lines break only between words
+    const lw = Math.max(...r.short.split(/\s+/).map(w0 => w0.length));
+    const fs = clamp((sw - 16) / (lw * 0.6), 8.5, 11.5), maxCh = Math.max(3, Math.floor((sw - 14) / (fs * 0.6)));
+    const lines = [];
+    for (const w0 of r.short.split(/\s+/)) { const last = lines[lines.length - 1]; if (last != null && (last + ' ' + w0).length <= maxCh) lines[lines.length - 1] = last + ' ' + w0; else lines.push(w0); }
+    const maxL = sh >= 40 ? 2 : 1, shown = lines.slice(0, maxL);
+    if (lines.length > maxL) shown[maxL - 1] += ' ' + lines.slice(maxL).join(' ');
+    const nameH = Math.round(fs * 1.25 * shown.length);
     const sg = Math.round(Math.min(sw - 24, sh - nameH - 20, 60));
-    return [sg >= 16 ? h('div', { class: 'wc-badge' }, sigil(r, sg)) : null, h('div', { class: 'wc-sname' + (two ? ' two' : ''), lang: 'en', text: r.short }), att];
+    return [sg >= 16 ? h('div', { class: 'wc-badge' }, sigil(r, sg)) : null,
+      h('div', { class: 'wc-sname lines', style: { fontSize: fs.toFixed(1) + 'px' }, lang: 'en', title: r.short }, shown.map(l => h('span', { text: l }))), att];
   }
   const p = STAT.byName[r.name], v28 = p ? p.v.slice(0, 28).reverse() : [];
   const big = lod === 'L' || lod === 'XL', wide = sw / sh > 2.1;
   const head = h('div', { class: 'wc-head' }, sigil(r, lod === 'XL' ? 46 : 32),
     h('div', { class: 'wc-tt' }, h('b', { class: 'wc-name', text: r.short }), h('span', { class: 'wc-meta' }, B.lifeBadge(r.life), ' ', r.last_ts ? ago(r.last_ts) : t('bez commitów'))));
   const foot = h('div', { class: 'wc-foot' });
-  if (big || wide) foot.append(h('span', { class: 'wc-nums', text: `${fmt(r.commits)} · ${tn(r.branches.length, 'gałąź', 'gałęzie', 'gałęzi')} · ${r.prs.open} PR` }));
+  if (big || wide) foot.append(h('span', { class: 'wc-nums', text: `${fmt(r.commits)} · ${tn(r.branches.length, 'gałąź', 'gałęzie', 'gałęzi')} · ${r.api === false ? '?' : r.prs.open} PR`, 'data-tip': r.api === false ? t('Liczby PR nie znam: API GitHuba nie widziało tego repo w tym zrzucie.') : null }));
   if ((big || wide) && r.pages && r.life !== 'zakończone') foot.append(B.playA(r, { class: 'wc-play' }, B.playIcon(), t('Zagraj')));
   if (wide) return [h('div', { class: 'wc-in wide' }, head, sparkSvg(v28, 'wc-sp'), foot.firstChild ? foot : null), att];
   // what fits is decided by the card's real height: the bottom row first, then activity, the state quote, the next step
@@ -228,7 +261,9 @@ function renderWall(box, c) {
     ibtn('minus', t('Oddal (−)'), () => zoomAt(cam.z / 1.25)), zv, ibtn('plus', t('Przybliż (+)'), () => zoomAt(cam.z * 1.25)),
     ibtn('fit', t('Pokaż wszystko (0)'), () => fit(true)));
   zv.addEventListener('click', () => fit(true));
-  el.append(grid, lFrames, links, lItems, selBoxEl, band, readout, mini, zbar);
+  // when the view holds nothing (a pinch that landed in empty space: 05_MOBILE 02:19), say so and offer the way back
+  const emptyEl = h('button', { class: 'w2-empty', type: 'button', hidden: true, onclick: () => fit(true) }, icon('fit', 15), h('span', { text: t('Tu nic nie ma · pokaż wszystko') }));
+  el.append(grid, lFrames, links, lItems, selBoxEl, band, readout, mini, zbar, emptyEl);
   box.append(el);
 
   let W = 0, H = 0;
@@ -250,8 +285,14 @@ function renderWall(box, c) {
     const z = clamp(Math.min(zw, zh), WZMIN, 1.6);
     return { cx: bb.x + bb.w / 2, cy: bb.y + bb.h / 2, z };
   }
-  let camT = 0;
-  const saveCam = () => { clearTimeout(camT); camT = setTimeout(() => c.setView({ ...(c.view() || {}), cam: { cx: Math.round(cam.cx), cy: Math.round(cam.cy), z: Math.round(cam.z * 1000) / 1000 } }), 250); };
+  let camT = 0, zLogged = cam ? cam.z : 0;
+  const saveCam = () => {
+    clearTimeout(camT);
+    camT = setTimeout(() => {
+      c.setView({ ...(c.view() || {}), cam: { cx: Math.round(cam.cx), cy: Math.round(cam.cy), z: Math.round(cam.z * 1000) / 1000 } });
+      if (!zLogged || Math.abs(Math.log(cam.z / zLogged)) > 0.15) { zLogged = cam.z; logEv(t('ściana: przybliżenie {0}%', Math.round(cam.z * 100))); }
+    }, 250);
+  };
   let lastFit = 0;
   function fit(animate, all) {
     // a second press right after the first shows the whole wall even on a tall screen
@@ -297,6 +338,8 @@ function renderWall(box, c) {
     grid.style.backgroundSize = gs >= 6 ? `${gs}px ${gs}px` : '0 0';
     grid.style.backgroundPosition = `${(W / 2 - cam.cx * z) % gs}px ${(H / 2 - cam.cy * z) % gs}px`;
     const seen = new Set();
+    let onScreen = 0;
+    const inView = it => sx(it.x + it.w) >= 0 && sx(it.x) <= W && sy(it.y + it.h) >= 0 && sy(it.y) <= H;
     // frames (below everything)
     for (const f of st.showFrames === false ? [] : st.frames) {
       const it = frameRect(f), k = it.k;
@@ -313,6 +356,7 @@ function renderWall(box, c) {
         e = { el: ne, k: key }; els.set(k, e);
       }
       place(e.el, it, z);
+      if (inView(it)) onScreen++;
       e.el.style.setProperty('--fz', String(clamp(z * 1.4, 0.45, 1.12)));
       e.el.style.setProperty('--fbig', Math.round(clamp(Math.min(sw / Math.max(4, (f.label || '').length) * 1.3, sh * 0.16), 11, 30)) + 'px');
       e.el.classList.toggle('picked', picked.has(k));
@@ -340,6 +384,7 @@ function renderWall(box, c) {
         e = { el: ne, k: key }; els.set(it.k, e);
       }
       e.el.hidden = false;
+      onScreen++;
       place(e.el, it, z);
       e.el.classList.toggle('picked', picked.has(it.k));
       e.el.classList.toggle('live', live.has(it.k));
@@ -358,11 +403,13 @@ function renderWall(box, c) {
         e = { el: ne, k: key }; els.set(k, e);
       }
       place(e.el, it, z);
+      if (inView(it)) onScreen++;
       e.el.style.setProperty('--nz', String(clamp(z, 0.55, 1.6)));
       e.el.classList.toggle('picked', picked.has(k));
       e.el.classList.toggle('live', live.has(k));
     }
     for (const [k, e] of els) if (!seen.has(k)) { e.el.remove(); els.delete(k); }
+    emptyEl.hidden = onScreen > 0 || !seen.size || !!g;
     paintLinks(z);
     paintSel(z);
     paintMini();
@@ -377,8 +424,10 @@ function renderWall(box, c) {
     const ta = h('textarea', { class: 'wn-text', placeholder: t('Notatka…'), 'aria-label': t('Notatka na ścianie'), spellcheck: 'true' });
     ta.value = noteText(n.id);
     let tm = 0;
-    ta.addEventListener('input', () => { clearTimeout(tm); tm = setTimeout(() => noteSet(n.id, ta.value), 250); });
-    ta.addEventListener('blur', () => { clearTimeout(tm); noteSet(n.id, ta.value); });
+    let typed = false; // only typed text is written back: an older text shown here never overwrites a newer one (v6.1)
+    const flush = () => { clearTimeout(tm); if (!typed) return; typed = false; noteSet(n.id, ta.value); };
+    ta.addEventListener('input', () => { typed = true; clearTimeout(tm); tm = setTimeout(flush, 250); });
+    ta.addEventListener('blur', flush);
     ta.addEventListener('pointerdown', e => e.stopPropagation()); // typing and selecting text are the textarea's own
     ta.addEventListener('keydown', e => e.stopPropagation());
     ta.addEventListener('wheel', e => { if (ta.scrollHeight > ta.clientHeight) e.stopPropagation(); }, { passive: true });
@@ -754,7 +803,9 @@ function renderWall(box, c) {
       openMenu(anchor, [
         { head: r.short },
         { label: t('Karta projektu'), icon: 't_karta', act: () => { c.select(r.name); c.openType('karta', { free: true }); } },
-        r.pages && r.life !== 'zakończone' ? { label: t('Zagraj'), icon: 'play', act: () => B.openUrl(r.pages) } : null,
+        // the same "Zagraj" as everywhere (v6 opened a new browser tab from here): the game window, Shift-version beside
+        r.pages && r.life !== 'zakończone' ? { label: t('Zagraj'), icon: 'play', act: () => { if (B.HOOK.play?.(r) !== true) B.openUrl(r.pages); } } : null,
+        r.pages && r.life !== 'zakończone' && gamesInWindow() && !r.tab ? { label: t('Zagraj w nowym oknie obok'), icon: 'play', act: () => { if (B.HOOK.play?.(r, { beside: true }) !== true) B.openUrl(r.pages); } } : null,
         { label: t('Otwórz na GitHubie'), icon: 'ext', act: () => B.openUrl(r.url) },
         { sep: true },
         it.hand ? { label: t('Rozmiar z miary'), desc: t('oddaj rozmiar mierze „{0}”', t(WALL_DRV.find(d => d[0] === st.size)?.[1] || '')), icon: 'reset', act: () => { c.commit(t('rozmiar karty {0} z miary', r.short), () => { const c0 = st.cards[r.name]; delete c0.w; delete c0.h; }); c.save(); paint(); } } : null,
@@ -789,7 +840,7 @@ function renderWall(box, c) {
     ], at);
   }
 
-  const api = { fit: () => fit(true), addNote: () => addNote(), addFrame: () => addFrame(), zoomBy: f => zoomAt(cam.z * f), picked, cam: () => cam, aspect: () => (W && H ? W / H : 1.6) };
+  const api = { fit: () => fit(true), addNote: () => addNote(), addFrame: () => addFrame(), zoomBy: f => zoomAt(cam.z * f), picked, cam: () => cam, setCam: c1 => { cam = { ...cam, ...c1 }; paint(); saveCam(); }, aspect: () => (W && H ? W / H : 1.6) };
   WALLS.set(c.id, api);
   c.onSel(name => { const k = 'c:' + name; if (!(picked.size === 1 && picked.has(k))) { if (![...picked].some(x => x === k)) { picked.clear(); picked.add(k); } } paint(); });
   const ro = new ResizeObserver(() => {
@@ -809,15 +860,21 @@ function renderWall(box, c) {
 
 function arrangeMenu(anchor, c) {
   const st = c.win.st;
-  const go = (kind, label) => { const a = WALLS.get(c.id)?.aspect() || 1.6; c.commit(label, () => wallApplyArrangement(st, wallArrange(st, kind, a))); c.save(); setTimeout(() => WALLS.get(c.id)?.fit(), 40); };
+  const go = (kind, label) => {
+    const a = WALLS.get(c.id)?.aspect() || 1.6;
+    let aside = 0;
+    c.commit(label, () => { wallApplyArrangement(st, wallArrange(st, kind, a)); aside = wallNotesAside(st); });
+    c.save(); setTimeout(() => WALLS.get(c.id)?.fit(), 40);
+    if (aside) jtoast(t('Notatki, które zasłoniłyby karty, stoją teraz z prawej ({0}).', aside), { label: t('Cofnij'), act: () => undo() });
+  };
   openMenu(anchor, [
     { head: t('Ułóż karty od nowa') },
-    { note: t('Karty zmienią miejsca (Ctrl+Z cofa). Rozmiary ustawione ręką, Twoje ramki i notatki zostają.') },
+    { note: t('Karty zmienią miejsca (Ctrl+Z cofa). Rozmiary ustawione ręką, Twoje ramki i notatki zostają; tylko notatka, która zasłoniłaby kartę, przesunie się w bok.') },
     { label: t('Według rodzin'), desc: t('ramka dla każdej rodziny, najżywsze pierwsze'), icon: 'frame', act: () => go('rodziny', t('ułożenie ściany według rodzin')) },
     { label: t('Według życia'), desc: t('żywe, stygnące, uśpione…'), icon: 'layers', act: () => go('zycie', t('ułożenie ściany według życia')) },
     { label: t('Według świeżości'), desc: t('siatka od ostatnio ruszanych'), icon: 'grid4', act: () => go('swiezosc', t('ułożenie ściany według świeżości')) },
     { sep: true },
-    { label: t('Rozsuń nachodzące karty'), desc: t('tylko tyle, ile trzeba; reszta stoi'), icon: 'spread', act: () => { let n = 0; c.commit(t('rozsunięcie kart'), () => { n = wallSeparate(st); return n ? undefined : false; }); c.save(); jtoast(n ? t('Rozsunięte: {0}.', tn(n, 'karta', 'karty', 'kart')) : t('Nic na siebie nie nachodzi.')); } },
+    { label: t('Rozsuń nachodzące karty'), desc: t('karty i notatki, tylko tyle, ile trzeba; reszta stoi'), icon: 'spread', act: () => { let n = 0; c.commit(t('rozsunięcie kart'), () => { n = wallSeparate(st); return n ? undefined : false; }); c.save(); jtoast(n ? t('Rozsunięte: {0}.', tn(n, 'rzecz', 'rzeczy', 'rzeczy')) : t('Nic na siebie nie nachodzi.')); } },
   ]);
 }
 function wallViewMenu(anchor, c) {

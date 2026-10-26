@@ -14,6 +14,12 @@ const NARROW_STAGE = 700; // below this width the phone layout shows one window 
 const DSHORT = new Intl.DateTimeFormat('pl-PL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Warsaw' });
 const DSHORT_EN = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Warsaw' });
 const snapAgeDays = () => (Date.now() / 1000 - SNAP) / DAY;
+/* who this build is (the top bar shows it, so a screen recording names its own version) and where it runs:
+   'plik' a downloaded file, 'web' a server of Jozz's own, 'claude' inside claude.ai (other sites cannot open in a window there) */
+const BUILD = (typeof JASK_BUILD !== 'undefined' && JASK_BUILD) || { v: '?', built: '', host: 'artifact' };
+const VER = 'v' + BUILD.v;
+const PLACE = B.RUNS_LOCAL ? 'plik' : B.HOSTED ? 'web' : 'claude';
+const PLACE_NAME = { plik: 'plik na tym urządzeniu', web: 'własny serwer', claude: 'claude.ai' };
 
 /* ---------- preferences: how Jaskinia looks and behaves on this device ---------- */
 const PREFS_KEY = 'jaskinia:prefs';
@@ -21,12 +27,14 @@ const PREF_CHOICES = {
   theme: ['jaskinia', 'kataster', 'neon', 'piwnica'],
   scheme: ['auto', 'ciemna', 'jasna'],
   life: ['zielen', 'zar'],
-  density: ['zwarta', 'srednia', 'duza'],
+  density: ['auto', 'zwarta', 'srednia', 'duza'],
   lang: ['pl', 'en'],
   wheel: ['zoom', 'pan'],
   motion: ['full', 'less'],
+  games: ['auto', 'okno', 'karta'],
+  pixels: ['ostre', 'gladkie'],
 };
-const PREFS_DEF = { theme: 'jaskinia', scheme: 'auto', life: 'zielen', density: 'srednia', cz: 1, lang: 'pl', wheel: 'zoom', tips: true, motion: 'full' };
+const PREFS_DEF = { theme: 'jaskinia', scheme: 'auto', life: 'zielen', density: 'auto', cz: 1, lang: 'pl', wheel: 'zoom', tips: true, motion: 'full', games: 'auto', pixels: 'ostre', pv: 2 };
 function sanitizePrefs(p) {
   const out = { ...PREFS_DEF };
   if (!p || typeof p !== 'object') return out;
@@ -35,7 +43,9 @@ function sanitizePrefs(p) {
   if (typeof p.tips === 'boolean') out.tips = p.tips;
   return out;
 }
-const prefs = (() => { try { return sanitizePrefs(JSON.parse(localStorage.getItem(PREFS_KEY) || '{}')); } catch { return sanitizePrefs({}); } })();
+/* pv 2 (v6.1): the size of the interface became "auto" (compact with a mouse, larger on touch). Preferences written before
+   held the old default "srednia" without anyone choosing it, so that one value becomes "auto" once. */
+const prefs = (() => { try { const raw = JSON.parse(localStorage.getItem(PREFS_KEY) || '{}'); if (raw && !raw.pv && raw.density === 'srednia') raw.density = 'auto'; return sanitizePrefs(raw); } catch { return sanitizePrefs({}); } })();
 function savePrefs() { try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); return true; } catch { return false; } }
 
 /* ---------- interface language: Polish source strings, English beside them (05-i18n.js) ---------- */
@@ -100,6 +110,7 @@ const ICONS = {
   spread: 'M5.5 8H1.5 M3.5 6l-2 2 2 2 M10.5 8h4 M12.5 6l2 2-2 2 M6.5 4.5h3v7h-3z',
   phone: 'M4.5 1.5h7v13h-7z M7 12.5h2',
   warn: 'M8 2.5 14 13H2z M8 6.5v3.2 M8 11.6v.01',
+  flag: 'M3.5 14V2.5 M3.5 3h8.5l-2.2 3.2 2.2 3.3H3.5',
   hand: 'M5.5 8V3.8a1 1 0 0 1 2 0V7.5 M7.5 7V2.8a1 1 0 0 1 2 0V7.5 M9.5 7.2V3.8a1 1 0 0 1 2 0v5.4c0 2.8-1.8 4.3-4 4.3-1.8 0-2.6-.8-3.6-2.3L2.5 8.6a1 1 0 0 1 1.6-1.2l1.4 1.4',
   /* window types */
   t_wybor: 'M2.5 2.5h11v11h-11z M8 5.5v5 M5.5 8h5',
@@ -113,6 +124,8 @@ const ICONS = {
   t_zmiany: 'M3.2 6.5A5 5 0 0 1 12.5 5 M12.8 9.5A5 5 0 0 1 3.5 11 M12.5 2v3h-3 M3.5 14v-3h3',
   t_zagraj: 'M2.5 3.5h5v4h-5z M8.5 3.5h5v4h-5z M2.5 8.5h5v4h-5z M8.5 8.5h5v4h-5z',
   t_gra: 'M8 1.8a6.2 6.2 0 1 1 0 12.4A6.2 6.2 0 0 1 8 1.8z M6.6 5.3v5.4L10.8 8z',
+  t_przyrzad: 'M2.2 11.5a5.8 5.8 0 0 1 11.6 0 M8 11.5l3.2-4.2 M4.2 8.4l.9.6 M8 5.7v1.1 M11.8 8.4l-.9.6 M2 13.5h12',
+  t_sygnaly: 'M2 2.5h12v11H2z M3 9.5c.9 0 1.1-3.5 2.1-3.5s1.2 5.5 2.2 5.5 1.2-7 2.2-7 1.1 4.5 2.1 4.5c.6 0 .9-.8 1.4-.8',
   t_karta: 'M2.5 2.5h11v11h-11z M5 5.5h6 M5 8h6 M5 10.5h3.5',
   t_galezie: 'M4.5 2.5v11 M4.5 9.5c0-3 7-2 7-6.5 M4.5 6.5c0-2 3.5-1.5 3.5-4',
   t_rytm: 'M1.5 13.5h13 M3 13.5v-2 M4.5 13.5v-5 M6 13.5v-1 M7.5 13.5v-7 M9 13.5v-3 M10.5 13.5v-8 M12 13.5v-4 M13.5 13.5v-2',

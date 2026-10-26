@@ -42,7 +42,7 @@ FAMILIES = [
      "repos": ["Combat-Lab", "Box3d-Character-Controler", "Jozz-Universal-Rig-Editor"]},
     {"id": "materia", "name": "Materia i świat",
      "question": "Z czego jest zrobiony świat: edytowalna materia, cała planeta, skan, który można dotknąć?",
-     "repos": ["FrameMatter-Lab", "Jozz-Splat-Game-Lab"]},
+     "repos": ["FrameMatter-Lab", "Jozz-Splat-Game-Lab", "Splot"]},
     {"id": "maszyny", "name": "Maszyny i pojazdy",
      "question": "Zbuduj, uruchom, obserwuj, popraw, wsiądź i jedź: warsztat maszyn od wokseli po natywny C.",
      "repos": ["voxel-aeronautics-workshop", "Box3d_FunProject", "JV-Box3D-Web-experiment", "JV-Box3D-Web-Public",
@@ -56,7 +56,7 @@ FAMILIES = [
      "repos": ["Shared-Work-Medium-Lab", "Jozz-Cave-Workbench"]},
     {"id": "feniks", "name": "Feniks",
      "question": "Czy da się złożyć całość: żywą krainę, w której mieszkańcy żyją z własnych powodów, a Ty ją tworzysz i przekształcasz?",
-     "repos": ["Mini_Feniks"]},
+     "repos": ["Mini_Feniks", "Feniks-Studio"]},
     {"id": "poczatki", "name": "Pierwsze próby",
      "question": "Od czego zaczęło się na GitHubie: mod do Minecrafta, vibe-coding, pusty pomysł.",
      "repos": ["Simply_game_experiment", "MinecraftLike-Fun-Project"]},
@@ -87,11 +87,15 @@ SHORT = {  # display short names (the long ones break layouts)
     "Combat-Lab": "Combat Lab",
     "Gloopipelago": "Gloopipelago",
     "Cognitive-Ecology-Lab": "Cognitive Ecology",
+    "Feniks-Studio": "Feniks Studio",
+    "Splot": "Splot",
 }
 
 IDENTITY = {  # Claude's one-line hypotheses (status: hypothesis until the Owner ratifies)
     "Mini_Feniks": "Poważna próba złożenia jak największej części marzenia o Feniksie w jedną żywą krainę; po pierwszym graniu budowa wstrzymana, trwa ocena fundamentu.",
-    "Jozz-Cave-Workbench": "Przyszły dom Jaskini, Twojego warsztatu nad wszystkimi projektami. Na razie bez commitów.",
+    "Jozz-Cave-Workbench": "Dom Jaskini, Twojego okna na wszystkie projekty: kod, testy, kompas i publiczny podgląd. Twoja prywatna Jaskinia żyje jako artefakt.",
+    "Feniks-Studio": "Warsztat do tworzenia miejsc, rzeczy i eksperymentów przyszłego Feniksa. Dziś badania i plan bez aplikacji: budowę wstrzymałeś, a Jaskinia jest jednym z kandydatów na jego dom.",
+    "Splot": "Mały żywy świat 2.5D: materia, którą można przekształcać, kilka poziomów i zachowania, które reagują na zmiany. Grywalny punkt wyjścia, a geometria K3 jako osobny dawca.",
     "ReflexBrain-Lab": "Czy tani, lokalny mechanizm uczący się wyciągnie znaczenie z prywatnego doświadczenia żyjącego, ucieleśnionego aktora.",
     "Companion-Brain-Lab": "Towarzysz gracza z prawdziwym, lokalnym mózgiem: autonomia, współpraca taktyczna i szybkie polecenia.",
     "Llm-Live-NPC": "NPC napędzany małym LLM, który mieszka w świecie: widzi tylko swoje, pamięta i działa wyłącznie przez sprawdzone możliwości świata.",
@@ -298,7 +302,7 @@ LEDGER = [  # UTC ISO
 ]
 
 OPEN = [
-    "Feniks nie ma jeszcze repo na GitHubie. Jego dokumentacja Studio i biblioteka donorów leżą lokalnie, poza zasięgiem tej Biblioteki: widzi ona tylko GitHub.",
+    "Feniks jako całość nie ma jednego repo. Studio ma swoje (Feniks-Studio: badania i plan, bez aplikacji), a reszta dokumentacji i biblioteka donorów leżą lokalnie, poza zasięgiem tej Biblioteki: widzi ona tylko GitHub.",
     "Mapy JURE z Twojej rozmowy z GPT nie ruszamy na razie.",
     "Wspólne konto we wszystkich kanałach: dowodem jest diff i odczyt źródła, nie podpis wiadomości.",
     "Wkład Medium w odkrycie nie jest jeszcze wykazany. Do sprawdzenia: późniejszy czytelnik i ramię bez biblioteki.",

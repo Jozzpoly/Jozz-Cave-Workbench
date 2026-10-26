@@ -30,6 +30,18 @@ Nagrania i klatki nie trafiają do publicznego repo. Widać na nich cały ekran.
 4. **Dopiero po oddaniu C1 przeczytam D1 i D2** i napiszę porównanie: zgodne, sprzeczne, przeoczone. Rozbieżności sprawdzę ponownie na wideo.
 5. **Po Twoim feedbacku:** plan i poprawki z dowodem (test, zrzut przed i po, numer wersji). Najpierw to, co niszczy zaufanie i gesty, potem braki, na końcu polerka.
 
-## Na następną rundę
+## Na następną rundę (od v4)
 
-W Jaskini będzie widoczny numer wersji. Dojdzie też przycisk „Paczka dla Claude'a”: stan, ustawienia, rozmiar ekranu i dziennik ostatnich ruchów z czasem. Wtedy nagranie i ruchy zestawia się sekunda po sekundzie, bez godzin cięcia klatek.
+Jaskinia v4 ma to już w sobie:
+- **Numer wersji** stoi obok nazwy w górnym pasku.
+- **Uwaga przypięta do chwili:** chorągiewka u góry albo Ctrl+. (na telefonie: menu pod logo). Zapisuje godzinę co do sekundy, układ, okno, projekt i ekran.
+- **„Paczka dla Claude'a”** (Ustawienia → Uwagi i paczka) to wersja, urządzenie, ustawienia, układy, uwagi i dziennik ostatnich ruchów z godzinami. Jest jako plik albo jako tekst do wklejenia w rozmowę.
+
+Najtańsza runda wygląda tak:
+1. Nagraj ekran.
+2. W trakcie wciśnij chorągiewkę, kiedy coś uwiera albo cieszy.
+3. Na końcu wyślij nagranie i paczkę.
+
+Czas z dziennika i czas nagrania zestawia się sekunda po sekundzie, bez godzin cięcia klatek.
+
+Runda 15–16.10: moja recenzja C1 jest prywatna (opisuje Twój ekran). Co z niej wynikło dla produktu, opisuje [2026-10-16-v4.md](2026-10-16-v4.md).

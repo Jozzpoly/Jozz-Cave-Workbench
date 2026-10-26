@@ -129,7 +129,7 @@ function statChart(m, W, H, select) {
   const mx = Math.max(1, ...bins.map(b => b.v)), bw = W / nb;
   const y = v => padT + ch - (v / mx) * ch;
   const unit = k === 1 ? t('dzień') : k === 7 ? t('tydzień') : t('miesiąc');
-  const svg = s('svg', { class: 'st-chart', viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: 'img',
+  const svg = s('svg', { class: 'st-chart', 'data-own-tip': '', viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: 'img',
     'aria-label': t('Commity, jeden słupek to {0}. Najwięcej {1}.', unit, fmt(Math.max(...bins.map(b => b.v)))) });
   const mon = i => (prefs.lang === 'en' ? ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] : MON)[i];
   // "od początku" leaves out a thin prelude: say so at the left edge, where it would have been
@@ -141,15 +141,16 @@ function statChart(m, W, H, select) {
     bandLabel = s('text', { class: 'band-t', x: 6, y: brk && y1 - 5 < 28 ? Math.min(y2 - 3, y1 + 13) : Math.max(11, y1 - 5), text: k === 1 ? t('typowy aktywny dzień: {0}–{1} commitów', p25, p75) : t('typowy aktywny {0}: {1}–{2} commitów', unit, p25, p75) });
   }
   svg.append(s('line', { class: 'base', x1: 0, x2: W, y1: padT + ch + 0.5, y2: padT + ch + 0.5 }));
-  const g = s('g');
+  const g = s('g'), bars = [];
   let best = -1;
   bins.forEach((b, i) => { if (best < 0 || b.v > bins[best].v) best = i; });
   bins.forEach((b, i) => {
     if (!b.v) return;
     const lvl = heatOf((STAT.end - b.lo) * DAY + DAY / 2);
     const bh = Math.max(1.5, (b.v / mx) * ch);
-    g.append(s('rect', { class: 'bar' + (i === best ? ' rec' : ''), x: i * bw + Math.min(1, bw * 0.15), y: padT + ch - bh, width: Math.max(0.8, bw - Math.min(2, bw * 0.3)), height: bh,
-      fill: lvl >= 1 ? `var(${heatVar(lvl)})` : 'var(--cold)' })); // older than a month: neutral blue, still plainly visible
+    bars[i] = s('rect', { class: 'bar' + (i === best ? ' rec' : ''), x: i * bw + Math.min(1, bw * 0.15), y: padT + ch - bh, width: Math.max(0.8, bw - Math.min(2, bw * 0.3)), height: bh,
+      fill: lvl >= 1 ? `var(${heatVar(lvl)})` : 'var(--cold)' }); // older than a month: neutral blue, still plainly visible
+    g.append(bars[i]);
   });
   svg.append(g);
   if (bandLabel) svg.append(bandLabel); // above the bars, with a halo so it stays readable
@@ -184,14 +185,20 @@ function statChart(m, W, H, select) {
   const at = e => { const bb = svg.getBoundingClientRect(); return clamp(Math.floor((e.clientX - bb.left) / bb.width * nb), 0, nb - 1); };
   const topIn = b => { let top = null, tv = 0; for (const p of P) { let v = 0; for (let di = b.lo; di <= b.hi; di++) v += p.v[di] || 0; if (v > tv) { tv = v; top = p.r; } } return { top, tv }; };
   const when0 = b => k === 1 ? diText(b.lo) : `${diText(b.hi, false)} – ${diText(b.lo)}`;
+  /* the same answer as Puls and every other chart mark: the bar under the pointer lights softly, the note follows, and
+     leaving fades instead of snapping off (the owner, 18 Oct) */
+  let lit = null, offT = 0, mine = 0;
+  const off = () => { clearTimeout(offT); offT = 0; guide.setAttribute('visibility', 'hidden'); lit?.classList.remove('on'); lit = null; B.untip(mine); };
   svg.addEventListener('pointermove', e => {
+    clearTimeout(offT); offT = 0;
     const i = at(e), b = bins[i];
+    if (lit !== bars[i]) { lit?.classList.remove('on'); lit = bars[i] || null; lit?.classList.add('on'); }
     guide.setAttribute('x1', i * bw + bw / 2); guide.setAttribute('x2', i * bw + bw / 2); guide.setAttribute('visibility', 'visible');
     const { top, tv } = topIn(b);
-    B.tip(e, [h('div', { class: 'tt', text: tn(b.v, 'commit', 'commity', 'commitów') }), h('div', { class: 'ts', text: when0(b) }),
+    mine = B.tip(e, [h('div', { class: 'tt', text: tn(b.v, 'commit', 'commity', 'commitów') }), h('div', { class: 'ts', text: when0(b) }),
       h('div', { class: 'tm', text: top ? t('najwięcej: {0} ({1})', top.short, tv) + (select ? t(' · kliknij, żeby zaznaczyć') : '') : t('cisza') })]);
   });
-  svg.addEventListener('pointerleave', () => { guide.setAttribute('visibility', 'hidden'); B.untip(); });
+  svg.addEventListener('pointerleave', () => { clearTimeout(offT); offT = setTimeout(off, 120); });
   if (select) svg.addEventListener('click', e => { const { top } = topIn(bins[at(e)]); if (top) select(top.name); });
   return svg;
 }
@@ -222,7 +229,7 @@ function statHours(m) {
   for (const p of m.P) { (p.r.hours || []).forEach((v, i) => { H[i] += v; }); (p.r.weekdays || []).forEach((v, i) => { Wd[i] += v; }); }
   const hm = Math.max(1, ...H), wm = Math.max(1, ...Wd), tot = sum(H) || 1;
   const night = [22, 23, 0, 1, 2, 3, 4, 5].reduce((a, i) => a + H[i], 0);
-  const bars = (vals, mx, lab, cls) => h('div', { class: 'st-mb ' + cls }, vals.map((v, i) => h('div', { class: 'mb' + (v === mx ? ' peak' : '') + (cls === 'hrs' && (i >= 22 || i < 6) ? ' night' : ''), title: `${lab(i)}: ${tn(v, 'commit', 'commity', 'commitów')}` },
+  const bars = (vals, mx, lab, cls) => h('div', { class: 'st-mb ' + cls }, vals.map((v, i) => h('div', { class: 'mb' + (v === mx ? ' peak' : '') + (cls === 'hrs' && (i >= 22 || i < 6) ? ' night' : ''), 'data-tip': `${lab(i)}: ${tn(v, 'commit', 'commity', 'commitów')}` },
     h('i', { style: { height: Math.max(v ? 2 : 0, 100 * v / mx).toFixed(1) + '%' } }), h('em', { text: cls === 'hrs' ? (i % 3 === 0 ? String(i) : '') : WDN[i] }))));
   return h('div', { class: 'st-hours' },
     h('p', { class: 'st-cap', text: t('Godzina zapisana w commicie (prawie zawsze polski czas). Ciemniejsze tło: noc, 22:00–6:00.') }),
@@ -270,7 +277,7 @@ function statFacts(m) {
   let allBest = 0, allBestDi = 0;
   full.forEach((x, di) => { if (x > allBest) { allBest = x; allBestDi = di; } });
   const mostBr = P.slice().sort((a, b) => b.r.branches.length - a.r.branches.length)[0];
-  const mostPr = P.slice().sort((a, b) => b.r.prs.open - a.r.prs.open)[0];
+  const seen = P.filter(p => p.r.api !== false), mostPr = seen.slice().sort((a, b) => b.r.prs.open - a.r.prs.open)[0]; // a repo the API did not see has no count
   const ws = m.ws, activeSince = full.slice(0, ws.start + 1).filter(x => x > 0).length;
   const T = D.estate.totals;
   const f = (k, v, sub) => h('li', null, h('span', { text: k }), h('b', { text: v }), h('small', { text: sub }));
@@ -278,7 +285,7 @@ function statFacts(m) {
     f(t('rekord dnia'), allBest ? tn(allBest, 'commit', 'commity', 'commitów') : '—', allBest ? diText(allBestDi) : ''),
     f(t('najdłuższa seria'), tn(bestRun, 'dzień', 'dni', 'dni') + t(' z rzędu'), bestRun ? t('do {0}', diText(runEnd)) : ''),
     f(t('najwięcej gałęzi'), mostBr ? mostBr.r.short : '—', mostBr ? tn(mostBr.r.branches.length, 'gałąź', 'gałęzie', 'gałęzi') : ''),
-    f(t('najwięcej otwartych PR'), mostPr && mostPr.r.prs.open ? mostPr.r.short : '—', mostPr && mostPr.r.prs.open ? tn(mostPr.r.prs.open, 'otwarty', 'otwarte', 'otwartych') : t('brak')),
+    f(t('najwięcej otwartych PR'), mostPr && mostPr.r.prs.open ? mostPr.r.short : seen.length ? '—' : '?', mostPr && mostPr.r.prs.open ? tn(mostPr.r.prs.open, 'otwarty', 'otwarte', 'otwartych') : seen.length ? t('brak') : t('nie wiem: brak danych z API')),
     f(t('aktywne dni od początku'), t('{0} z {1}', activeSince, ws.start + 1),
       ws.before ? t('od {0}; pierwszy commit {1}', diText(ws.start), diText(ws.first)) : t('pierwszy commit {0}', diText(ws.first))),
     f(t('całość na GitHubie'), tn(T.commits, 'commit', 'commity', 'commitów'), t('{0} repo · {1} gałęzi · {2} przebiegów CI · {3} PR', T.repos, T.branches, fmt(T.ci_runs), T.prs)));
