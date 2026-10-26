@@ -27,13 +27,14 @@ const PREF_CHOICES = {
   theme: ['jaskinia', 'kataster', 'neon', 'piwnica'],
   scheme: ['auto', 'ciemna', 'jasna'],
   life: ['zielen', 'zar'],
-  density: ['zwarta', 'srednia', 'duza'],
+  density: ['auto', 'zwarta', 'srednia', 'duza'],
   lang: ['pl', 'en'],
   wheel: ['zoom', 'pan'],
   motion: ['full', 'less'],
   games: ['auto', 'okno', 'karta'],
+  pixels: ['ostre', 'gladkie'],
 };
-const PREFS_DEF = { theme: 'jaskinia', scheme: 'auto', life: 'zielen', density: 'srednia', cz: 1, lang: 'pl', wheel: 'zoom', tips: true, motion: 'full', games: 'auto' };
+const PREFS_DEF = { theme: 'jaskinia', scheme: 'auto', life: 'zielen', density: 'auto', cz: 1, lang: 'pl', wheel: 'zoom', tips: true, motion: 'full', games: 'auto', pixels: 'ostre', pv: 2 };
 function sanitizePrefs(p) {
   const out = { ...PREFS_DEF };
   if (!p || typeof p !== 'object') return out;
@@ -42,7 +43,9 @@ function sanitizePrefs(p) {
   if (typeof p.tips === 'boolean') out.tips = p.tips;
   return out;
 }
-const prefs = (() => { try { return sanitizePrefs(JSON.parse(localStorage.getItem(PREFS_KEY) || '{}')); } catch { return sanitizePrefs({}); } })();
+/* pv 2 (v6.1): the size of the interface became "auto" (compact with a mouse, larger on touch). Preferences written before
+   held the old default "srednia" without anyone choosing it, so that one value becomes "auto" once. */
+const prefs = (() => { try { const raw = JSON.parse(localStorage.getItem(PREFS_KEY) || '{}'); if (raw && !raw.pv && raw.density === 'srednia') raw.density = 'auto'; return sanitizePrefs(raw); } catch { return sanitizePrefs({}); } })();
 function savePrefs() { try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); return true; } catch { return false; } }
 
 /* ---------- interface language: Polish source strings, English beside them (05-i18n.js) ---------- */
@@ -121,6 +124,8 @@ const ICONS = {
   t_zmiany: 'M3.2 6.5A5 5 0 0 1 12.5 5 M12.8 9.5A5 5 0 0 1 3.5 11 M12.5 2v3h-3 M3.5 14v-3h3',
   t_zagraj: 'M2.5 3.5h5v4h-5z M8.5 3.5h5v4h-5z M2.5 8.5h5v4h-5z M8.5 8.5h5v4h-5z',
   t_gra: 'M8 1.8a6.2 6.2 0 1 1 0 12.4A6.2 6.2 0 0 1 8 1.8z M6.6 5.3v5.4L10.8 8z',
+  t_przyrzad: 'M2.2 11.5a5.8 5.8 0 0 1 11.6 0 M8 11.5l3.2-4.2 M4.2 8.4l.9.6 M8 5.7v1.1 M11.8 8.4l-.9.6 M2 13.5h12',
+  t_sygnaly: 'M2 2.5h12v11H2z M3 9.5c.9 0 1.1-3.5 2.1-3.5s1.2 5.5 2.2 5.5 1.2-7 2.2-7 1.1 4.5 2.1 4.5c.6 0 .9-.8 1.4-.8',
   t_karta: 'M2.5 2.5h11v11h-11z M5 5.5h6 M5 8h6 M5 10.5h3.5',
   t_galezie: 'M4.5 2.5v11 M4.5 9.5c0-3 7-2 7-6.5 M4.5 6.5c0-2 3.5-1.5 3.5-4',
   t_rytm: 'M1.5 13.5h13 M3 13.5v-2 M4.5 13.5v-5 M6 13.5v-1 M7.5 13.5v-7 M9 13.5v-3 M10.5 13.5v-8 M12 13.5v-4 M13.5 13.5v-2',

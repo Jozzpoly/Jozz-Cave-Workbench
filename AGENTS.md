@@ -1,18 +1,68 @@
 # AGENTS.md: start here
 
-For any agent (Claude, GPT, Codex) working on Jaskinia. Read this, then [docs/2026-10-16-z-gory.md](docs/2026-10-16-z-gory.md) (Polish: what we are fighting for, honest state, next steps), then [docs/design/2026-10-14-jaskinia-v2-decisions.md](docs/design/2026-10-14-jaskinia-v2-decisions.md).
+For any agent (Claude, GPT, Codex) working on Jaskinia. **First read the [Jaskinia compass (issue #5)](https://github.com/Jozzpoly/Jozz-Cave-Workbench/issues/5)**, in Polish: what Jaskinia is for, who holds what, and how we work with the owner. It is the one place for that; changes go there, not into new START_HERE files. Then read this file, then these, in order:
+1. [docs/2026-10-22-v641-ruch-poprawki.md](docs/2026-10-22-v641-ruch-poprawki.md): v6.4.1, the reviewers' findings on Ruch fixed and kept as checks (a part is known again by where it sits, not by its name alone; two windows add up; one finger, one gesture).
+2. [docs/2026-10-20-v64-ruch.md](docs/2026-10-20-v64-ruch.md): v6.4, Ruch (the owner gives his own parts their axes and motion by hand, kept for agents) and his surfaces speaking about the works first, with the workshop's process on call.
+3. [docs/2026-10-19-v63-bezpieczne-wydanie.md](docs/2026-10-19-v63-bezpieczne-wydanie.md): v6.3, a release older tabs cannot undo (the GPT lines' findings on PR #4, answered), material revisions that survive older builds, fresh data and verified play entries.
+4. [docs/2026-10-18-v62-uwagi.md](docs/2026-10-18-v62-uwagi.md): v6.2, the owner's ten remarks from using v6, each answered by behaviour, and **his conventions** (below).
+5. [docs/2026-10-18-v61-fundament.md](docs/2026-10-18-v61-fundament.md): v6.1, the foundation after the owner's look from above (several tabs merge, addresses, the agents window, material settings revisions) and the next steps in order.
+6. [docs/2026-10-16-z-gory.md](docs/2026-10-16-z-gory.md): in Polish, what we are fighting for, the honest state and the next steps.
+7. [docs/2026-10-18-v6-materialy.md](docs/2026-10-18-v6-materialy.md): v6, the owner's own models in 3D and walking inside them; the shared goal with Feniks Studio (Astra) and the `window.Jaskinia` API.
+8. [docs/2026-10-16-szwy.md](docs/2026-10-16-szwy.md): the evening review of 16 Oct, covering the seams found with GPT, Medium and the Studio line, the measurements, and the current order of work.
+9. [docs/design/2026-10-14-jaskinia-v2-decisions.md](docs/design/2026-10-14-jaskinia-v2-decisions.md).
 
 ## The owner
 
 Jozz, a solo game developer and graphic designer, writes in Polish and casually. He builds with several agents and judges work by using it. His screen recordings are the strongest evidence there is. Mechanical tests passing never overrule his verdict. He does not want to be the scheduler of agents or the carrier of their context. Carry your own continuity: recover the goal, the state and the last real boundary, then do the next valuable step.
 
+## The owner's hands (conventions, v6.2)
+
+He judges Jaskinia with his hands. These hold in every window, and a new window follows them from the start.
+
+- **Mouse in 3D.**
+  - Left button turns.
+  - The wheel button (and the right one) **always moves the view**.
+  - Turning the wheel zooms toward the cursor.
+  - Never give the wheel button another job.
+- **Walking and flying, as in Minecraft and Unreal.**
+  - WASD walks.
+  - Space jumps; flying, Space goes up and Shift goes down. Shift runs on foot.
+  - F flies.
+  - The wheel sets the speed.
+  - A key let go is let go. A browser shortcut or leaving the tab clears every held key.
+- **Games.** "Zagraj" switches the game in the game window. Shift opens a new window beside. Ctrl opens a browser tab. A game window taken into use gets the keyboard (`focusGame`).
+- **One answer to pointing.** Every chart mark answers with the same `tip()` note:
+  - it brightens softly;
+  - the note follows the pointer;
+  - it fades back.
+
+  Never draw a mark with only an SVG `<title>` (it is upgraded automatically, but write the note on purpose). Hover effects fade; nothing flashes. A chart with its own richer note marks itself `data-own-tip`. A chart that lets its note go late (a short wait after the pointer leaves) keeps the number `tip()` returned and calls `untip(thatNumber)`, so it never hides a note another chart put up meanwhile (6.4.1).
+- **Pixels are sharp.** His models are Blockbench pixel art: nearest sampling, no mipmaps, by default. `prefs.pixels` is the one switch for every model (`swPixels`).
+- **His parts move by his hand (v6.4, Materiały → Ruch).**
+  - A click picks the part he most likely means (a wheel with its shaft, its Axis cube, a bone of a skinned glTF); the path in his file picks another level.
+  - Ctrl+click gathers cubes into a part of his own.
+  - A drag on a moving part moves it, and the view stays still meanwhile. A drag anywhere else still turns the view, and the wheel and right buttons still pan.
+  - Every value he sets is one click, never a number to type.
+- **Compact on a desk, large on touch.** Window tools stay quiet until the header is pointed at.
+- **Only his.** Never offer, ship or call "his" a model, asset or text without checking who made it.
+- **His remarks are the strongest signal after his recordings.** Read them in "Dla agentów" (`#agenci`) before working on Jaskinia. When you act on one, add an answer to `private/uwagi_odpowiedzi.json` (keyed by the remark's moment, private layer only), so he sees it under the remark and other agents see it is no longer open.
+
 ## Rules the code and the tests enforce
 
 - **Nothing disappears silently.** A broken workspace goes to the trash (`broken`) and the rest keeps working. An unreadable store is kept in the rescue box and the last backup is loaded, with a visible banner. Deleting goes to the trash. "Delete forever" exists only inside the trash.
-- **Risky operations make a backup first** (reset, import, load-all, delete forever) and offer "Cofnij" (undo) in a toast.
+- **Risky operations make a backup first** (reset, import, load-all, delete forever) and offer "Cofnij" (undo) in a toast. When the copy cannot be written, the operation does not happen and says why; a copy that does not fit never removes the copies stored before (v6.3).
 - **Deleting for good keeps a way back.** A copy holds layouts, notes and views, not the trash, so `makeBackup(why, forgotten)` puts what leaves the trash for good inside the copy made just before, and restoring that copy puts it back in the trash. If the copy cannot be written, nothing is deleted.
+- **A release never undoes the owner's work (v6.3).** The live state is in `jaskinia:v3`. Builds before v6.3 write `jaskinia:v2`, which v6.3 only watches: such a write goes whole into a copy (every different state its own copy, the newest four kept), a newer note comes in (the replaced text into a copy first), and layouts are never taken from it. Material settings revisions also live in `jaskinia-materialy-ustawienia`, which older builds never open. Before you change a storage format again, test the old published build and the new one in two tabs of one origin (`jk63_test.mjs` shows how).
+- **Several tabs merge, they never overwrite (v6.1).** A tab writes only after it changed something. Every written state names itself and its parent (`rev`, `par`), and another tab's write is merged three ways against the state it grew from: layouts window by window, notes by their newer text, views, saved states and trash item by item. A real clash keeps this tab's version, puts the other in an automatic copy and says so once. Since v6.3 every losing side gets its own copy (both, when both lose), and a conflict inside one window or a rename counts. Note editors write back only typed text. Never call `persistNow()` to save a change: call `persist()` (it marks the change), as every app path does.
+- **Everything has an address (v6.1).** `#repo~Name`, `#m~id`, `#uklad~id`, `#agenci` and window names work from outside, when typed and from links inside windows (`59-adresy.js`). A link in a window that goes nowhere is a bug, not something to hide with CSS.
 - **An older Jaskinia never erases what a newer one wrote.** Every Jaskinia downloaded to one computer shares the same `file://` storage, and the public build shares it with the private one. A window type or a pinned project that a build does not know waits in `w.lost` and comes back in a build that knows it.
+- **A running lab is never reloaded by Jaskinia.**
+  - Window types with `live: true` (`przyrzad`, `gra`) are rebuilt only when what they run changes (`liveKey`). Theme, density, zoom, a layout change or a narrow window never rebuild them.
+  - Switching the interface language still relaunches all of Jaskinia (debt 8).
+  - Loaded is not always running: a lab from another origin stops animating while its window is in another layout, and a resize reaches the lab ([docs/2026-10-16-szwy.md](docs/2026-10-16-szwy.md)).
+  - Labs that speak the instrument contract ([docs/przyrzad/KONTRAKT.md](docs/przyrzad/KONTRAKT.md)) are heard only from frames Jaskinia opened, and only as text.
 - **Note text never enters the log.** A menu item whose label comes from something the owner wrote carries a `log` label (the notes menu logs "notatka"), and a package without notes scrubs every note's title and lines out of the log.
+- **Materials are the owner's files, kept whole.** The same bytes are the same material (id from SHA-256). A changed file with the same name is a new version beside the old one, never a silent replacement. Deleting is soft and has "Cofnij". Materials live outside layout undo, in IndexedDB `jaskinia-materialy`. Any change to a material record (settings, delete, Cofnij) is made on the record as it is at that moment, in one transaction (`mpatch`, `matPatch`, `matApplySettings`), never on a window's copy of it: another tab may have changed it since (v6.3).
 - **Notes live outside layout undo.** Their text is in `store.notes`; a notes window only holds `st.note` (an id). Ctrl+Z of a layout never rewinds typing.
 - **The wall never rearranges itself.** Arranging happens only on request ("Ułóż…") and is one undo step. Camera position is per window in `store.views` and is not part of undo.
 - **Colours say something true.** Life colours measure time since the last commit at snapshot time, not "now", so an old snapshot does not make living projects look dead. Green means alive, older fades to calm blue and the background, red only marks findings that need a decision.
@@ -20,6 +70,19 @@ Jozz, a solo game developer and graphic designer, writes in Polish and casually.
 - **Facts and meaning stay apart.** Families and the one-line "why" of each project are Claude's hypotheses (marked "HIPOTEZA CLAUDE" in the interface) until the owner ratifies them. Agents propose; their proposals never silently become the owner's decisions.
 - **"Od początku" starts where real work starts** (`workStart`): a thin prelude (under 10% of commits before a silence longer than 60 days) is left out and named at the chart's edge. The account's whole life is the "od konta" range.
 - **No pretend features.** If something only looks like it works, it is a bug.
+- **His surfaces speak about the works; the workshop's process waits on call (v6.4).**
+  - Where he plays and looks first (the "Do zagrania" shelf, a game's launch card), say what the work is: his own sentence when he fixed one, else Claude's hypothesis, marked as such.
+  - Commits, ages, branches, snapshots and CI go one step away: a closed "Z warsztatu agentów", or a hover.
+  - Do not add new process lines to a first view. Measure the share before and after when you touch one (docs/2026-10-20-v64-ruch.md).
+- **His motion is his decision (v6.4).**
+  - `m.ruch` on a material holds the parts he set in motion, with their axes, pivots and ranges, in the file's frame.
+  - Read it (`Jaskinia.materialy.ruch(id)`) before you guess a pivot; never overwrite it; propose changes to him.
+  - Change it only in one transaction on the record (`matPatch`), like every material change.
+  - A save sends only the parts that window added, changed or took back since it last read the record; the rest stays as the record holds it, so two windows or tabs on one model add up (v6.4.1).
+  - A part is known again in a new version of the file by its names and, where names repeat, by where its nodes sit (`boxes`, measured in the rest pose). When that is not certain, nothing is guessed: the part is not carried and he is told which one to point at again. A carried part whose place or shape changed says so (v6.4.1).
+- **Hands before hardening (v6.4).**
+  - A new interaction reaches him early, as a marked try ("próba") he can feel. It gets its safety layers, formats and long docs after he says it is right.
+  - Two things are never deferred: his data is kept whole from the first try, and tests check that.
 - **Every build names itself.** Raise `src/jaskinia/version.txt` for every version the owner gets, and add a row to [docs/VERSIONS.md](docs/VERSIONS.md). His recordings are matched to builds by the number in the top bar.
 - **Where it runs is detected, not assumed.** `PLACE` is `plik` (a downloaded file: `file:` or `content:`), `web` (the owner's own server) or `claude` (the artifact). Games may open in a window only outside claude.ai. Tests set `window.__JASK_PLACE` to pretend.
 - **The data's age is visible.** The top bar says how old the snapshot is; charts never draw the days after the snapshot as empty days.
@@ -35,36 +98,66 @@ Jozz, a solo game developer and graphic designer, writes in Polish and casually.
 | `00-base.js` | device preferences (`jaskinia:prefs`), `t()` / `tn()` for language, icons, small helpers |
 | `05-i18n.js` | English beside the Polish source strings (key = the Polish sentence; arrays = singular/plural) |
 | `10-model.js` | pure layout model: split tree, floating windows, ids |
-| `15-store.js` | store v2 in `localStorage` (`jaskinia:v2`), backups (`jaskinia:kopie`), rescue box (`jaskinia:ratunek`), migration from `jaskinia:v1` (left untouched), repair, export/import |
+| `15-store.js` | the store in `localStorage` (`jaskinia:v3` since v6.3; `jaskinia:v2` of older builds is taken over once, then only watched), backups (`jaskinia:kopie`, with saved layouts), rescue box (`jaskinia:ratunek`), migration from `jaskinia:v1` (left untouched), three-way merge of tabs, repair, export/import |
 | `20-stats.js` | statistics from the snapshot (day 0 = snapshot day), periods, chart binning (day → week → month when bars get thinner than 3 px) |
 | `30-wall.js` | the wall: world coordinates, camera, semantic zoom (level of detail by on-screen size), frames, sticky notes, links, minimap, gestures |
 | `40-types.js` | the window-type registry `TYPES` (24 types: map, wall, Kataster, list, play, findings, changes, card, game, branches, rhythm, state, data, stats, chart, ranking, year, clock, pulse, history, notes, knowledge, settings, empty chooser) |
 | `45-settings.js` | themes (`data-jk`), life ramps (`data-life`), density, the Settings window, export/import |
 | `50-shell.js` | the shell: top bar, workspaces (tabs), windows, dividers, drag and drop, menus and sheets, phone mode (Back closes a sheet, two fingers zoom a window), undo/redo, trash, reset, toasts |
-| `55-feedback.js` | the feedback loop: the log (`jaskinia:dziennik`), "To mnie uwiera" notes pinned to the moment (`jaskinia:uwagi`), "Paczka dla Claude'a" (file or text), the Settings section "Uwagi i paczka" |
+| `52-przyrzady.js` | instruments: the owner's labs and games running in `przyrzad` and `gra` windows, the instrument contract (hello, state, signals, events, remarks back), the live "Sygnały" window, the picker of what to run, and the demo lab carried inside (`LAB_DEMO`) |
+| `56-swiat.js` | the 3D runtime every 3D window shares: `swStage` (light, theme colours, metre grid, framing, the 1.8 m person, adaptive resolution, renders only on change, the owner's mouse), `swPixels` (sharp or smooth texture pixels) and `swWalk` (first person at 1:1, a capsule against a BVH, step-up, jump, fly, phone sticks) |
+| `56b-blockbench.js` | Blockbench's `.bbmodel` read directly into three.js (cubes, meshes, pivots, ZYX rotations, embedded pictures; 16 px = 1 m) and `bbLook()`, the Blockbench material that `.obj` exports get too |
+| `57-materialy.js` | Materiały: the owner's models and pictures in IndexedDB (files by SHA-256, materials with versions, orientation and scale defaults with numbered revisions mirrored in `jaskinia-materialy-ustawienia`), companions by path, the window, file drops anywhere in Jaskinia, his models from his public repositories |
+| `57b-ruch.js` | Ruch (v6.4): his parts set in motion by hand on the Materiały stage (pick, Ctrl+click parts, axis from a cube named Axis or the shape, dial and slide drags, show and stop to the exact rest pose), kept as `m.ruch`, carried to a new version by names and, where names repeat, by where the parts sit (v6.4.1), never guessed; in a skinned glTF (Blockbench's armature export) a part is a bone and empty axis bones mark the axis line; `ruchRig()` also drives copies for agents |
+| `59-adresy.js` | addresses (`#repo~`, `#m~`, `#uklad~`, window names): at start, on `hashchange` and from links in windows; the address follows the selection; the "Dla agentów" window (`agenci`) |
+| `58-api.js` | `window.Jaskinia` v1, the surface other tools may use: `ext.type/icon/strings/open`, `materialy.*` (with `ruch(id)` and `rig(object, id)` since v6.4), `swiat.*` (see the v6 doc) |
+| `../vendor/swiat3d.js` | three.js 0.180.0 + addons + three-mesh-bvh 0.9.2, bundled by `tools/swiat/build.mjs`; `render.py` puts it before Jaskinia's script; it only defines a factory until a 3D window asks |
+| `55-feedback.js` | the feedback loop: the log (`jaskinia:dziennik`), "To mnie uwiera" notes pinned to the moment (`jaskinia:uwagi`, correctable, merged across tabs, with agents' answers from the private layer as `UW_ODP`), "Paczka dla Claude'a" (file or text), the Settings section "Uwagi i paczka" |
 | `version.txt` | the version number the top bar shows; `render.py` stamps it with the build time into `JASK_BUILD` |
 
 Phone mode switches on when the stage is narrower than 700 px: one window at a time, a dock of window chips at the bottom, menus as bottom sheets.
 
-A window type is an entry in `TYPES` with a `name`, a `glyph`, a `desc` and `render(box, c)`. `c` is the context: the window, its layout, the selected repo, `save()`, `setView()`, `busy()`. Optional flags: `sized` (needs its size), `fill`, `zoomKey`, `noZoom`, `ranged` (stats periods), `ctx` (header controls).
+Code outside this repository (Feniks Studio first) adds window types through `Jaskinia.ext.type(key, def)` instead of editing these files. A window type is an entry in `TYPES` with a `name`, a `glyph`, a `desc` and `render(box, c)`. `c` is the context: the window, its layout, the selected repo, `save()`, `setView()`, `busy()`. Optional flags: `sized` (needs its size), `fill`, `zoomKey`, `noZoom`, `ranged` (stats periods), `ctx` (header controls).
 
 Interface strings are written in Polish in the source and wrapped in `t('…')`. The English dictionary sits beside them. Panels that come from the Library are still Polish only.
 
 ## Before you propose a change
 
-- Run `node tools/jk_test.mjs`, `node tools/jk2_test.mjs`, `node tools/jk4_test.mjs` and `node tools/jk2_chaos.mjs 400 <seed>`. All must pass. They open the pages over http (`tools/serve.mjs`), because headless Chromium can drop the `localStorage` of `file://` pages across reloads, which would test the browser instead of Jaskinia.
+- Run `node tools/jk_test.mjs`, `node tools/jk2_test.mjs`, `node tools/jk4_test.mjs`, `node tools/jk5_test.mjs`, `node tools/jk6_test.mjs [shots] [models]`, `node tools/jk61_test.mjs`, `node tools/jk62_test.mjs`, `node tools/jk63_test.mjs`, `node tools/jk64_test.mjs`, `node tools/jk641_test.mjs` and `node tools/jk2_chaos.mjs 400 <seed>`. The v6 checks run WebGL in SwiftShader and need a folder of the owner's public models (see the script's header). All must pass. They open the pages over http (`tools/serve.mjs`), because headless Chromium can drop the `localStorage` of `file://` pages across reloads, which would test the browser instead of Jaskinia.
+- **A check waits for the state it tests, not for a fixed time.** Poll the record, the style or the element until it is there (with a generous limit) and then assert. Two checks that slept 350 ms and 1.5 s failed on 19 Oct only because the machine was busy; a fixed pause tests the machine, not Jaskinia.
+- **Look for the moment between two writes.** Anything written in two steps (two databases, a number then a record) has a moment where a reader in another tab sees half of it. Write a check that stops there and reads from a second tab (`jk63_test.mjs`, "a tab reading while another applies a change").
 - For anything visible, take screenshots on desktop and phone (`tools/jk4_look.mjs [dir] [scenario]` shows how) and look at them.
+- **Playwright's Chromium is not the owner's browser.** It turns storage partitioning off and changes some throttling. A claim about storage, origins, hidden frames or folder access needs a run with partitioning on (`node tools/probes/hosting.mjs` shows how), a note of the flags it ran with, and finally the owner's own browser.
 - Work on a branch and open a pull request. `main` is the owner's.
+- **Read the newest comments on the open pull request before you publish.** Other lines review the branch head while you work; on 19 Oct three findings about the pushed head waited unread for up to 45 minutes, and one of them was the bug being fixed at that moment.
 - Do not commit generated test pages (`dist/_*.html`) or screenshot folders.
 - Never put tokens anywhere in the repository.
 
-## Known debts (as of 16 Oct 2026, v4)
+## Known debts (as of 16 Oct 2026, v5, with the evening review in [docs/2026-10-16-szwy.md](docs/2026-10-16-szwy.md))
 
-1. The data is a snapshot taken in an agent's sandbox, with no automatic refresh yet.
+1. The data is a snapshot taken in an agent's sandbox (`tools/regen.py`, last on 19 Oct 2026), with no automatic refresh yet. Play addresses guessed from a repository's name can be dead: `data/wejscia.json` holds the verified ones (who, when, window or tab only).
 2. State lives in one browser; no sync between devices. The owner often runs Jaskinia as a downloaded file, so a sync built only on the claude.ai artifact would not reach him.
 3. There is no layer for the owner's own judgment of projects (finished, donor, return to it).
 4. Library panels are glued in through a compatibility hook and are Polish only.
 5. The window system is concatenated scripts with shared state. Tests are mostly end-to-end.
-6. In the claude.ai artifact, games open in a new tab, not in a window (a downloaded file and the owner's own server can open them in a window since v4).
+6. In the claude.ai artifact, games open in a new tab, not in a window (a downloaded file and the owner's own server can open them in a window since v4). The demo lab is the exception: it is carried inside the page.
+7. The instrument contract reaches labs only in a window. A lab opened in a separate tab (the phone's default for games) does not talk to Jaskinia yet. Two real labs use Jaskinia's seams since 19–21 Oct: ŚLAD (Medium, Shared-Work-Medium-Lab `419b9c9`) speaks the contract read-only, and Tworzywo (Astra, Feniks-Studio PR #2) uses `window.Jaskinia`; a third-party extension key can still replace another's (GPT's falsifier on PR #4).
+8. Changing the interface language rebuilds Jaskinia, so running labs start again.
+9. ~~A game window is not an instance (GPT's M1).~~ Fixed in v6, and corrected in v6.2 by the owner's use. v6 opened every next game beside the last one, which he did not want. Now a plain "Zagraj" switches the game in the game window, Shift opens a new one beside it (sharing the width when floating), and a game already open is brought forward. The lesson: an audit can name a seam, but only his hands decide the default.
+10. **Origins.**
+    - On GitHub Pages, Jaskinia and the games share one origin: a game can read Jaskinia's storage (M2), and copies of a game share one save.
+    - Other hosting changes what a framed game sees and can do (table 2 in the evening review).
+    - The contract's drop-in answers any parent (F1).
+11. **Old files.** Builds v2–v6.2 still rewrite `jaskinia:v2` and drop what they do not know (F2). Since v6.3 that key is only watched, so they can no longer overwrite the live state; what they write waits in a copy.
+12. **Hidden windows.** Windows of another layout are hidden with `display:none`, which stops the animation of a lab from another origin.
+13. **Keys.**
+    - The shell's shortcuts ignore `defaultPrevented`, and Ctrl+S saves the layout even from a text field.
+    - ~~A game window is never given focus.~~ Fixed in v6.2: a game window taken into use gets the keyboard.
+    - JV steering failed in the owner's test because the game never had the keyboard. Fixed in v6.2; the owner's confirmation is pending.
+14. **Backups and trash (D7).**
+    - Backup dedupe ignores views.
+    - The trash silently stops at 200 items.
+    - The "Cała Jaskinia" export is not disaster recovery.
+15. **Materials (v6).** One browser only, no sync; on GitHub Pages the storage is shared with every page of `jozzpoly.github.io`. Draco/meshopt glTF, KTX2 and FBX are not read; several models in one file are one material; Blockbench animations are not played. Skinned meshes collide in their rest pose. A folder import reads only models and their pictures; files of other kinds are not read. (The owner's rule about `.vox` is for agents searching his disk: never open, list or copy his MagicaVoxel files there. It does not forbid Jaskinia from reading a `.vox` he drops himself.)
 
-The order in which to tackle these is in the view from above.
+The order in which to tackle these is in [docs/2026-10-16-szwy.md](docs/2026-10-16-szwy.md), which replaces the order in the view from above.

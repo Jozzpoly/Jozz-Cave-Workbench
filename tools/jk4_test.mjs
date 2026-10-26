@@ -287,13 +287,13 @@ const overlaps = (a, b) => Math.max(0, Math.min(a.right, b.right) - Math.max(a.l
   /* an older Jaskinia, or the public one, opening layouts written by a newer one (every downloaded file on one computer
      shares the same file:// storage): what it cannot draw waits, and comes back */
   const sid = await J(() => { const J = __JASK, sp = J.store.spaces[0], id = J.leafIds(sp.L.tree)[0];
-    Object.assign(sp.L.wins[id], { type: 'przyrzad_z_przyszlosci', pin: 'Repo-Z-Przyszlosci', st: { url: 'https://example.org/lab' } }); J.store.cur = sp.id; J.persistNow(); return sp.id; });
+    Object.assign(sp.L.wins[id], { type: 'przyrzad_z_przyszlosci', pin: 'Repo-Z-Przyszlosci', st: { url: 'https://example.org/lab' } }); J.store.cur = sp.id; J.persist(); J.persistNow(); return sp.id; });
   await page.reload(); await wait(1000);
   const kept = await J(sid => { const J = __JASK, sp = J.store.spaces.find(x => x.id === sid), w = sp.L.wins[J.leafIds(sp.L.tree)[0]]; return { type: w.type, lost: w.lost || null, url: w.st.url || null }; }, sid);
   ok(kept.type === 'wybor' && kept.lost?.type === 'przyrzad_z_przyszlosci' && kept.lost?.pin === 'Repo-Z-Przyszlosci' && kept.url, 'older build: an unknown window type and project wait aside', JSON.stringify(kept));
   ok(await page.locator('.ch-lost').count() > 0, 'older build: the empty window says what was there', '');
   // a Jaskinia that knows them again (simulated with a type and a project this build knows)
-  await J(sid => { const J = __JASK, sp = J.store.spaces.find(x => x.id === sid), w = sp.L.wins[J.leafIds(sp.L.tree)[0]]; w.lost = { type: 'karta', pin: 'Mini_Feniks' }; J.persistNow(); }, sid);
+  await J(sid => { const J = __JASK, sp = J.store.spaces.find(x => x.id === sid), w = sp.L.wins[J.leafIds(sp.L.tree)[0]]; w.lost = { type: 'karta', pin: 'Mini_Feniks' }; J.persist(); J.persistNow(); }, sid);
   await page.reload(); await wait(1000);
   const backAgain = await J(sid => { const J = __JASK, sp = J.store.spaces.find(x => x.id === sid), w = sp.L.wins[J.leafIds(sp.L.tree)[0]]; return { type: w.type, pin: w.pin, lost: w.lost || null }; }, sid);
   ok(backAgain.type === 'karta' && backAgain.pin === 'Mini_Feniks' && !backAgain.lost, 'newer build: the window and its project come back by themselves', JSON.stringify(backAgain));
@@ -318,7 +318,7 @@ for (const name of ['jaskinia.html', 'jaskinia-web.html']) {
   if (booted) {
     const where = await page.evaluate(() => { const k = __JASK.packageData(false).jaskinia; return k.dziala_jako + ' ' + k.protokol; });
     ok(where === 'plik file:', `file://: ${name} knows it runs as a file`, where);
-    await page.evaluate(() => { __JASK.store.spaces[0].purpose = 'sprawdzenie po przeładowaniu'; __JASK.persistNow(); });
+    await page.evaluate(() => { __JASK.store.spaces[0].purpose = 'sprawdzenie po przeładowaniu'; __JASK.persist(); __JASK.persistNow(); });
     await page.reload(); await up();
     const kept = await page.evaluate(() => __JASK.store.spaces[0].purpose);
     ok(kept === 'sprawdzenie po przeładowaniu', `file://: ${name} keeps its state across a reload`, String(kept));

@@ -1,0 +1,10 @@
+{
+  "name": "jaskinia-swiat3d",
+  "private": true,
+  "description": "The 3D runtime carried inside Jaskinia: three.js and a few addons, bundled into src/vendor/swiat3d.js by build.mjs",
+  "devDependencies": {
+    "esbuild": "0.25.10",
+    "three": "0.180.0",
+    "three-mesh-bvh": "0.9.2"
+  }
+}

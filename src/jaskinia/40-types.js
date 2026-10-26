@@ -54,24 +54,34 @@ function renderGame(box, c) {
       h('div', { class: 'jk-chips' }, playable.map(x => h('button', { class: 'jk-chip', type: 'button', onclick: () => c.pickProject(x.name) }, sigil(x, 18), x.short)))));
     return;
   }
-  if (gamesInWindow()) {
-    // a downloaded file or Jozz's own server may frame the game; if a site refuses frames, the link below still works
-    box.append(h('div', { class: 'jk-game' }, h('iframe', { src: r.pages, title: `${r.short}: gra`, allowfullscreen: '', referrerpolicy: 'no-referrer',
-      allow: 'fullscreen; xr-spatial-tracking; gamepad; autoplay; clipboard-write; accelerometer; gyroscope; magnetometer; screen-wake-lock' }),
-      h('div', { class: 'jk-game-bar' }, h('span', { text: t('Gra nie rusza w oknie?') }), h('a', { class: 'jk-game-ext', href: r.pages, target: '_blank', rel: 'noopener' }, icon('ext', 13), t('Otwórz w nowej karcie')))));
+  if (gamesInWindow() && !r.tab) {
+    // a downloaded file or Jozz's own server may frame the game; if a site refuses frames, the link in the bar still works.
+    // The game is an instrument (52-przyrzady.js): nothing in Jaskinia restarts it, and if it speaks the contract it says what is happening.
+    const frame = liveFrame(r.pages, `${r.short}: gra`);
+    const e = attachLive(c, frame, r.pages, r.short);
+    box.append(h('div', { class: 'jk-game' }, frame, liveBar(c, e)));
     return;
   }
   const ch = (B.CH?.moved || []).find(m => m.repo === r.name);
   const fresh = r.branches.filter(b => !b.roles.includes('domyślna')).sort((a, b) => b.ts - a.ts).slice(0, 4);
-  box.append(h('div', { class: 'jk-pad jk-launch' },
-    h('div', { class: 'jl-top' }, sigil(r, 96), h('div', null,
-      h('h2', { text: r.short }), h('p', { class: 'jl-sub' }, B.lifeBadge(r.life), ' · ', t('ostatni commit'), ' ', h('b', { text: ago(r.last_ts) })),
-      h('div', { class: 'jl-acts' }, B.playA(r, { class: 'btn hot jl-play' }, B.playIcon(), t('Zagraj')), h('span', { class: 'jl-url', text: r.pages.replace('https://', '') })))),
-    h('p', { class: 'jl-note', text: B.HOSTED ? t('Gra otworzy się w nowej karcie, bo tak jest ustawione (Ustawienia → Zachowanie → Gry). Może też grać w tym oknie.') : t('Gra otworzy się w nowej karcie: w claude.ai strona nie może pokazać innej strony w oknie. W Jaskini pobranej jako plik albo postawionej na własnym serwerze zagrasz w tym oknie.') }),
+  /* v6.4: the card speaks about the game (what it is, how to play it); the workshop's process (commits, branches, the
+     repo's own state note) is folded below, on call: one click away, never the first thing he reads */
+  const own = B.sense?.['repo:' + r.name], fixed = own?.status === 'fix' && !!own.text;
+  const proc = [
     ch ? h('p', { class: 'jl-ch' }, h('b', { text: t('Od poprzedniego zrzutu: ') }), [ch.commits ? '+' + tn(ch.commits, 'commit', 'commity', 'commitów') : null, ch.n_new_branches ? '+' + tn(ch.n_new_branches, 'gałąź', 'gałęzie', 'gałęzi') : null].filter(Boolean).join(', ') || t('przesunięte gałęzie')) : null,
     r.state?.status ? h('div', { class: 'jl-st' }, h('span', { class: 'k', text: t('Stan według repo') }), h('blockquote', { text: r.state.status })) : null,
     fresh.length ? h('div', { class: 'jl-br' }, h('span', { class: 'k', text: t('Ostatnio ruszane gałęzie') }),
-      h('ul', null, fresh.map(b => h('li', null, h('code', { text: b.n }), h('span', { text: ' · ' + ago(b.ts) + (b.s ? ' · ' + b.s : '') }))))) : null));
+      h('ul', null, fresh.map(b => h('li', null, h('code', { text: b.n }), h('span', { text: ' · ' + ago(b.ts) + (b.s ? ' · ' + b.s : '') }))))) : null,
+  ].filter(Boolean);
+  box.append(h('div', { class: 'jk-pad jk-launch' },
+    h('div', { class: 'jl-top' }, sigil(r, 96), h('div', null,
+      h('h2', { text: r.short }), h('p', { class: 'jl-sense' + (fixed ? '' : ' hyp'), title: fixed ? t('Twoje zdanie o tym świecie') : t('Zdanie zaproponował Claude. Ty decydujesz.'), text: B.workLine ? B.workLine(r) : B.senseText(r) }),
+      h('div', { class: 'jl-acts' }, B.playA(r, { class: 'btn hot jl-play' }, B.playIcon(), t('Zagraj')), h('span', { class: 'jl-url', text: r.pages.replace('https://', '') })))),
+    h('p', { class: 'jl-note', text: r.tab ? t('Ta gra działa tylko w osobnej karcie. {0}', r.wejscie?.dlaczego || '') : B.HOSTED ? t('Gra otworzy się w nowej karcie, bo tak jest ustawione (Ustawienia → Zachowanie → Gry). Może też grać w tym oknie.') : t('Gra otworzy się w nowej karcie: w claude.ai strona nie może pokazać innej strony w oknie. W Jaskini pobranej jako plik albo postawionej na własnym serwerze zagrasz w tym oknie.') }),
+    r.wejscie ? h('p', { class: 'jl-note', text: t('Adres sprawdzony {0}: {1}.', r.wejscie.kiedy || '?', r.wejscie.sprawdzil || '?') }) : null,
+    h('details', { class: 'jl-proc' },
+      h('summary', null, h('span', { text: t('Z warsztatu agentów') }), h('span', { class: 'jl-proc-s' }, B.lifeBadge(r.life), ' · ', t('ostatni commit'), ' ', ago(r.last_ts))),
+      ...proc)));
 }
 
 function renderState(box, c) {
@@ -93,15 +103,15 @@ function renderNotes(box, c) {
   const ta = h('textarea', { class: 'jk-notes', placeholder: t('Twoje notatki. Zapisują się same, w tej przeglądarce. Cofanie układu (Ctrl+Z) ich nie rusza.'), 'aria-label': t('Notatki'), spellcheck: 'true' });
   ta.value = noteText(id);
   const gone = store.notes[id]?.gone;
-  let tm = 0;
-  ta.addEventListener('input', () => {
-    clearTimeout(tm);
-    tm = setTimeout(() => { noteSet(id, ta.value); document.dispatchEvent(new CustomEvent('jk:note', { detail: { id, from: ta } })); }, 250);
-  });
-  ta.addEventListener('blur', () => { clearTimeout(tm); noteSet(id, ta.value); });
+  /* only what Jozz typed here is written back: a textarea showing an older text (another tab changed the note, v6.1)
+     never writes that older text over the newer one on blur or when the window is redrawn */
+  let tm = 0, typed = false;
+  const flush = () => { clearTimeout(tm); if (!typed) return; typed = false; noteSet(id, ta.value); document.dispatchEvent(new CustomEvent('jk:note', { detail: { id, from: ta } })); };
+  ta.addEventListener('input', () => { typed = true; clearTimeout(tm); tm = setTimeout(flush, 250); });
+  ta.addEventListener('blur', flush);
   const onNote = e => { if (e.detail.id === id && e.detail.from !== ta && document.activeElement !== ta) ta.value = noteText(id); };
   document.addEventListener('jk:note', onNote);
-  c.onDispose(() => { document.removeEventListener('jk:note', onNote); clearTimeout(tm); if (ta.value !== noteText(id)) noteSet(id, ta.value); });
+  c.onDispose(() => { document.removeEventListener('jk:note', onNote); flush(); });
   box.append(h('div', { class: 'jk-pad jk-notes-w' }, gone && !noteText(id) ? h('p', { class: 'jk-sub warn', text: t('Tekstu tej notatki tu nie ma: został usunięty na zawsze albo nie przyszedł z importem. Okno zaczyna od pustej kartki.') }) : null, ta));
 }
 function notesCtx(c) {
@@ -224,7 +234,7 @@ const TYPES = {
     render(box) { box.append(pad(B.changesStrip() || h('p', { class: 'jk-empty', text: t('Nie ma poprzedniego zrzutu do porównania.') }))); } },
   karta: { group: 'one', follows: true, name: 'Karta projektu', glyph: 't_karta', desc: 'Wszystko o jednym projekcie: po co jest, liczby, stan, wejścia, gałęzie, PR.',
     render(box, c) { box.append(c.repo ? B.repoView(c.repo) : noRepo()); } },
-  gra: { group: 'one', follows: true, name: 'Gra', glyph: 't_gra', fill: true, noZoom: true, desc: 'Zagraj w zaznaczony projekt.', render: renderGame },
+  gra: { group: 'one', follows: true, live: true, liveKey: () => [gamesInWindow()], name: 'Gra', glyph: 't_gra', fill: true, noZoom: true, desc: 'Zagraj w zaznaczony projekt.', render: renderGame },
   galezie: { group: 'one', follows: true, sized: true, name: 'Gałęzie', glyph: 't_galezie', desc: 'Las gałęzi zaznaczonego projektu albo ich tabela.',
     render(box, c) {
       const r = c.repo;

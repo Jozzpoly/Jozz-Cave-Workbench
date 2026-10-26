@@ -79,7 +79,7 @@ for (const mode of ['desk', 'phone']) {
         if (document.querySelectorAll('.win:not([hidden]) .jk-err').length) out.push('window failed to draw: ' + [...document.querySelectorAll('.win:not([hidden]) .jk-err')].map(e => e.textContent).join(' / '));
         if ((document.querySelector('.jk-bar')?.textContent || '').includes('null')) out.push('null in bar');
         J.persistNow();
-        try { JSON.parse(localStorage.getItem('jaskinia:v2')); } catch { out.push('store not JSON'); }
+        try { JSON.parse(localStorage.getItem('jaskinia:v3')); } catch { out.push('store not JSON'); }
         return out;
       });
       if (inv.length) { bad++; console.log(`[${mode}] step ${i}: ${inv.join('; ')} (last: ${log.slice(-6).join(',')})`); }
