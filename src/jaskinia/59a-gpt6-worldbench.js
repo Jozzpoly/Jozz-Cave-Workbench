@@ -39,6 +39,13 @@ function wbLaunch(url) {
   if (phone) phoneSwitch(lab);
   return {lab, microscope};
 }
+function wbExpectedOrigin(e) {
+  if (e.url === DEMO_URL) return location.origin === 'null' ? '*' : location.origin;
+  try {
+    const u = new URL(e.url, location.href);
+    return ['http:', 'https:'].includes(u.protocol) ? u.origin : '*';
+  } catch { return '*'; }
+}
 function wbMeta(e) {
   return {hostObservedAt: new Date().toISOString(), hostWindowId: e.id,
     address: e.url, hello: e.hello ? {...e.hello} : null,
@@ -67,8 +74,9 @@ function wbCapture(id) {
     try {
       // A WASM-backed module may start listening AFTER the iframe load "hi".
       // Re-handshake in the same task before requesting evidence; messages are ordered.
-      e.frame.contentWindow.postMessage({jaskinia:1,type:'hi',v:1}, '*');
-      e.frame.contentWindow.postMessage({protocol:WB_PROTOCOL,type:'capture?',id:requestId}, '*');
+      const origin=wbExpectedOrigin(e);
+      e.frame.contentWindow.postMessage({jaskinia:1,type:'hi',v:1}, origin);
+      e.frame.contentWindow.postMessage({protocol:WB_PROTOCOL,type:'capture?',id:requestId}, origin);
     }
     catch { clearTimeout(timer); wbPending.delete(requestId);
       resolve({kind:'witness-message-failed',host,source:null}); }
@@ -79,6 +87,8 @@ addEventListener('message', event => {
   if (!d || d.protocol !== WB_PROTOCOL || d.type !== 'capture' || typeof d.id !== 'string') return;
   const pending = wbPending.get(d.id);
   if (!pending || liveOf(event.source) !== pending.e) return; // source-bound request, no broadcast trust
+  const expectedOrigin=wbExpectedOrigin(pending.e);
+  if (expectedOrigin !== '*' && event.origin !== expectedOrigin) return; // navigation cannot silently change provenance
   wbPending.delete(d.id);
   clearTimeout(pending.timer);
   if (d.ok !== true || !d.record || typeof d.record !== 'object') {
