@@ -211,7 +211,10 @@ function wbMicroscope(box, c) {
   .gpt6-wb button{font:inherit;border:1px solid #667382;border-radius:5px;padding:7px;background:#25465d;color:#fff;cursor:pointer}
   .gpt6-wb .wb-row{display:flex;gap:5px;flex-wrap:wrap}.gpt6-wb .wb-row button{flex:1;min-width:90px}
   .gpt6-wb pre{white-space:pre-wrap;word-break:break-word;max-height:30vh;overflow:auto;background:#101a25;color:#d9e6ed;padding:9px;border-radius:5px}
-  .gpt6-wb strong{font-size:12px}.gpt6-wb .wb-warning{border-left:3px solid #dfaa5c;padding-left:7px}`;
+  .gpt6-wb strong{font-size:12px}.gpt6-wb .wb-warning{border-left:3px solid #dfaa5c;padding-left:7px}
+  .gpt6-wb .wb-context{font-size:12px;line-height:1.5;padding:8px;border:1px solid #476b76;
+    border-radius:6px;background:#142b34;white-space:pre-line}
+  .gpt6-wb .wb-context b{color:#9de6ca}`;
   sheet.append(style);
   const h = document.createElement('h3'); h.textContent = 'Worldbench · żywy mikroskop v0'; sheet.append(h);
   const explanation=document.createElement('p');
@@ -231,6 +234,9 @@ function wbMicroscope(box, c) {
     }catch(err){const n=sheet.querySelector('.wb-warning');if(n)n.textContent=String(err.message||err);}
   };
   const select=document.createElement('select');select.setAttribute('aria-label','Działający przyrząd');sheet.append(select);
+  const context=document.createElement('div');
+  context.className='wb-context';context.textContent='Czekam na stan zaznaczonego ciała…';
+  sheet.append(context);
   const row=document.createElement('div');row.className='wb-row';sheet.append(row);
   const capture=document.createElement('button');capture.textContent='Uchwyć moment';
   const mark=document.createElement('button');mark.textContent='Uwaga do przyrządu';
@@ -247,12 +253,34 @@ function wbMicroscope(box, c) {
   const observations=[];
   let lastWitness=null,lastSourceId=null;
   const current=()=>LIVE.get(select.value);
+  const fmt=(x,unit='')=>Number.isFinite(x)?x.toFixed(2)+unit:'?';
+  const refreshContext=()=>{
+    const e=current();
+    if(!e?.hello){context.textContent='Wybierz żywy Lab. Prawda o świecie należy do jego fizyki.';return;}
+    const d=e.state?.data;
+    const a=d?.selectedActor;
+    if(!a){
+      context.textContent='Przyrząd: '+liveName(e)+'\\n'+
+        (e.state?.text||'Nie zgłosił jeszcze fizycznego kontekstu.');
+      return;
+    }
+    context.textContent=
+      'AKTYWNE CIAŁO · '+String(a.kind||'?')+' #'+a.id+
+      '\\nPozycja: '+fmt(a.x,' m')+' / '+fmt(a.y,' m')+
+      '  ·  prędkość: '+fmt(Math.hypot(a.vx,a.vy),' m/s')+
+      '\\nMasa: '+fmt(a.mass,' kg')+'  ·  postawa: '+String(a.stance||'brak')+
+      '\\nRzeczywiste chwyty: '+(Number.isInteger(d.selectedGripCount)?d.selectedGripCount:'?')+
+      '  ·  szczelina: '+fmt(d.aperture,' m')+
+      '\\nEdycje źródła: '+(Number.isInteger(d.worldEdits)?d.worldEdits:'?')+
+      '  ·  krok solvera: '+(Number.isInteger(d.tick)?d.tick:'?')+
+      '\\nTo odczyt źródła, nie rekonstrukcja świata.';
+  };
   const controls=()=>{
     const capable=lastWitness?.capabilities?.operations||[];
     widen.disabled=!lastWitness||lastSourceId!==select.value||!capable.includes('p10b.aperture.widen');
     narrow.disabled=!lastWitness||lastSourceId!==select.value||!capable.includes('p10b.aperture.narrow');
   };
-  select.onchange=()=>{lastWitness=null;lastSourceId=null;controls();};
+  select.onchange=()=>{lastWitness=null;lastSourceId=null;controls();refreshContext();};
   const change=async action=>{
     const e=current();
     if(!e||!lastWitness||lastSourceId!==e.id){
@@ -290,10 +318,10 @@ function wbMicroscope(box, c) {
     for(const e of here) {const o=document.createElement('option');o.value=e.id;o.textContent=liveName(e);select.append(o);}
     if(here.some(e=>e.id===chosen))select.value=chosen;
     else select.value=here[0].id;
-    controls();
+    controls();refreshContext();
   };
   let refreshTimer=0;
-  const subscriber=()=>{clearTimeout(refreshTimer);refreshTimer=setTimeout(options,200);};
+  const subscriber=()=>{refreshContext();clearTimeout(refreshTimer);refreshTimer=setTimeout(options,200);};
   liveSubs.add(subscriber);
   c.onDispose(()=>{clearTimeout(refreshTimer);liveSubs.delete(subscriber);});
   options();
