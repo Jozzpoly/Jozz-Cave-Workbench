@@ -59,6 +59,48 @@ try{
  assert.ok(edited.source.simulation.materialEvents.edits>=1);
  assert.equal(edited.source.simulation.tick,paused.source.simulation.tick,
   'editing while paused did not secretly step the world');
+ // An actual foreign Jaskinia window MUST NOT be able to edit without
+ // an explicit permission gesture inside the already-running physical lab.
+ const expectedFrom=source=>({runtimeId:source.runtimeId,
+   aperture:source.simulation.aperture.width,edits:source.simulation.materialEvents.edits});
+ const denied=await page.evaluate(({id,exp})=>Jaskinia.ext.worldbench.action(
+   id,'p10b.aperture.widen',exp),{id:pair.lab,exp:expectedFrom(edited.source)});
+ assert.equal(denied.ok,false);
+ assert.equal(denied.error,'owner-opt-in-required');
+ const afterDenial=await page.evaluate(id=>Jaskinia.ext.worldbench.capture(id),pair.lab);
+ assert.equal(afterDenial.source.simulation.aperture.width,edited.source.simulation.aperture.width);
+ // Owner's actual local button grants this one live session physical edit authority.
+ await target.locator('#wb-grant').click();
+ const granted=await page.evaluate(id=>Jaskinia.ext.worldbench.capture(id),pair.lab);
+ assert.equal(granted.source.capabilities.ownerGrantedRemoteEdit,true);
+ // Execute through the actual NATIVE Jaskinia microscope controls, not JS state mutation.
+ const microscopy=page.locator(`.win[data-id="${pair.microscope}"] .gpt6-wb`);
+ await microscopy.getByText('Uchwyć moment',{exact:true}).click();
+ await microscopy.getByText('Poszerz fizyczną szczelinę',{exact:true}).click();
+ await page.waitForFunction(id=>{
+   const el=document.querySelector(`.win[data-id="${id}"] .gpt6-wb .wb-warning`);
+   return el && el.textContent.includes('Źródło potwierdziło');
+ },pair.microscope,{timeout:8000});
+ const afterAction=await page.evaluate(id=>Jaskinia.ext.worldbench.capture(id),pair.lab);
+ assert.equal(afterAction.source.runtimeId,edited.source.runtimeId);
+ assert.ok(afterAction.source.simulation.aperture.width>=edited.source.simulation.aperture.width+1.29);
+ assert.equal(afterAction.source.simulation.materialEvents.edits,
+   edited.source.simulation.materialEvents.edits+1);
+ assert.equal(afterAction.source.simulation.tick,edited.source.simulation.tick);
+ const stale=await page.evaluate(({id,exp})=>Jaskinia.ext.worldbench.action(
+   id,'p10b.aperture.narrow',exp),{id:pair.lab,exp:expectedFrom(edited.source)});
+ assert.equal(stale.ok,false);
+ assert.equal(stale.error,'stale-physical-state');
+ await microscopy.getByText('Cofnij poszerzenie',{exact:true}).click();
+ await page.waitForFunction(({id,width})=>{
+   const el=document.querySelector(`.win[data-id="${id}"] .gpt6-wb .wb-warning`);
+   return el && el.textContent.includes('Źródło potwierdziło') &&
+     el.textContent.includes('→ '+width+' m');
+ },{id:pair.microscope,width:edited.source.simulation.aperture.width},{timeout:8000});
+ const reversed=await page.evaluate(id=>Jaskinia.ext.worldbench.capture(id),pair.lab);
+ assert.equal(reversed.source.simulation.aperture.width,edited.source.simulation.aperture.width);
+ assert.equal(reversed.source.simulation.materialEvents.edits,
+   edited.source.simulation.materialEvents.edits+2);
  const ruler=page.locator('.jk-div.jk-dv:visible').last(), box=await ruler.boundingBox();
  assert.ok(box,'actual native Jaskinia splitter exists');
  await page.mouse.move(box.x+box.width/2,box.y+box.height/2);
@@ -66,9 +108,9 @@ try{
  await page.mouse.move(box.x+box.width/2+45,box.y+box.height/2,{steps:6});
  await page.mouse.up();
  const reflow=await page.evaluate(id=>Jaskinia.ext.worldbench.capture(id),pair.lab);
- assert.equal(reflow.source.runtimeId,edited.source.runtimeId,
+ assert.equal(reflow.source.runtimeId,reversed.source.runtimeId,
   'native resize preserved active Rapier world and actual physical edits');
- assert.equal(reflow.source.simulation.aperture.width,edited.source.simulation.aperture.width);
+ assert.equal(reflow.source.simulation.aperture.width,reversed.source.simulation.aperture.width);
  // Verify source observation and host time, without claiming an authoritative solver checkpoint.
  assert.ok(reflow.host.hostObservedAt && reflow.host.address===p10);
  assert.equal(reflow.source.sourceRevisionClaim,null);
@@ -88,5 +130,5 @@ try{
  await page.screenshot({path:path.join(caveDist,'_gpt6_worldbench_p10b_desktop.png'),fullPage:true});
  await ctx.close();
  assert.deepEqual(errors,[]);
- console.log('PASS cross-repo: real Jaskinia native split + real P10b Rapier collider edit + source witness + runtime survival');
+ console.log('PASS cross-repo: native Jaskinia + real Rapier edits + owner permission + stale rejection + reverse + runtime survival');
 }finally{await browser.close();cave.close();combat.close();}
