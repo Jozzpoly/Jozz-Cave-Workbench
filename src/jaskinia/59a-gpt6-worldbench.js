@@ -64,7 +64,12 @@ function wbCapture(id) {
         limitation:'No verified protocol reply from the specific instrument frame.'});
     }, 1600);
     wbPending.set(requestId, {e, resolve, timer, host});
-    try { e.frame.contentWindow.postMessage({protocol:WB_PROTOCOL,type:'capture?',id:requestId}, '*'); }
+    try {
+      // A WASM-backed module may start listening AFTER the iframe load "hi".
+      // Re-handshake in the same task before requesting evidence; messages are ordered.
+      e.frame.contentWindow.postMessage({jaskinia:1,type:'hi',v:1}, '*');
+      e.frame.contentWindow.postMessage({protocol:WB_PROTOCOL,type:'capture?',id:requestId}, '*');
+    }
     catch { clearTimeout(timer); wbPending.delete(requestId);
       resolve({kind:'witness-message-failed',host,source:null}); }
   });
