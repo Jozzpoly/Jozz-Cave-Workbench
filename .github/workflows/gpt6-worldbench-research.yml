@@ -35,7 +35,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: Jozzpoly/Combat-Lab
-          ref: 0fc05aa911e4b3aae4f5dc9d84aa141cef629088
+          ref: 4ca7686fe088ee348098c5ab2bc9fde58a7b5b16
           path: combat-donor
       - name: Build exact real Rapier P10b donor
         run: |
