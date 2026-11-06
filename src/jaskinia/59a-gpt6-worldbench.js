@@ -205,11 +205,52 @@ function wbMicroscope(box, c) {
   const mark=document.createElement('button');mark.textContent='Uwaga do przyrządu';
   const exportBtn=document.createElement('button');exportBtn.textContent='Eksportuj odczyty';
   row.append(capture,mark,exportBtn);
+  const edits=document.createElement('div');edits.className='wb-row';
+  const widen=document.createElement('button');widen.textContent='Poszerz fizyczną szczelinę';
+  const narrow=document.createElement('button');narrow.textContent='Cofnij poszerzenie';
+  widen.disabled=true;narrow.disabled=true;
+  edits.append(widen,narrow);sheet.append(edits);
   const status=document.createElement('p');status.className='wb-warning';
   status.textContent='Odczyty są deklaracjami źródła; brak odtwarzania, gwarancji identycznego replay i trwałości po zamknięciu.';sheet.append(status);
   const out=document.createElement('pre');out.textContent='Wybierz działający przyrząd i pobierz odczyt.';sheet.append(out);
   const observations=[];
+  let lastWitness=null,lastSourceId=null;
   const current=()=>LIVE.get(select.value);
+  const controls=()=>{
+    const capable=lastWitness?.capabilities?.operations||[];
+    widen.disabled=!lastWitness||lastSourceId!==select.value||!capable.includes('p10b.aperture.widen');
+    narrow.disabled=!lastWitness||lastSourceId!==select.value||!capable.includes('p10b.aperture.narrow');
+  };
+  select.onchange=()=>{lastWitness=null;lastSourceId=null;controls();};
+  const change=async action=>{
+    const e=current();
+    if(!e||!lastWitness||lastSourceId!==e.id){
+      status.textContent='Najpierw uchwyć ten sam żywy świat.';return;
+    }
+    const t=lastWitness.simulation;
+    const expected={runtimeId:lastWitness.runtimeId,
+      aperture:t.aperture.width,edits:t.materialEvents.edits};
+    widen.disabled=true;narrow.disabled=true;
+    status.textContent='Źródło samodzielnie sprawdza uprawnienie i fizyczną zmianę…';
+    try {
+      const receipt=await wbAction(e.id,action,expected);
+      if(!receipt.ok){status.textContent=receipt.kind+': '+receipt.error+
+        ' · Na pauzie w Labie włącz „Zezwól na edycję z Jaskini” i pobierz świeży odczyt.';return;}
+      observations.push({kind:receipt.kind,host:wbMeta(e),source:receipt.record,
+        result:receipt.result,limitation:receipt.limitation});
+      if(observations.length>30)observations.shift();
+      lastWitness=receipt.record;
+      lastSourceId=e.id;
+      status.textContent='Źródło potwierdziło rzeczywistą zmianę szczeliny: '+
+        receipt.result.before+' → '+receipt.result.after+' m. Nie jest to solver checkpoint.';
+      out.textContent=JSON.stringify({receipt:receipt.result,
+        tick:receipt.record.simulation.tick,runtimeId:receipt.record.runtimeId,
+        capability:receipt.record.capabilities},null,2);
+    }catch(err){status.textContent='Błąd: '+String(err.message||err);}
+    finally{controls();}
+  };
+  widen.onclick=()=>change('p10b.aperture.widen');
+  narrow.onclick=()=>change('p10b.aperture.narrow');
   const options=()=> {
     const chosen=select.value || c.win.st?.source || '';
     const here=liveHere().filter(e=>e.id!==c.id);
@@ -218,6 +259,7 @@ function wbMicroscope(box, c) {
     for(const e of here) {const o=document.createElement('option');o.value=e.id;o.textContent=liveName(e);select.append(o);}
     if(here.some(e=>e.id===chosen))select.value=chosen;
     else select.value=here[0].id;
+    controls();
   };
   let refreshTimer=0;
   const subscriber=()=>{clearTimeout(refreshTimer);refreshTimer=setTimeout(options,200);};
@@ -241,6 +283,9 @@ function wbMicroscope(box, c) {
       const r=await wbCapture(e.id);
       observations.push(r);
       if(observations.length>30)observations.shift();
+      lastWitness=r.kind==='source-reported-physical-witness'?r.source:null;
+      lastSourceId=e.id;
+      controls();
       status.textContent=r.kind+' · '+observations.length+' odczyt(y). Weryfikacja niezależna: nie.';
       const sim=r.source?.simulation;
       const short=sim ? {tick:sim.tick,fixture:sim.fixture,actors:sim.actors,
