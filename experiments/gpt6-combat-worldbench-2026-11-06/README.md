@@ -1,5 +1,24 @@
 # GPT-6 / Combat Lab × Jaskinia — Worldbench v0 (6 Nov 2026)
 
+## Executed update: 2026-11-06, native Jaskinia × genuine Rapier P10b
+
+**Current narrow machine gate: PASS at [CI #42309795677](https://github.com/Jozzpoly/Jozz-Cave-Workbench/actions/runs/42309795677); NOT OWNER EXPERIENCED/ACCEPTED; NOT A REPLAY/SAVE OR PRODUCTION JASKINIA.** Actual browser desktop, focused dual-window space, cross-origin Vite-built P10b WASM, and touch-mobile physical runtime were executed. Two draft PRs: [old Jaskinia #7](https://github.com/Jozzpoly/Jozz-Cave-Workbench/pull/7), [Combat P10b #15](https://github.com/Jozzpoly/Combat-Lab/pull/15).
+
+New achieved behaviours beyond the initial read-only donor:
+
+- **Actual source-domain authoring:** P10b shows an explicit in-game "Zezwól na edycję z Jaskini" permission toggle when embedded. Only when owner grants it and the physics world is paused can the native Jaskinia microscope request the exact allowed physical edit `p10b.aperture.widen` or its bounded physical inverse `p10b.aperture.narrow`. The live P10b source checks exact runtime identity, before-aperture, edit revision, idempotency and operation whitelist. Native UI receives the post-physics source trace. Request without permission and stale before-state were rejected in **real Chromium**, not just the Node mock. Do not generalize this P10b domain operation to RPG/VAW.
+- **Observed old Jaskinia UX deficiency:** First real world-pane in crowded default view was unusable in its initial CSS; the physics canvas was entirely below the fold (`canvasVisibleFraction=0`). Reworked **embedded-only** P10b responsive CSS without altering stand-alone desktop layout. In final machine geometry its entire canvas was visible (360×616 pane, ~350×390 canvas). This is a measured gate, NOT evidence of intuitive controls, touch feel or good bodily graphics.
+- **An explicit task-focused native workspace rather than a fake CSS desktop:** `launchFocus(url)` creates a new named **Combat Lab · Badanie** Jaskinia space with a real compositor `row` split: ~71% live world and ~29% microscope. The previous workspace and its independent P10b runtime stay untouched; returning to either native workspace retains each distinct runtime. Exact measured focused world canvas: 1121 px at 1600×950.
+- **Live, situated context:** click/select a physically real actor in the P10b iframe (actual keyboard `2` for bulky), and its source-grounded mass, coordinates, velocity, stance, true grip count, physical aperture and edits appear in the microscope automatically (1 Hz source telemetry, no extra manual capture). Real Chrome read `bulky #14, 160 kg`. The human-facing live context is source-reported evidence, not proof of causal explanation.
+- **Actual mobile donor:** Pixel 7 emulated touch Chrome launched native focused workspace with real P10b Rapier; tapped Pause and physically widened slot, read source evidence, switched to native Jaskinia microscope via dock, showed live selected-body card, then returned to the SAME physical runtime without loss. `stageWidth=402`, visible fraction `1`. Real hand-held Owner Opera and intuitive touch dragging remain untested.
+- **Evidence:** CI saved desktop Jaskinia with live world after physical action, separate full-width focused workshop, mobile native source/microscope and native protocol desktop/mobile photos. 7-day retention. Static screenshots were actually reviewed by GPT-6; real UI is visibly simple 2D circle/rectangle Rapier matter and plain contextual readouts, *not impressive natural organism feel*. Human decision still open.
+- **GitHub safety:** all changes on two visibly named isolated branches and draft PRs, no `main`, Jaskinia release, Combat rehearsal, Pages deploy, cloud account or Owner browser state modified.
+
+Critical limits/next falsifiers: i) no single-click freely accessible permanent preview (CI artifact is research evidence and expires); ii) no actual source snapshot/replay/branchable experiment or long-lived user-owned save; iii) old Jaskinia same-origin risks remain and the parent handshake is not a production authorization protocol for arbitrary hosts; iv) no validated multi-world API or persistent cross-agent authoring surface; v) unit/browser PASS is subordinate to actual Owner unscripted play and judgement. Preserve these negatives as first-class donor evidence.
+
+**Different research question now earned:** not "can a page be embedded?", but "can a situated actor/material intervention, observed outcome and unfinished question become one navigable, durable, resumable research act across laboratories and agents?" The next experiment must use genuine Combat Lab phenomena and compare independent no-Jaskinia controls; do not add a generic framework/launcher or silently adopt Coopege's `setTile` semantics.
+
+
 **ISOLATED SCIENTIFIC EXPERIMENT. NOT DEPLOYED. NOT OWNER-ACCEPTED. NOT A NEW JASKINIA API CONTRACT.**
 
 Branches:
