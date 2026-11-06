@@ -260,20 +260,20 @@ function wbMicroscope(box, c) {
     const d=e.state?.data;
     const a=d?.selectedActor;
     if(!a){
-      context.textContent='Przyrząd: '+liveName(e)+'\\n'+
+      context.textContent='Przyrząd: '+liveName(e)+'\n'+
         (e.state?.text||'Nie zgłosił jeszcze fizycznego kontekstu.');
       return;
     }
     context.textContent=
       'AKTYWNE CIAŁO · '+String(a.kind||'?')+' #'+a.id+
-      '\\nPozycja: '+fmt(a.x,' m')+' / '+fmt(a.y,' m')+
+      '\nPozycja: '+fmt(a.x,' m')+' / '+fmt(a.y,' m')+
       '  ·  prędkość: '+fmt(Math.hypot(a.vx,a.vy),' m/s')+
-      '\\nMasa: '+fmt(a.mass,' kg')+'  ·  postawa: '+String(a.stance||'brak')+
-      '\\nRzeczywiste chwyty: '+(Number.isInteger(d.selectedGripCount)?d.selectedGripCount:'?')+
+      '\nMasa: '+fmt(a.mass,' kg')+'  ·  postawa: '+String(a.stance||'brak')+
+      '\nRzeczywiste chwyty: '+(Number.isInteger(d.selectedGripCount)?d.selectedGripCount:'?')+
       '  ·  szczelina: '+fmt(d.aperture,' m')+
-      '\\nEdycje źródła: '+(Number.isInteger(d.worldEdits)?d.worldEdits:'?')+
+      '\nEdycje źródła: '+(Number.isInteger(d.worldEdits)?d.worldEdits:'?')+
       '  ·  krok solvera: '+(Number.isInteger(d.tick)?d.tick:'?')+
-      '\\nTo odczyt źródła, nie rekonstrukcja świata.';
+      '\nTo odczyt źródła, nie rekonstrukcja świata.';
   };
   const controls=()=>{
     const capable=lastWitness?.capabilities?.operations||[];
