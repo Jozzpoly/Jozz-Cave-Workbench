@@ -23,7 +23,22 @@ try{
  assert.ok(pair.lab&&pair.microscope);
  const target=page.frameLocator(`.win[data-id="${pair.lab}"] iframe`);
  await target.locator('body[data-p10-live="yes"]').waitFor({timeout:25000});
- await page.waitForFunction(id=>(__JASK.live().find(x=>x.id===id)?.hello?.name)==='Combat Lab · P10b',pair.lab,{timeout:15000});
+ try {
+   await page.waitForFunction(id=>(__JASK.live().find(x=>x.id===id)?.hello?.name)==='Combat Lab · P10b',
+     pair.lab,{timeout:6500});
+ } catch(err) {
+   const host=await page.evaluate(id=>{
+     const e=__JASK.live().find(x=>x.id===id);
+     return {entry:e||null,hosted:!!document.querySelector('.win[data-type="przyrzad"] iframe'),
+       liveCount:__JASK.live().length};
+   },pair.lab);
+   const child=await target.locator('body').evaluate(()=>{
+     return {live:document.body.dataset.p10Live,errors:document.body.dataset.p10Error||null,
+       framed:window.parent!==window,origin:location.origin};
+   });
+   console.error('WITNESS HANDSHAKE DIAGNOSTIC',JSON.stringify({host,child,errors}));
+   throw err;
+ }
  const before=await page.evaluate(id=>Jaskinia.ext.worldbench.capture(id),pair.lab);
  assert.equal(before.kind,'source-reported-physical-witness',
   'not merely declared telemetry: P10b v0 should opt into actual source trace');
