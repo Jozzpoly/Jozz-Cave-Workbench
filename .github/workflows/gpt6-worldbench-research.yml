@@ -54,5 +54,6 @@ jobs:
             dist/_gpt6_worldbench_phone.png
             dist/_gpt6_worldbench_p10b_desktop.png
             dist/_gpt6_worldbench_focus.png
+            dist/_gpt6_worldbench_p10b_phone.png
           if-no-files-found: ignore
           retention-days: 7
