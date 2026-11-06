@@ -131,6 +131,41 @@ try{
  assert.ok(viewport.canvasWidth>=150 && viewport.canvasHeight>=150,
    'Owner-critical: physical world cannot shrink into a token-sized preview');
  await page.screenshot({path:path.join(caveDist,'_gpt6_worldbench_p10b_desktop.png'),fullPage:true});
+ // Alternative UX: one dedicated workbench with 71% width for real physical
+ // world, instead of shrinking the lab among unrelated library windows.
+ // It must preserve the *original* running lab in its original workspace.
+ const focused=await page.evaluate(url=>Jaskinia.ext.worldbench.launchFocus(url),p10);
+ assert.equal(focused.independentRuntime,true);
+ assert.equal(await page.evaluate(()=>__JASK.store.cur),focused.spaceId);
+ const focusedTree=await page.evaluate(()=>__JASK.L.tree);
+ assert.equal(focusedTree.t,'s');
+ assert.ok(focusedTree.r>=0.70);
+ const focusFrame=page.frameLocator(`.win[data-id="${focused.lab}"] iframe`);
+ await focusFrame.locator('body[data-p10-live="yes"]').waitFor({timeout:25000});
+ await page.waitForFunction(id=>(__JASK.live().find(x=>x.id===id)?.hello?.name)==='Combat Lab · P10b',
+   focused.lab,{timeout:12000});
+ const focusSample=await page.evaluate(id=>Jaskinia.ext.worldbench.capture(id),focused.lab);
+ assert.equal(focusSample.kind,'source-reported-physical-witness');
+ assert.notEqual(focusSample.source.runtimeId,reflow.source.runtimeId,
+  'focus launch must never pretend an independent physical world is the old session');
+ const focusedView=await focusFrame.locator('body').evaluate(()=>{
+   const stage=document.querySelector('.stage').getBoundingClientRect();
+   const visible=Math.max(0,Math.min(innerHeight,stage.bottom)-Math.max(0,stage.top));
+   return {width:innerWidth,height:innerHeight,canvasWidth:Math.round(stage.width),
+     visibleFraction:+(visible/Math.max(1,stage.height)).toFixed(3)};
+ });
+ assert.ok(focusedView.canvasWidth>600,'focus workspace must actually give the world useful horizontal area');
+ assert.ok(focusedView.visibleFraction>=.70,'focused native space keeps physics in view');
+ console.log('FOCUSED WORKSPACE GEOMETRY:',JSON.stringify(focusedView));
+ await page.screenshot({path:path.join(caveDist,'_gpt6_worldbench_focus.png'),fullPage:true});
+ await page.evaluate(id=>__JASK.setSpace(id),focused.from);
+ const returned=await page.evaluate(id=>Jaskinia.ext.worldbench.capture(id),pair.lab);
+ assert.equal(returned.source.runtimeId,reflow.source.runtimeId,'original world survives detour to dedicated workspace');
+ assert.equal(returned.source.simulation.aperture.width,reversed.source.simulation.aperture.width);
+ await page.evaluate(id=>__JASK.setSpace(id),focused.spaceId);
+ const focusReturn=await page.evaluate(id=>Jaskinia.ext.worldbench.capture(id),focused.lab);
+ assert.equal(focusReturn.source.runtimeId,focusSample.source.runtimeId,
+  'dedicated experiment workspace returns without restarting its world');
  await ctx.close();
  assert.deepEqual(errors,[]);
  console.log('PASS cross-repo: native Jaskinia + real Rapier edits + owner permission + stale rejection + reverse + runtime survival');
