@@ -5,6 +5,7 @@ const WB_PROTOCOL = 'jozz-worldbench/v0';
 const WB_LIMIT = 32000;
 let wbCounter = 0;
 const wbPending = new Map();
+const wbActionPending = new Map();
 
 function wbBeside(anchor, type, opts = {}) {
   if (!store || !L || !L.wins[anchor]) throw Error('Worldbench: anchor window no longer exists');
@@ -109,8 +110,73 @@ addEventListener('message', event => {
       limitation:String(err.message).slice(0,180)});
   }
 });
+// Narrow, per-lab authoring route: only physical P10b actions from owner-granted lab UI.
+// The host cannot grant permission, directly mutate Rapier or claim solver authority.
+function wbAction(id, action, expected) {
+  const e = LIVE.get(id);
+  if (!e || !e.frame?.contentWindow || !L.wins[id])
+    return Promise.reject(Error('Worldbench: source window closed'));
+  if (!e.hello?.wants.includes('evidence'))
+    return Promise.reject(Error('Worldbench: not an action-capable source'));
+  if (!['p10b.aperture.widen','p10b.aperture.narrow'].includes(action))
+    return Promise.reject(Error('Worldbench: unsupported action'));
+  if (!expected || typeof expected.runtimeId !== 'string' ||
+      expected.runtimeId.length > 100 || !Number.isFinite(expected.aperture) ||
+      !Number.isSafeInteger(expected.edits))
+    return Promise.reject(Error('Worldbench: get exact live source witness first'));
+  const idReq = 'wba-' + (++wbCounter) + '-' + Math.random().toString(36).slice(2,12);
+  return new Promise(resolve => {
+    const timer = setTimeout(()=>{
+      wbActionPending.delete(idReq);
+      resolve({kind:'action-timeout',ok:false,error:'No source action receipt; do not retry blindly.'});
+    },1600);
+    wbActionPending.set(idReq,{e,resolve,timer,action,expected});
+    try {
+      const origin=wbExpectedOrigin(e);
+      e.frame.contentWindow.postMessage({jaskinia:1,type:'hi',v:1},origin);
+      e.frame.contentWindow.postMessage({protocol:WB_PROTOCOL,type:'action?',
+        id:idReq,action,expected},origin);
+    }catch(err){
+      clearTimeout(timer);wbActionPending.delete(idReq);
+      resolve({kind:'action-send-failed',ok:false,error:String(err.message||err).slice(0,180)});
+    }
+  });
+}
+addEventListener('message',event=>{
+  const d=event.data;
+  if (!d || d.protocol!==WB_PROTOCOL || d.type!=='action' || typeof d.id!=='string') return;
+  const pending=wbActionPending.get(d.id);
+  if (!pending || liveOf(event.source)!==pending.e) return;
+  const origin=wbExpectedOrigin(pending.e);
+  if (origin!=='*' && event.origin!==origin) return;
+  wbActionPending.delete(d.id);
+  clearTimeout(pending.timer);
+  if(d.ok!==true) {
+    pending.resolve({kind:'source-refused-action',ok:false,
+      error:String(d.error||'source refused').slice(0,180)});
+    return;
+  }
+  try {
+    const raw=JSON.stringify(d.record);
+    if(raw.length>WB_LIMIT) throw Error('source record over size limit');
+    const record=JSON.parse(raw);
+    if(record.contract!==WB_PROTOCOL || record.restorable!==false ||
+      record.kind!=='read-only-physical-witness' || 
+      record.runtimeId!==pending.expected.runtimeId ||
+      record.simulation?.materialEvents?.edits!==pending.expected.edits+1 ||
+      !Number.isFinite(d.result?.after) ||
+      record.simulation?.aperture?.width!==d.result.after ||
+      d.result.action!==pending.action ||
+      d.result.before!==pending.expected.aperture)
+      throw Error('source receipt inconsistent with expected before/after');
+    pending.resolve({kind:'source-reported-physical-edit',ok:true,action:pending.action,
+      record,result:d.result,
+      limitation:'Source-reported effect; not independent physics verification or rollback proof.'});
+  }catch(err){pending.resolve({kind:'invalid-action-receipt',ok:false,error:String(err.message||err).slice(0,180)});}
+});
+
 JASKINIA_API.ext.worldbench = Object.freeze({
-  v: 0, openBeside: wbBeside, launch: wbLaunch, capture: wbCapture,
+  v: 0, openBeside: wbBeside, launch: wbLaunch, capture: wbCapture, action: wbAction,
 });
 
 function wbMicroscope(box, c) {
