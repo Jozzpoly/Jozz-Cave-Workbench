@@ -126,7 +126,10 @@ try{
      controlsBelowWorld:aside.top>=stage.bottom,controlsTop:Math.round(aside.top)};
  });
  console.log('OWNER-VIEW GEOMETRY (NOT FEEL PASS):',JSON.stringify(viewport));
- if(viewport.canvasVisibleFraction<0.65)console.warn('UX FINDING: canvas mostly below fold; current embedded UI requires redesign');
+ assert.ok(viewport.canvasVisibleFraction>=0.70,
+   'Owner-critical: the physical world must be genuinely visible in native Jaskinia window, not below fold');
+ assert.ok(viewport.canvasWidth>=150 && viewport.canvasHeight>=150,
+   'Owner-critical: physical world cannot shrink into a token-sized preview');
  await page.screenshot({path:path.join(caveDist,'_gpt6_worldbench_p10b_desktop.png'),fullPage:true});
  await ctx.close();
  assert.deepEqual(errors,[]);
