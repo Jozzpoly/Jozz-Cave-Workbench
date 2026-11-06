@@ -157,6 +157,29 @@ try{
  assert.ok(focusedView.canvasWidth>600,'focus workspace must actually give the world useful horizontal area');
  assert.ok(focusedView.visibleFraction>=.70,'focused native space keeps physics in view');
  console.log('FOCUSED WORKSPACE GEOMETRY:',JSON.stringify(focusedView));
+ await page.waitForFunction(id=>{
+   const e=__JASK.live().find(v=>v.id===id);
+   return e?.state?.data?.selectedActor?.kind==='small';
+ },focused.lab,{timeout:6000});
+ await page.waitForFunction(id=>{
+   const el=document.querySelector(`.win[data-id="${id}"] .gpt6-wb .wb-context`);
+   return el?.textContent?.includes('AKTYWNE CIAŁO · small')===true;
+ },focused.microscope,{timeout:6000});
+ // Real operator input to game changes selected physical body; the live Jaskinia
+ // microscope must follow without a manual "Capture" press.
+ await focusFrame.locator('#world').click({position:{x:32,y:32}});
+ await page.keyboard.press('2');
+ await page.waitForFunction(id=>{
+   const e=__JASK.live().find(v=>v.id===id);
+   return e?.state?.data?.selectedActor?.kind==='bulky';
+ },focused.lab,{timeout:6000});
+ await page.waitForFunction(id=>{
+   const el=document.querySelector(`.win[data-id="${id}"] .gpt6-wb .wb-context`);
+   return el?.textContent?.includes('AKTYWNE CIAŁO · bulky')===true;
+ },focused.microscope,{timeout:6000});
+ const bodyContext=await page.evaluate(id=>__JASK.live().find(v=>v.id===id).state.data.selectedActor,focused.lab);
+ assert.ok(bodyContext.mass>0 && Number.isFinite(bodyContext.x));
+ console.log('LIVE SELECTED-BODY CONTEXT:',JSON.stringify(bodyContext));
  await page.screenshot({path:path.join(caveDist,'_gpt6_worldbench_focus.png'),fullPage:true});
  await page.evaluate(id=>__JASK.setSpace(id),focused.from);
  const returned=await page.evaluate(id=>Jaskinia.ext.worldbench.capture(id),pair.lab);
