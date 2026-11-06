@@ -40,6 +40,27 @@ function wbLaunch(url) {
   if (phone) phoneSwitch(lab);
   return {lab, microscope};
 }
+// Alternative to cramming two new instruments into the existing crowded workspace.
+// This is a NEW explicitly named experiment session; it does NOT pretend to move or
+// teleport an existing running lab into another Jaskinia space.
+function wbLaunchFocus(url) {
+  const safe=liveSafeUrl(url);
+  if(!safe) throw Error('Worldbench: expected actual lab URL');
+  const from=store.cur;
+  const lab=newWinId(), microscope=newWinId();
+  const layout={
+    tree:row(phone ? 0.5 : 0.71,leaf(lab),leaf(microscope)),
+    wins:{
+      [lab]:{type:'przyrzad',z:1,pin:null,st:{url:safe,title:'Combat Lab · fizyczny świat'}},
+      [microscope]:{type:'gpt6_mikroskop',z:1,pin:null,st:{source:lab}}
+    },
+    floats:[],max:null,focus:lab,stats:{}
+  };
+  const sp=addSpace('Combat Lab · Badanie',layout,null,from,
+    'Izolowana sesja eksperymentalna: żywy świat + natywny mikroskop. Sam świat ma własne niezależne życie.');
+  return {lab,microscope,spaceId:sp.id,from,independentRuntime:true};
+}
+
 function wbExpectedOrigin(e) {
   if (e.url === DEMO_URL) return location.origin === 'null' ? '*' : location.origin;
   try {
@@ -176,7 +197,7 @@ addEventListener('message',event=>{
 });
 
 JASKINIA_API.ext.worldbench = Object.freeze({
-  v: 0, openBeside: wbBeside, launch: wbLaunch, capture: wbCapture, action: wbAction,
+  v: 0, openBeside: wbBeside, launch: wbLaunch, launchFocus: wbLaunchFocus, capture: wbCapture, action: wbAction,
 });
 
 function wbMicroscope(box, c) {
@@ -199,6 +220,16 @@ function wbMicroscope(box, c) {
   const input=document.createElement('input');input.placeholder='URL izolowanego buildu Combat Lab P10b';
   input.autocomplete='off';input.spellcheck=false;sheet.append(input);
   const open=document.createElement('button');open.textContent='Otwórz lab w natywnym oknie obok';sheet.append(open);
+  const focusBtn=document.createElement('button');
+  focusBtn.textContent='Nowa pracownia: duży świat + mikroskop';
+  sheet.append(focusBtn);
+  focusBtn.onclick=()=>{
+    try{
+      const url=liveSafeUrl(input.value);
+      if(!url)throw Error('Podaj adres prawdziwego uruchamialnego Labu');
+      wbLaunchFocus(url); // genuinely new space and NEW runtime, never claims same instance
+    }catch(err){const n=sheet.querySelector('.wb-warning');if(n)n.textContent=String(err.message||err);}
+  };
   const select=document.createElement('select');select.setAttribute('aria-label','Działający przyrząd');sheet.append(select);
   const row=document.createElement('div');row.className='wb-row';sheet.append(row);
   const capture=document.createElement('button');capture.textContent='Uchwyć moment';
