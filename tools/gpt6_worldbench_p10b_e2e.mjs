@@ -72,6 +72,19 @@ try{
  // Verify source observation and host time, without claiming an authoritative solver checkpoint.
  assert.ok(reflow.host.hostObservedAt && reflow.host.address===p10);
  assert.equal(reflow.source.sourceRevisionClaim,null);
+ // This is NOT a PASS for Owner usability. Measure how much of the true
+ // physics canvas remains visible inside a native split before promoting UX.
+ const viewport=await target.locator('body').evaluate(()=>{
+   const stage=document.querySelector('.stage').getBoundingClientRect();
+   const aside=document.querySelector('aside').getBoundingClientRect();
+   const height=innerHeight,width=innerWidth;
+   const visibleHeight=Math.max(0,Math.min(height,stage.bottom)-Math.max(0,stage.top));
+   return {width,height,canvasWidth:Math.round(stage.width),canvasHeight:Math.round(stage.height),
+     canvasVisibleFraction:+(visibleHeight/Math.max(1,stage.height)).toFixed(3),
+     controlsBelowWorld:aside.top>=stage.bottom,controlsTop:Math.round(aside.top)};
+ });
+ console.log('OWNER-VIEW GEOMETRY (NOT FEEL PASS):',JSON.stringify(viewport));
+ if(viewport.canvasVisibleFraction<0.65)console.warn('UX FINDING: canvas mostly below fold; current embedded UI requires redesign');
  await page.screenshot({path:path.join(caveDist,'_gpt6_worldbench_p10b_desktop.png'),fullPage:true});
  await ctx.close();
  assert.deepEqual(errors,[]);
