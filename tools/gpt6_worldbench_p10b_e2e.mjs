@@ -1,6 +1,6 @@
 // Cross-repository source execution: genuine Jaskinia compositor hosts genuine Vite/Rapier P10b.
 // Requires sibling checkout `combat-donor/dist/p10.html`. No public deployment or private data.
-import {chromium} from 'playwright';
+import {chromium,devices} from 'playwright';
 import {serve} from './serve.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -190,6 +190,47 @@ try{
  assert.equal(focusReturn.source.runtimeId,focusSample.source.runtimeId,
   'dedicated experiment workspace returns without restarting its world');
  await ctx.close();
+ // A second genuine P10b Rapier runtime on touch mobile. Jaskinia's native
+ // one-window-at-a-time dock must preserve it when opening the microscope.
+ const phoneCtx=await browser.newContext({...devices['Pixel 7'],colorScheme:'dark'});
+ const mobile=await phoneCtx.newPage();
+ mobile.on('pageerror',e=>errors.push('phone parent: '+e.message));
+ await mobile.goto(cave.base+'/jaskinia-web.html');
+ await mobile.waitForFunction(()=>Boolean(window.Jaskinia?.ext?.worldbench),null,{timeout:25000});
+ const pairPhone=await mobile.evaluate(url=>Jaskinia.ext.worldbench.launchFocus(url),p10);
+ const mobileLab=mobile.frameLocator(`.win[data-id="${pairPhone.lab}"] iframe`);
+ await mobileLab.locator('body[data-p10-live="yes"]').waitFor({timeout:25000});
+ await mobile.waitForFunction(id=>(__JASK.live().find(e=>e.id===id)?.hello?.name)==='Combat Lab · P10b',
+   pairPhone.lab,{timeout:12000});
+ const mobileBefore=await mobile.evaluate(id=>Jaskinia.ext.worldbench.capture(id),pairPhone.lab);
+ assert.equal(mobileBefore.kind,'source-reported-physical-witness');
+ await mobileLab.locator('#pause').tap();
+ await mobileLab.locator('#open').tap();
+ const mobileChanged=await mobile.evaluate(id=>Jaskinia.ext.worldbench.capture(id),pairPhone.lab);
+ assert.equal(mobileChanged.source.paused,true);
+ assert.ok(mobileChanged.source.simulation.aperture.width>3.4);
+ const mGeometry=await mobileLab.locator('body').evaluate(()=>{
+   const stage=document.querySelector('.stage').getBoundingClientRect();
+   const height=Math.max(0,Math.min(innerHeight,stage.bottom)-Math.max(0,stage.top));
+   return {width:innerWidth,height:innerHeight,stageWidth:stage.width,
+     visibleFraction:+(height/Math.max(1,stage.height)).toFixed(3)};
+ });
+ assert.ok(mGeometry.visibleFraction>=.6 && mGeometry.stageWidth>=250,
+   'phone Jaskinia must keep physical stage visible, not only responsive iframe loaded');
+ await mobile.locator('.jk-dock .dk-i').nth(1).tap();
+ await mobile.locator(`.win[data-id="${pairPhone.microscope}"] .gpt6-wb .wb-context`)
+   .waitFor({timeout:8000});
+ await mobile.waitForFunction(id=>document.querySelector(
+   `.win[data-id="${id}"] .gpt6-wb .wb-context`)?.textContent?.includes('AKTYWNE CIAŁO'),
+   pairPhone.microscope,{timeout:8000});
+ await mobile.screenshot({path:path.join(caveDist,'_gpt6_worldbench_p10b_phone.png')});
+ await mobile.locator('.jk-dock .dk-i').nth(0).tap();
+ const mobileReturned=await mobile.evaluate(id=>Jaskinia.ext.worldbench.capture(id),pairPhone.lab);
+ assert.equal(mobileReturned.source.runtimeId,mobileChanged.source.runtimeId,
+   'phone dock switch must not restart physical source');
+ assert.equal(mobileReturned.source.simulation.aperture.width,mobileChanged.source.simulation.aperture.width);
+ console.log('REAL PHONE PHYSICS GEOMETRY:',JSON.stringify(mGeometry));
+ await phoneCtx.close();
  assert.deepEqual(errors,[]);
  console.log('PASS cross-repo: native Jaskinia + real Rapier edits + owner permission + stale rejection + reverse + runtime survival');
 }finally{await browser.close();cave.close();combat.close();}
