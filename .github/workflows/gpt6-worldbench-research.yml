@@ -5,6 +5,7 @@ on:
     paths:
       - 'src/jaskinia/59a-gpt6-worldbench.js'
       - 'tools/gpt6_worldbench_test.mjs'
+      - 'tools/gpt6_worldbench_p10b_e2e.mjs'
       - '.github/workflows/gpt6-worldbench-research.yml'
       - 'experiments/gpt6-combat-worldbench-2026-11-06/**'
   workflow_dispatch:
@@ -14,7 +15,7 @@ permissions:
 
 jobs:
   native-source-proof:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04 # Playwright 1.56 unsupported on 26.04 runner (observed CI FAIL)
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -30,6 +31,19 @@ jobs:
           python3 tools/render.py --app jaskinia --host web
       - name: Test native composition and source-bound witness
         run: node tools/gpt6_worldbench_test.mjs
+      - name: Checkout exact external Combat Lab P10b witness donor (public only)
+        uses: actions/checkout@v4
+        with:
+          repository: Jozzpoly/Combat-Lab
+          ref: d5fa246ec3dec70f39e0e4ed4d99e05b15db1c14
+          path: combat-donor
+      - name: Build exact real Rapier P10b donor
+        run: |
+          npm --prefix combat-donor install --no-audit --no-fund
+          npm --prefix combat-donor run build
+          test -s combat-donor/dist/p10.html
+      - name: Cross-repo real P10b Rapier-afterstate through native Jaskinia
+        run: node tools/gpt6_worldbench_p10b_e2e.mjs
       - name: Preserve actual browser frames for source-level review
         if: always()
         uses: actions/upload-artifact@v4
@@ -38,5 +52,6 @@ jobs:
           path: |
             dist/_gpt6_worldbench_desktop.png
             dist/_gpt6_worldbench_phone.png
+            dist/_gpt6_worldbench_p10b_desktop.png
           if-no-files-found: ignore
           retention-days: 7
