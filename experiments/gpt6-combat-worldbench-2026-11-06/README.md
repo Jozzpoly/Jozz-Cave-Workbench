@@ -1,5 +1,33 @@
 # GPT-6 / Combat Lab × Jaskinia — Worldbench v0 (6 Nov 2026)
 
+## 7 Nov — critical continuity correction, after interrupted conversation
+
+**State recovery:** The repo, not a chat claim, is the persistent evidence. Draft Jaskinia PR #7 (this branch) and draft Combat PR #15 (`experiment/gpt6-worldbench-witness-2026-11-06`) are open and unmerged. New-Jaskinia issue #4 communicates the donor; it does NOT authorize changing that repo's `main`. The platform-level reason for the interrupted chat is not observable; no evidence of GitHub source loss. Some earlier Actions screenshot artifacts expire after 7 days; source code, tests and source-level findings are in Git.
+
+### Confirmed new falsifier: preserving an iframe is not preserving a living world
+
+[Real browser controlled negative probe, CI #42316083721](https://github.com/Jozzpoly/Jozz-Cave-Workbench/actions/runs/42316083721). Real cross-origin Vite/Rapier P10b, same host, same runtime identity; sampled physical solver tick when its Jaskinia workspace was visible for 850 ms, then switched to another workspace for 1400 ms and returned:
+
+- visible **52 solver steps / 850 ms**;
+- hidden **2 steps / 1400 ms**;
+- time-normalized hidden/visible progression **~0.023**;
+- instance identity preserved. All other physical witness / native Jaskinia tests remained PASS.
+
+Thus prior "keeps running" wording must be read ONLY as "not reloaded; state survived" in these circumstances, NOT "continuously simulated while invisible". Old Jaskinia docs already suspected the different-origin hidden-rAF throttle; this directly verifies it on the actual donor.
+
+**This is not proof that every world should continue in the background.** The required experimental question is which world-time semantics are intended: freeze/park; catch up on return; keep a bounded live runner; or actually remain continuously authoritative outside the view. Browser hidden-frame rAF, browser tab suspension, OS sleep and network hosting are distinct conditions. Keeping the old iframe instance is NOT a clock policy. Do not silently advance simulated time to match wall-clock seconds, nor assume exact replay.
+
+### Two additional red-team conclusions
+
+1. **Native touch access is not complete embodied control.** On emulated Pixel 7 we tested tapping Pause/Open and switching native windows; we did not validate expressive movement, manipulation, zoom, combat feel or gesture affordances. Inspect P10b `p10-ui.js`: moving matter by drag currently requires Ctrl+drag while paused, and actor movement uses keyboard input. Those conditions do not translate naturally to a phone. Canvas 100% visible is a geometry measurement, not an experiential PASS.
+2. **Independent new Jaskinia already has its own provisional records/heads/journal proposal** (as of 4 Nov, `Jozzpoly/Jaskinia/docs/rdzen-zapisow-szkic.md`). Worldbench's 30 JSON observations are ephemeral within its own window; export is a file, not persistent resumption, provenance-linked experiment or shared versioned authoring. Do not build a competing record core from P10b pressure. Compare as a donor and demand three distinct consumer falsifiers before any generalization.
+
+### Stop rule and next high-value experiment
+
+Technical integration is no longer the primary unknown. The next step must distinguish **(a) interesting natural physical interaction and causal understanding in Combat Lab** from **(b) interface/session infrastructure**. Prototype exactly one direct physical question in a dedicated *visible* Lab with a clear before-condition, operator intervention, actual after-behaviour, exact source and environmental constraints, and an inexpensive path for Owner to freely break it. Compare the experience standalone against the native focused Jaskinia composition. Only after an actual return/use case should we add resumable experiment records; no new framework merely for screenshots or workflow green checkmarks.
+
+The immediate evidence targets are **background world-time semantics** and **actual phone body/material gestures**; not another status panel, and not an Opus-dependent implementation plan.
+
 ## Executed update: 2026-11-06, native Jaskinia × genuine Rapier P10b
 
 **Current narrow machine gate: PASS at [CI #42309795677](https://github.com/Jozzpoly/Jozz-Cave-Workbench/actions/runs/42309795677); NOT OWNER EXPERIENCED/ACCEPTED; NOT A REPLAY/SAVE OR PRODUCTION JASKINIA.** Actual browser desktop, focused dual-window space, cross-origin Vite-built P10b WASM, and touch-mobile physical runtime were executed. Two draft PRs: [old Jaskinia #7](https://github.com/Jozzpoly/Jozz-Cave-Workbench/pull/7), [Combat P10b #15](https://github.com/Jozzpoly/Combat-Lab/pull/15).
