@@ -181,6 +181,29 @@ try{
  assert.ok(bodyContext.mass>0 && Number.isFinite(bodyContext.x));
  console.log('LIVE SELECTED-BODY CONTEXT:',JSON.stringify(bodyContext));
  await page.screenshot({path:path.join(caveDist,'_gpt6_worldbench_focus.png'),fullPage:true});
+ // NEGATIVE-FIRST continuity probe. Keeping a frame alive is NOT the same as
+ // keeping a world progressing while hidden. Measure actual solver ticks, not
+ // just stable runtime IDs or screenshot appearance.
+ const visibleBefore=await page.evaluate(id=>Jaskinia.ext.worldbench.capture(id),focused.lab);
+ await page.waitForTimeout(850);
+ const visibleAfter=await page.evaluate(id=>Jaskinia.ext.worldbench.capture(id),focused.lab);
+ const visibleTicks=visibleAfter.source.simulation.tick-visibleBefore.source.simulation.tick;
+ assert.ok(visibleTicks>3, 'continuity baseline: visible Rapier world must actually progress');
+ await page.evaluate(id=>__JASK.setSpace(id),focused.from);
+ await page.waitForTimeout(1400);
+ await page.evaluate(id=>__JASK.setSpace(id),focused.spaceId);
+ const hiddenAfter=await page.evaluate(id=>Jaskinia.ext.worldbench.capture(id),focused.lab);
+ const hiddenTicks=hiddenAfter.source.simulation.tick-visibleAfter.source.simulation.tick;
+ const hiddenRatio=hiddenTicks/Math.max(1,visibleTicks)*(850/1400);
+ const continuity={visibleTicks,visibleMs:850,hiddenTicks,hiddenMs:1400,
+   normalizedHiddenToVisible:+hiddenRatio.toFixed(3),
+   sameRuntime:hiddenAfter.source.runtimeId===visibleAfter.source.runtimeId,
+   interpretation:hiddenRatio<.2?'background-simulation-stalled-or-throttled':
+     hiddenRatio>.8?'background-simulation-continued-in-this-browser':'background-simulation-partially-throttled'};
+ console.log('BACKGROUND-LIFE NEGATIVE PROBE:',JSON.stringify(continuity));
+ assert.equal(continuity.sameRuntime,true,'hidden world identity still survives');
+ // No universal background execution assumption: recording actual evidence
+ // rather than imposing a policy that hidden games must always keep ticking.
  await page.evaluate(id=>__JASK.setSpace(id),focused.from);
  const returned=await page.evaluate(id=>Jaskinia.ext.worldbench.capture(id),pair.lab);
  assert.equal(returned.source.runtimeId,reflow.source.runtimeId,'original world survives detour to dedicated workspace');
