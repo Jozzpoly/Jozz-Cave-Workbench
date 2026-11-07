@@ -7,7 +7,6 @@ on:
       - 'tools/gpt6_worldbench_test.mjs'
       - 'tools/gpt6_worldbench_p10b_e2e.mjs'
       - '.github/workflows/gpt6-worldbench-research.yml'
-      - 'experiments/gpt6-combat-worldbench-2026-11-06/**'
   workflow_dispatch:
 
 permissions:
