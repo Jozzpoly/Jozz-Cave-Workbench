@@ -219,6 +219,15 @@ try{
  },id);
  await page.evaluate(id=>__JASK.setSpace(id),focused.from);
  await page.waitForTimeout(140);
+ // Addressability is distinct from source lifecycle: the experimental public
+ // API currently checks active L.wins, not all persistent workspace windows.
+ // Record the API answer rather than declaring its active-space scope wrong.
+ const inactiveApi=await page.evaluate(async id=>{
+   try{const result=await Jaskinia.ext.worldbench.capture(id);
+     return {ok:true,kind:result.kind};}
+   catch(err){return {ok:false,error:String(err.message||err)};}
+ },focused.lab);
+ console.log('INACTIVE-SPACE API LOOKUP:',JSON.stringify(inactiveApi));
  const hiddenFirst=await readAnySpace(focused.lab);
  await page.waitForTimeout(1080);
  const hiddenSecond=await readAnySpace(focused.lab);
