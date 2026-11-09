@@ -308,6 +308,32 @@ try{
    'the physical aperture reset despite visually restoring the same Jaskinia space');
  assert.equal(reloadReality.afterEdits,0);
  assert.equal(reloadReality.afterPaused,false);
+ // A permission granted afresh after reload must NOT revive an edit command
+ // referring to the previous runtime that occupied the SAME Jaskinia window.
+ await returnedFrame.locator('#pause').click();
+ await returnedFrame.locator('#wb-grant').click();
+ const freshAuthorized=await page.evaluate(id=>Jaskinia.ext.worldbench.capture(id),focused.lab);
+ assert.equal(freshAuthorized.source.capabilities.ownerGrantedRemoteEdit,true);
+ assert.equal(freshAuthorized.source.paused,true);
+ const stalePriorWorld=await page.evaluate(({id,old})=>Jaskinia.ext.worldbench.action(
+   id,'p10b.aperture.widen',{
+     runtimeId:old.runtimeId,
+     aperture:old.simulation.aperture.width,
+     edits:old.simulation.materialEvents.edits
+   }),{id:focused.lab,old:beforeReload.source});
+ assert.equal(stalePriorWorld.ok,false,
+   'stale world-originated edit must not gain authority from same Jaskinia window id');
+ assert.equal(stalePriorWorld.error,'stale-runtime');
+ const postStale=await page.evaluate(id=>Jaskinia.ext.worldbench.capture(id),focused.lab);
+ assert.equal(postStale.source.simulation.aperture.width,2.2);
+ assert.equal(postStale.source.simulation.materialEvents.edits,0);
+ console.log('STALE-WORLD AFTER RELOAD:',JSON.stringify({
+   oldRuntime:beforeReload.source.runtimeId,
+   newRuntime:postStale.source.runtimeId,
+   stillAuthorizedToCurrentWorld:postStale.source.capabilities.ownerGrantedRemoteEdit,
+   oldCommandRejected:stalePriorWorld.error,
+   actualAperture:postStale.source.simulation.aperture.width
+ }));
  await ctx.close();
  // A second genuine P10b Rapier runtime on touch mobile. Jaskinia's native
  // one-window-at-a-time dock must preserve it when opening the microscope.
