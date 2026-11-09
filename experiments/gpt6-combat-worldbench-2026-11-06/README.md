@@ -1,5 +1,21 @@
 # GPT-6 / Combat Lab × Jaskinia — Worldbench v0 (6 Nov 2026)
 
+## Metodologiczna korekta / 9 XI 2026 — świat naprawdę ukryty, a nie dopiero przywrócony
+
+**Nowy, wyraźnie lepszy test:** [GitHub Actions #42711325258](https://github.com/Jozzpoly/Jozz-Cave-Workbench/actions/runs/42711325258), rzeczywisty Chromium, Jaskinia v6.4.1 i przypięty fizyczny P10b Rapier. Wysłano dwa niezależne, powiązane ze źródłowym iframe żądania odczytu **gdy samo okno wciąż miało `hidden=true`**. Nie przywracano go między próbkami.
+
+- 53 kroki Rapiera w poprzedzającym **widocznym** oknie 850 ms.
+- Dwa odczyty ukrytego świata oddzielone ~1080 ms: `tick=121` oraz `tick=121`, czyli **zero** kroków pomiędzy nimi.
+- Odpowiedź na `postMessage` dotarła z ukrytej ramki; źródło pozostawało dostępne do odczytu, mimo że jego pętla `requestAnimationFrame` nie postępowała w tym przedziale.
+- Identyfikator fizycznego runtime przed ukryciem i po powrocie pozostał ten sam. Bezpośredni odczyt zaraz po pokazaniu nadal wskazał `tick=121`.
+
+**Poprzedni wynik 1–2 kroków „w tle” był obciążony błędem metody:** odczyt wykonywano dopiero *po przywróceniu widoku*, a `p10-ui.js:frame()` po wznowionym `requestAnimationFrame` może wykonać kilka kroków (delta ograniczona do 0.05 s). Poprzedni iloraz ~1–2.3% **nie jest poprawnym oszacowaniem fizyki wykonywanej podczas ukrycia** i nie powinien być używany dalej.
+
+**Granica uogólnienia:** wynik dotyczy badanego, ukrytego `iframe` w Chromium i pętli P10b, nie wszystkich przeglądarek, systemów, Workerów ani wszystkich światów. `0` zmierzonych kroków nie dowodzi, że nic innego (wiadomości, zdarzenia, pamięć, sieć) w tle nie może działać. To dowód rozdzielenia: *istnienie instancji* / *możliwość odczytu* / *postęp fizyki* / *utrwalenie stanu*. Ostatniego nie badano.
+
+**Następny ważny falsyfikator etapu I:** czy host może bez przywrócenia widoku bezpiecznie wskazać i odczytać istniejący świat z innej pracowni? Sam Worldbench `capture(id)` obecnie sprawdza `L.wins[id]`, czyli układ **aktywny**, i może odrzucić działający obiekt w nieaktywnej przestrzeni; surowy test źródłowy dotarł do iframe przez zachowane `__JASK.RT`. Nie przyjmować tego hacka za projekt nowego API. Najpierw określić intencjonalną politykę dostępu oraz izolację i autorytet źródła.
+
+
 ## 7 Nov — critical continuity correction, after interrupted conversation
 
 **State recovery:** The repo, not a chat claim, is the persistent evidence. Draft Jaskinia PR #7 (this branch) and draft Combat PR #15 (`experiment/gpt6-worldbench-witness-2026-11-06`) are open and unmerged. New-Jaskinia issue #4 communicates the donor; it does NOT authorize changing that repo's `main`. The platform-level reason for the interrupted chat is not observable; no evidence of GitHub source loss. Some earlier Actions screenshot artifacts expire after 7 days; source code, tests and source-level findings are in Git.
