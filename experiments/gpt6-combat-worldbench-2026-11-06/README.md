@@ -1,5 +1,22 @@
 # GPT-6 / Combat Lab × Jaskinia — Worldbench v0 (6 Nov 2026)
 
+## 9 XI, późna próba — zachowane okno ≠ zachowany świat
+
+[Cross-repo Chromium × Rapier #42715217484](https://github.com/Jozzpoly/Jozz-Cave-Workbench/actions/runs/42715217484) PASS w izolowanej gałęzi. **Fakty obserwacyjne, nie nowa polityka Jaskini:**
+
+- Przed `page.reload()`: oryginalny fizyczny P10b, włączona pauza, rzeczywiście poszerzona szczelina **3,50 m**, źródłowy licznik edycji **1**.
+- Wykonano zapis układu starej Jaskini, pełny reload i ponowne połączenie z przyrządem.
+- Po reloadzie: **ta sama** nazwana pracownia i **ten sam identyfikator okna**, lecz **NOWE** `runtimeId`; fizyczna szczelina znów **2,20 m**, edycji **0**, pauza wyłączona.
+- Nawet po ponownym włączeniu uprawnienia edycji **w nowej sesji** komenda z `runtimeId` poprzedniego świata została odrzucona jako **`stale-runtime`**. Źródłowy collider nie został zmieniony.
+- Test z ukrytym iframe powtórzył **0** kroków fizyki między dwoma bezpośrednimi odczytami przy oknie pozostającym ukrytym.
+
+**Poważne zagrożenie na poziomie UX i przyszłych fundamentów:** Jaskinia obecnie zapisuje *stan własnej przestrzeni pracy* (w tym adres laboratorium) i umie odtworzyć jego wygląd, ale nie ma dowodu automatycznego utrwalenia *stanu wewnętrznego obcej fizyki*. Nie nazywać przywrócenia układu `resume` konkretnego świata. To nie świadczy o błędzie starego kontraktu — on tej gwarancji nie zawierał. W docelowej Jaskini potrzebujemy uczciwej informacji o tym, czy nastąpił nowy rozruch, powrót do wciąż żywej instancji, odtworzenie zatwierdzonego zapisu, jawne rozgałęzienie czy połączenie z zewnętrznym autorytetem. Tych sposobów nie wolno utożsamiać.
+
+**Dlaczego nie dodano teraz save/replay:** P10b nie ma udowodnionej pełnej serializacji Rapiera, source-authored reset/restore ani historii operatora. Zapisywanie rysunku lub `world.trace()` jako `solver checkpoint` byłoby fabrykowaniem możliwości. Nowa Jaskinia ma oddzielny badawczy rdzeń rekordów `R1`; nie robić z niego automatycznie głównego runtime symulacji. Autorstwo, tożsamość kodu, tożsamość uruchomienia, czas symulacji, odtwarzalność i prawo do mutacji są rozdzielnymi pytaniami.
+
+**Kolejny falsyfikator:** porównać z drugim, naprawdę zdolnym do checkpointu laboratorium (np. ReflexBrain LIFE/L1), aby nie promować ograniczeń P10b do ogólnej polityki Jaskini. Nie scalać, nie wdrażać, nie narzucać wspólnego formatu całemu ekosystemowi.
+
+
 ## Metodologiczna korekta / 9 XI 2026 — świat naprawdę ukryty, a nie dopiero przywrócony
 
 **Nowy, wyraźnie lepszy test:** [GitHub Actions #42711325258](https://github.com/Jozzpoly/Jozz-Cave-Workbench/actions/runs/42711325258), rzeczywisty Chromium, Jaskinia v6.4.1 i przypięty fizyczny P10b Rapier. Wysłano dwa niezależne, powiązane ze źródłowym iframe żądania odczytu **gdy samo okno wciąż miało `hidden=true`**. Nie przywracano go między próbkami.
