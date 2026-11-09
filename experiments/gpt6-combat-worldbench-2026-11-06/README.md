@@ -20,13 +20,13 @@
 
 **State recovery:** The repo, not a chat claim, is the persistent evidence. Draft Jaskinia PR #7 (this branch) and draft Combat PR #15 (`experiment/gpt6-worldbench-witness-2026-11-06`) are open and unmerged. New-Jaskinia issue #4 communicates the donor; it does NOT authorize changing that repo's `main`. The platform-level reason for the interrupted chat is not observable; no evidence of GitHub source loss. Some earlier Actions screenshot artifacts expire after 7 days; source code, tests and source-level findings are in Git.
 
-### Confirmed new falsifier: preserving an iframe is not preserving a living world
+### Earlier falsifier — qualitative conclusion survives; background percentages superseded on 9 XI
 
 [Real browser controlled negative probe, CI #42316083721](https://github.com/Jozzpoly/Jozz-Cave-Workbench/actions/runs/42316083721). Real cross-origin Vite/Rapier P10b, same host, same runtime identity; sampled physical solver tick when its Jaskinia workspace was visible for 850 ms, then switched to another workspace for 1400 ms and returned:
 
 - visible **52 solver steps / 850 ms**;
-- hidden **2 steps / 1400 ms**;
-- time-normalized hidden/visible progression **~0.023**;
+- **formerly reported:** 2 steps between hide and post-reveal sample over 1400 ms; these steps may have happened on reveal, NOT while hidden;
+- **invalid as a hidden-world rate:** former ~0.023 ratio includes the return-to-visible boundary; direct while-hidden measurement above instead found 0 steps;
 - instance identity preserved. All other physical witness / native Jaskinia tests remained PASS.
 
 Thus prior "keeps running" wording must be read ONLY as "not reloaded; state survived" in these circumstances, NOT "continuously simulated while invisible". Old Jaskinia docs already suspected the different-origin hidden-rAF throttle; this directly verifies it on the actual donor.
