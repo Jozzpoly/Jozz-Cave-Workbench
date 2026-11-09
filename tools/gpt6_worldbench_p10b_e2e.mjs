@@ -189,19 +189,57 @@ try{
  const visibleAfter=await page.evaluate(id=>Jaskinia.ext.worldbench.capture(id),focused.lab);
  const visibleTicks=visibleAfter.source.simulation.tick-visibleBefore.source.simulation.tick;
  assert.ok(visibleTicks>3, 'continuity baseline: visible Rapier world must actually progress');
+ // Obtain actual Rapier tick THROUGH THE HIDDEN IFRAME while it is still
+ // hidden: the former return-then-capture method accidentally counted the
+ // first resumed rAF steps as possible background physics.
+ const readAnySpace=async(id)=>page.evaluate(async id=>{
+   const rt=__JASK.RT.get(id),frame=rt?.el?.querySelector('iframe');
+   if(!frame?.contentWindow)return {ok:false,error:'source frame unavailable'};
+   const target=frame.contentWindow;
+   const token='hiddenprobe-'+Math.random().toString(36).slice(2,14);
+   const origin=new URL(frame.src).origin;
+   return await new Promise(resolve=>{
+     const timeout=setTimeout(()=>{removeEventListener('message',onMessage);
+       resolve({ok:false,error:'no reply from iframe while hidden'});},1300);
+     function onMessage(ev){
+       if(ev.source!==target||ev.origin!==origin||
+          ev.data?.protocol!=='jozz-worldbench/v0'||
+          ev.data?.type!=='capture'||ev.data?.id!==token)return;
+       clearTimeout(timeout);removeEventListener('message',onMessage);
+       const record=ev.data?.record;
+       resolve({ok:ev.data.ok===true,frameHidden:rt.el.hidden,
+         frameConnected:frame.isConnected,hostSpace:__JASK.store.cur,
+         reportedRuntimeId:record?.runtimeId||null,
+         reportedAt:record?.capturedByLabAt||null,
+         tick:record?.simulation?.tick??null,error:ev.data.error||null});
+     }
+     addEventListener('message',onMessage);
+     target.postMessage({protocol:'jozz-worldbench/v0',type:'capture?',id:token},origin);
+   });
+ },id);
  await page.evaluate(id=>__JASK.setSpace(id),focused.from);
- await page.waitForTimeout(1400);
+ await page.waitForTimeout(140);
+ const hiddenFirst=await readAnySpace(focused.lab);
+ await page.waitForTimeout(1080);
+ const hiddenSecond=await readAnySpace(focused.lab);
+ assert.equal(hiddenFirst.frameHidden,true,'must measure while host has ACTUALLY hidden source');
+ assert.equal(hiddenSecond.frameHidden,true);
+ assert.equal(hiddenFirst.ok,true,'source must answer a bounded read during hidden state');
+ assert.equal(hiddenSecond.ok,true);
+ assert.equal(hiddenSecond.reportedRuntimeId,visibleAfter.source.runtimeId);
+ const genuinelyHiddenTicks=hiddenSecond.tick-hiddenFirst.tick;
+ assert.ok(genuinelyHiddenTicks>=0,'monotonic true physics tick across two hidden observations');
  await page.evaluate(id=>__JASK.setSpace(id),focused.spaceId);
- const hiddenAfter=await page.evaluate(id=>Jaskinia.ext.worldbench.capture(id),focused.lab);
- const hiddenTicks=hiddenAfter.source.simulation.tick-visibleAfter.source.simulation.tick;
- const hiddenRatio=hiddenTicks/Math.max(1,visibleTicks)*(850/1400);
- const continuity={visibleTicks,visibleMs:850,hiddenTicks,hiddenMs:1400,
-   normalizedHiddenToVisible:+hiddenRatio.toFixed(3),
-   sameRuntime:hiddenAfter.source.runtimeId===visibleAfter.source.runtimeId,
-   interpretation:hiddenRatio<.2?'background-simulation-stalled-or-throttled':
-     hiddenRatio>.8?'background-simulation-continued-in-this-browser':'background-simulation-partially-throttled'};
- console.log('BACKGROUND-LIFE NEGATIVE PROBE:',JSON.stringify(continuity));
- assert.equal(continuity.sameRuntime,true,'hidden world identity still survives');
+ const resumed=await page.evaluate(id=>Jaskinia.ext.worldbench.capture(id),focused.lab);
+ const firstVisibleAfterSwitch=resumed.source.simulation.tick-hiddenSecond.tick;
+ const correctedContinuity={visibleTicks,visibleMs:850,
+   firstHiddenTick:hiddenFirst.tick,secondHiddenTick:hiddenSecond.tick,
+   hiddenIntervalMs:1080,hiddenTicks:genuinelyHiddenTicks,
+   resumedTick:resumed.source.simulation.tick,
+   resumeBoundaryTicks:firstVisibleAfterSwitch,
+   sameRuntime:resumed.source.runtimeId===visibleAfter.source.runtimeId};
+ console.log('HIDDEN-TIME DIRECT-WITNESS PROBE:',JSON.stringify(correctedContinuity));
+ assert.equal(correctedContinuity.sameRuntime,true,'same actual Rapier runtime survived hiding');
  // No universal background execution assumption: recording actual evidence
  // rather than imposing a policy that hidden games must always keep ticking.
  await page.evaluate(id=>__JASK.setSpace(id),focused.from);
