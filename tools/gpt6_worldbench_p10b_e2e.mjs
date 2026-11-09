@@ -259,6 +259,55 @@ try{
  const focusReturn=await page.evaluate(id=>Jaskinia.ext.worldbench.capture(id),focused.lab);
  assert.equal(focusReturn.source.runtimeId,focusSample.source.runtimeId,
   'dedicated experiment workspace returns without restarting its world');
+ // NEGATIVE EXPERIENCE TEST: Jaskinia can faithfully persist the layout and
+ // URL while the actual world-state (physical edit) is not checkpointed.
+ // Check all three: same Jaskinia workspace, new physical runtime, lost material edit.
+ await focusFrame.locator('#pause').click();
+ await focusFrame.locator('#open').click();
+ const beforeReload=await page.evaluate(id=>Jaskinia.ext.worldbench.capture(id),focused.lab);
+ assert.equal(beforeReload.source.paused,true);
+ assert.ok(beforeReload.source.simulation.aperture.width>3.4);
+ assert.ok(beforeReload.source.simulation.materialEvents.edits>=1);
+ const savedWorkspace=await page.evaluate(()=>{
+   __JASK.persistNow();
+   return {spaceId:__JASK.store.cur,windowIds:Object.keys(__JASK.L.wins)};
+ });
+ assert.equal(savedWorkspace.spaceId,focused.spaceId);
+ assert.ok(savedWorkspace.windowIds.includes(focused.lab));
+ await page.reload({waitUntil:'load'});
+ await page.waitForFunction(()=>Boolean(window.__JASK?.store && window.Jaskinia?.ext?.worldbench),
+   null,{timeout:25000});
+ const returnedWorkspace=await page.evaluate(()=>({
+   spaceId:__JASK.store.cur,windowIds:Object.keys(__JASK.L.wins)
+ }));
+ assert.equal(returnedWorkspace.spaceId,savedWorkspace.spaceId,
+   'Jaskinia reopens the saved research workspace after a full browser reload');
+ assert.ok(returnedWorkspace.windowIds.includes(focused.lab),
+   'Jaskinia restores the lab window id, not the prior physical runtime');
+ const returnedFrame=page.frameLocator(`.win[data-id="${focused.lab}"] iframe`);
+ await returnedFrame.locator('body[data-p10-live="yes"]').waitFor({timeout:25000});
+ await page.waitForFunction(id=>(__JASK.live().find(e=>e.id===id)?.hello?.name)==='Combat Lab · P10b',
+   focused.lab,{timeout:12000});
+ const afterReload=await page.evaluate(id=>Jaskinia.ext.worldbench.capture(id),focused.lab);
+ assert.equal(afterReload.kind,'source-reported-physical-witness');
+ const reloadReality={
+   sameWorkspace:returnedWorkspace.spaceId===savedWorkspace.spaceId,
+   sameWindowId:returnedWorkspace.windowIds.includes(focused.lab),
+   sameRuntime:afterReload.source.runtimeId===beforeReload.source.runtimeId,
+   beforeAperture:beforeReload.source.simulation.aperture.width,
+   afterAperture:afterReload.source.simulation.aperture.width,
+   beforeEdits:beforeReload.source.simulation.materialEvents.edits,
+   afterEdits:afterReload.source.simulation.materialEvents.edits,
+   beforePaused:beforeReload.source.paused,
+   afterPaused:afterReload.source.paused,
+   claim:'layout and instrument address survive; the concrete physical world does not'
+ };
+ console.log('RELOAD-REALITY NEGATIVE PROBE:',JSON.stringify(reloadReality));
+ assert.equal(reloadReality.sameRuntime,false,'Rapier runtime should reveal reset instead of false continuity');
+ assert.ok(Math.abs(reloadReality.afterAperture-2.2)<1e-4,
+   'the physical aperture reset despite visually restoring the same Jaskinia space');
+ assert.equal(reloadReality.afterEdits,0);
+ assert.equal(reloadReality.afterPaused,false);
  await ctx.close();
  // A second genuine P10b Rapier runtime on touch mobile. Jaskinia's native
  // one-window-at-a-time dock must preserve it when opening the microscope.
