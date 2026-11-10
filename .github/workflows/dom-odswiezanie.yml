@@ -14,7 +14,8 @@
 #   - przebieg idzie z main (main należy do Ownera),
 #   - Owner włączył publikację zmienną repozytorium PUBLIKUJ_PAGES = tak
 #     (Settings → Secrets and variables → Actions → Variables); usunięcie zmiennej wyłącza publikację,
-#   - każde repo z listy zostało przeczytane, API podało wszystko i testy przeszły,
+#   - każde repo z listy zostało przeczytane, API podało wszystko i testy przeszły; ciągłość nie ma wyjątków,
+#     a gdy kod strony różni się od opublikowanego, testy stanu Ownera nie mają ich także (tools/testy.py),
 #   - zmienił się fakt albo kod strony, albo opublikowane dane mają ponad 20 h (tools/publikuj_pages.py).
 name: Dom odświeża się sam
 
@@ -58,8 +59,22 @@ jobs:
           if git fetch --quiet --depth=1 origin gh-pages; then
             git show FETCH_HEAD:index.html > "$RUNNER_TEMP/teraz/index.html"
             git show FETCH_HEAD:dane/library.json > "$RUNNER_TEMP/teraz/library.json" 2>/dev/null || rm -f "$RUNNER_TEMP/teraz/library.json"
+            git show FETCH_HEAD:status.json > "$RUNNER_TEMP/teraz/status.json" 2>/dev/null || rm -f "$RUNNER_TEMP/teraz/status.json"
           fi
           ls -la "$RUNNER_TEMP/teraz"
+      - name: Czy kod strony różni się od opublikowanego
+        id: kod
+        shell: bash
+        run: |
+          # the files tools/render.py builds the page from; data is not code
+          pub=$(python3 -I -c "import json, sys; print((json.load(open(sys.argv[1])).get('source') or {}).get('commit') or '')" "$RUNNER_TEMP/teraz/status.json" 2>/dev/null || true)
+          if [ -n "$pub" ] && git cat-file -e "$pub^{commit}" 2>/dev/null && git diff --quiet "$pub" HEAD -- src docs/przyrzad tools/render.py package-lock.json; then
+            echo "scisle=nie" >> "$GITHUB_OUTPUT"
+            echo "### Kod strony: taki sam jak opublikowany (${pub:0:7}); zmieniają się tylko dane" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "scisle=tak" >> "$GITHUB_OUTPUT"
+            echo "### Kod strony: inny niż opublikowany (${pub:0:7}); testy stanu Ownera w trybie ścisłym" >> "$GITHUB_STEP_SUMMARY"
+          fi
       - name: Fakty z repo, wejścia „Zagraj”, strona
         id: fakty
         shell: bash
@@ -86,12 +101,15 @@ jobs:
         run: |
           python3 -I tools/luki_test.py
           python3 -I tools/publikuj_test.py
+          python3 -I tools/testy_test.py
       - name: Testy Jaskini w przeglądarce i ciągłość z opublikowaną stroną
         shell: bash
         run: |
           stara=()
           if [ -s "$RUNNER_TEMP/teraz/index.html" ]; then stara=(--stara "$RUNNER_TEMP/teraz/index.html"); fi
-          python3 -I tools/testy.py "${stara[@]}"
+          scisle=()
+          if [ "${{ steps.kod.outputs.scisle }}" != "nie" ]; then scisle=(--scisle); fi
+          python3 -I tools/testy.py "${stara[@]}" "${scisle[@]}"
       - name: Czy ten przebieg publikuje
         if: always()
         env:

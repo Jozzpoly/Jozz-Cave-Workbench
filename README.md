@@ -61,7 +61,7 @@ node tools/jk2_chaos.mjs 400 7                     # destruction run: hundreds o
 
 A full refresh of the data needs local clones of every repository and an authenticated `gh`: `python3 -I tools/regen.py` (see [GENERATOR.md](GENERATOR.md)).
 
-**Automatic refresh (10 Nov 2026, tymczasowe).** [.github/workflows/dom-odswiezanie.yml](.github/workflows/dom-odswiezanie.yml) rebuilds the public page every 6 hours from the public repositories. It opens every Zagraj entry, runs the suites through `python3 -I tools/testy.py` (known failures are listed with their reasons in `tools/znane_bledy.json`), and checks that layouts, windows and notes come through from the page published before (`tools/dom_ciaglosc_test.mjs`). It publishes to Pages only from `main` and only while the repository variable `PUBLIKUJ_PAGES` is `tak`. Background: [docs/2026-10-19-odswiezanie-danych.md](docs/2026-10-19-odswiezanie-danych.md).
+**Automatic refresh (10 Nov 2026, tymczasowe).** [.github/workflows/dom-odswiezanie.yml](.github/workflows/dom-odswiezanie.yml) rebuilds the public page every 6 hours from the public repositories. It opens every Zagraj entry, runs the suites through `python3 -I tools/testy.py`, and checks that layouts, windows and notes come through from the page published before (`tools/dom_ciaglosc_test.mjs`). Continuity has no exceptions; the suites that guard the owner's state get no retries and let a known failure through only when the page's code is unchanged; known failures are listed with their reasons in `tools/znane_bledy.json`. It publishes to Pages only from `main` and only while the repository variable `PUBLIKUJ_PAGES` is `tak`. Background: [docs/2026-10-19-odswiezanie-danych.md](docs/2026-10-19-odswiezanie-danych.md).
 
 ## Layout of this repository
 

@@ -1,5 +1,14 @@
 {
  "_o": "Known failures of Jaskinia's browser suites, each with its reason, and suites that cannot run on the machine that runs them. tools/testy.py lets the listed failures through and nothing else, and says out loud when one passes again, so this list cannot quietly harden into scenery. A skipped suite is named in every summary with its reason; asking for it by name runs it anyway. Remove an entry when its check passes, when the suite can run, or when the page it describes is replaced. Status: tymczasowe (10 Nov 2026).",
+ "klasa_stanu": [
+  "jk_test",
+  "jk2_test",
+  "jk61_test",
+  "jk63_test",
+  "jk64_test",
+  "jk641_test"
+ ],
+ "_klasa_stanu": "Suites that guard the owner's state: layouts and their persistence, storage, notes, trash and copies, tabs that merge, older tabs, the records of his Ruch parts. tools/testy.py never retries a new failure in them, and lets a known one through only when the page's code is the same as the published page's (only the data changed). Continuity (tools/dom_ciaglosc_test.mjs) has no exceptions at all.",
  "bledy": [
   {
    "zestaw": "jk62_test",

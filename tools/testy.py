@@ -1,22 +1,25 @@
 #!/usr/bin/env python3
-"""Run Jaskinia's browser suites and hold every failure against a written list of known ones (10 Nov 2026).
+"""Run Jaskinia's browser suites and decide whether a build may replace the owner's page (10 Nov 2026).
 
-Usage: python3 -I tools/testy.py [--stara PUBLISHED.html] [suite ...]
+Usage: python3 -I tools/testy.py [--stara PUBLISHED.html] [--scisle] [suite ...]
     suite      a name like jk62_test (runs tools/<suite>.mjs); default: every tools/jk*_test.mjs except the ones
                tools/znane_bledy.json lists under "pominiete" (each named in the summary with its reason)
     --stara    the page published now (gh-pages index.html). Adds tools/dom_ciaglosc_test.mjs, which opens that page
                and then the fresh dist/jaskinia-web.html at one address and checks that the owner's layouts, windows
                and notes come through.
+    --scisle   strict: the page's code differs from the published page's code (the workflow decides this from git)
 
-A failure that is not in tools/znane_bledy.json fails the run, unless it does not come back when the suite runs a
-second time: then it is reported as unstable (a ::warning:: and its own section) and lets the run through. A failure
-that is listed there is reported with its reason. A listed failure that passes again is reported out loud (a
-::warning:: in GitHub Actions): the list says when it has stopped being true instead of hardening into scenery.
-An entry marked "niestabilne" is a check known to fail only sometimes: it is let through either way and stays
-listed until its cause is fixed.
-A suite that stops without its PASS/FAIL lines fails the run, and a part a suite skips by itself (a line like
-"(… skipped)") is named in the summary, so fewer checks never pass for the usual number. Each suite's full output goes to
-shots/logi/<suite>.txt; a Markdown table goes to $GITHUB_STEP_SUMMARY when that is set.
+Three kinds of suites, because a failure means different things in each:
+- continuity (dom_ciaglosc_test): any failure blocks. Never retried, never let through by a list.
+- the owner's state (suites named under "klasa_stanu" in tools/znane_bledy.json: storage, tabs, older tabs, his
+  parts' records): any new failure blocks, without a retry. A failure on the known list is let through only when
+  the page's code is the same as the code published now, that is when only the data changed; with --scisle it blocks.
+- everything else: a new failure gets one retry. If it does not come back, it is reported as unstable (a ::warning::
+  and its own section) and lets the run through. A known failure is let through with its reason.
+In every kind, a known failure that passes again is reported out loud (unless it is marked "niestabilne"), a suite
+that stops without its PASS/FAIL lines blocks, and a part a suite skips by itself (a line like "(... skipped)") is
+named in the summary, so fewer checks never pass for the usual number.
+Each suite's output goes to shots/logi/<suite>.txt; a Markdown table goes to $GITHUB_STEP_SUMMARY when that is set.
 Status: tymczasowe, together with the self-refreshing Home (.github/workflows/dom-odswiezanie.yml).
 """
 import argparse
@@ -30,6 +33,7 @@ import time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 P = lambda *a: os.path.join(ROOT, *a)
+CONTINUITY = "dom_ciaglosc_test"
 
 
 def run_suite(args, timeout):
@@ -53,74 +57,102 @@ def judge(name, out, code, known):
     healed = [k for k in mine if not k.get("niestabilne") and any(p.startswith(k["test"]) for p in passes)]
     inner = [l.strip() for l in lines if re.match(r"^\s*\(.*\bskipped\b.*\)\s*$", l)]
     return {"passes": passes, "fails": fails, "known": hits, "unknown": unknown, "healed": healed, "inner": inner,
-            "broken": code != 0 and not fails, "tail": "\n".join(lines[-12:])}
+            "broken": code != 0 and not fails, "code": code, "tail": "\n".join(lines[-12:])}
+
+
+def kind_of(name, state_suites):
+    return "ciaglosc" if name == CONTINUITY else "stan" if name in state_suites else "inne"
+
+
+def decide(name, kind, r, again, strict):
+    """What one suite's result means for publishing. `again` runs the suite once more and judges it (or None).
+
+    Returns the final judgement and the failures sorted into: blocking (with why), let through (known, with the
+    entry), unstable (failed first, passed on the retry).
+    """
+    note, unstable = "", []
+    if kind == "inne" and (r["unknown"] or r["broken"]) and again:
+        r2 = again()
+        if not r2["unknown"] and not r2["broken"]:
+            unstable = [f for f in r["unknown"]] + ([f"przerwał się (kod {r['code']})"] if r["broken"] else [])
+            note = ", za drugim razem przeszło"
+        else:
+            note = ", za drugim razem też padło"
+        r = r2
+    blocking = [(f, "nowy błąd") for f in r["unknown"]]
+    if r["broken"]:
+        blocking.append((f"zestaw przerwał się (kod {r['code']})", "przerwany"))
+    let_through = []
+    for k in r["known"]:
+        if kind == "ciaglosc":
+            blocking.append((k["test"], "ciągłość nie ma wyjątków"))
+        elif kind == "stan" and strict:
+            blocking.append((k["test"], "znany, ale zmienił się kod strony, a to sprawdzenie chroni stan Ownera"))
+        else:
+            let_through.append(k)
+    return {"r": r, "note": note, "blocking": blocking, "let_through": let_through, "unstable": unstable}
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("suites", nargs="*")
     ap.add_argument("--stara", help="the page published now, for the continuity check")
+    ap.add_argument("--scisle", action="store_true", help="the page's code differs from the published page's code")
     ap.add_argument("--timeout", type=int, default=1200, help="seconds per suite")
     ap.add_argument("--logi", default=P("shots", "logi"))
     a = ap.parse_args()
     listed = json.load(open(P("tools", "znane_bledy.json"), encoding="utf-8"))
     known, skip = listed["bledy"], {s["zestaw"]: s for s in listed.get("pominiete", [])}
+    state_suites = set(listed.get("klasa_stanu", []))
     every = sorted(os.path.basename(p)[:-4] for p in glob.glob(P("tools", "jk*_test.mjs")))
     suites = a.suites or [s for s in every if s not in skip]
     skipped = [] if a.suites else [skip[s] for s in every if s in skip]
     plan = [(s, [P("tools", s + ".mjs"), P("shots", s)]) for s in suites]
     if a.stara:
-        plan.append(("dom_ciaglosc_test", [P("tools", "dom_ciaglosc_test.mjs"), os.path.abspath(a.stara)]))
+        plan.append((CONTINUITY, [P("tools", "dom_ciaglosc_test.mjs"), os.path.abspath(a.stara)]))
     os.makedirs(a.logi, exist_ok=True)
-    rows, let_through, unknown, healed, broken, unstable, inner = [], [], [], [], [], [], []
+    rows, let_through, blocking, healed, unstable, inner = [], [], [], [], [], []
     for name, args in plan:
         t0 = time.time()
         out, code = run_suite(args, a.timeout)
         open(os.path.join(a.logi, name + ".txt"), "w", encoding="utf-8").write(out)
-        r = judge(name, out, code, known)
-        again = ""
-        if r["unknown"] or r["broken"]:
-            # Once more. A failure that does not come back is reported as unstable, never hidden: it lets this run
-            # through, and the summary and a warning say what failed the first time.
+
+        def again(name=name, args=args):
             out2, code2 = run_suite(args, a.timeout)
             open(os.path.join(a.logi, name + ".2.txt"), "w", encoding="utf-8").write(out2)
-            r2 = judge(name, out2, code2, known)
-            if not r2["unknown"] and not r2["broken"]:
-                unstable += [(name, f) for f in r["unknown"]] + ([(name, f"przerwał się (kod {code})")] if r["broken"] else [])
-                again = ", za drugim razem przeszło"
-            else:
-                again = ", za drugim razem też padło"
-            r, code = r2, code2
-        let_through += [(name, k) for k in r["known"]]
-        unknown += [(name, f) for f in r["unknown"]]
+            return judge(name, out2, code2, known)
+
+        kind = kind_of(name, state_suites)
+        d = decide(name, kind, judge(name, out, code, known), again, a.scisle)
+        r = d["r"]
+        let_through += [(name, k) for k in d["let_through"]]
+        blocking += [(name, f, why) for f, why in d["blocking"]]
+        unstable += [(name, f) for f in d["unstable"]]
         healed += [(name, k) for k in r["healed"]]
         inner += [(name, x) for x in r["inner"]]
-        if r["broken"]:
-            broken.append((name, code, r["tail"]))
         dt = round(time.time() - t0)
-        rows.append((name, len(r["passes"]), len(r["fails"]), len(r["known"]), code, dt))
-        print(f"{name}: {len(r['passes'])} PASS, {len(r['fails'])} FAIL (znane: {len(r['known'])}), kod {code}, {dt} s{again}", flush=True)
+        rows.append((name, kind, len(r["passes"]), len(r["fails"]), len(d["let_through"]), r["code"], dt))
+        print(f"{name} [{kind}]: {len(r['passes'])} PASS, {len(r['fails'])} FAIL (przepuszczone: {len(d['let_through'])}), "
+              f"kod {r['code']}, {dt} s{d['note']}", flush=True)
 
-    for name, f in unknown:
-        print(f"::error title=Nowy błąd w {name}::{f[:300]}")
-    for name, code, tail in broken:
-        print(f"::error title={name} przerwał się::kod {code}. Koniec wyjścia: {tail[-300:]}")
+    for name, f, why in blocking:
+        print(f"::error title=Zatrzymuje publikację: {name}::{f[:300]} ({why})")
     for name, f in unstable:
         print(f"::warning title=Niestabilne w {name}::padło, a za drugim razem przeszło: {f[:300]}")
     for name, k in healed:
         print(f"::warning title=Znany błąd już nie występuje::{name}: „{k['test']}” przechodzi. Zdejmij go z tools/znane_bledy.json.")
 
-    tp, tf = sum(r[1] for r in rows), sum(r[2] for r in rows)
-    md = [f"### Testy Jaskini: {len(rows)} zestawów, {tp} PASS, {tf} FAIL (znane: {len(let_through)})", "",
-          "| zestaw | PASS | FAIL | z tego znane | kod | czas |", "| --- | --- | --- | --- | --- | --- |"]
-    md += [f"| {n} | {p} | {f} | {k} | {c} | {t} s |" for n, p, f, k, c, t in rows]
+    tp, tf = sum(r[2] for r in rows), sum(r[3] for r in rows)
+    mode = "ścisły (kod strony się zmienił)" if a.scisle else "zwykły (kod strony taki sam jak opublikowany)"
+    md = [f"### Testy Jaskini: {len(rows)} zestawów, {tp} PASS, {tf} FAIL; tryb {mode}", "",
+          "| zestaw | rodzaj | PASS | FAIL | przepuszczone | kod | czas |", "| --- | --- | --- | --- | --- | --- | --- |"]
+    md += [f"| {n} | {k} | {p} | {f} | {l} | {c} | {t} s |" for n, k, p, f, l, c, t in rows]
+    if blocking:
+        md += ["", "**Zatrzymuje publikację:**"]
+        md += [f"- {n}: {f[:300]} ({why})" for n, f, why in blocking]
     if let_through:
         md += ["", "**Znane błędy, przepuszczone z powodem** (tools/znane_bledy.json):"]
         md += [f"- {n}: „{k['test']}” · {k['dlaczego']} Zdejmij, gdy: {k['zdejmij_gdy']}." for n, k in let_through]
-    if unknown or broken:
-        md += ["", "**Nowe błędy (zatrzymują publikację):**"]
-        md += [f"- {n}: {f[:300]}" for n, f in unknown]
-        md += [f"- {n}: zestaw przerwał się (kod {c})" for n, c, _ in broken]
     if unstable:
         md += ["", "**Niestabilne** (padło, a za drugim razem przeszło; nie zatrzymuje publikacji, ale warto to zbadać):"]
         md += [f"- {n}: {f[:300]}" for n, f in unstable]
@@ -141,7 +173,7 @@ def main():
     if summary:
         with open(summary, "a", encoding="utf-8") as fh:
             fh.write(text + "\n\n")
-    sys.exit(1 if unknown or broken else 0)
+    sys.exit(1 if blocking else 0)
 
 
 if __name__ == "__main__":

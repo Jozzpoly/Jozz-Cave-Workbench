@@ -34,6 +34,10 @@ Claude (Opus 5.5, czat), gałąź `claude/dom-sam-sie-odswieza-2026-11-10`. 9.11
 - **Wejścia „Zagraj”** są otwierane automatycznie (`tools/sprawdz_wejscia.py`). To sprawdza adres, nie samą grę. `data/wejscia.json` zostaje ręcznym źródłem adresów.
 - **Stare karty:** `tools/dom_ciaglosc_test.mjs` otwiera opublikowaną stronę i nową kompilację pod jednym adresem. Sprawdza przeładowanie oraz kartę otwartą przez cały dzień obok nowej. Układy, okna, notatki i wybór muszą przejść.
 - **Publikacja na Pages** odbywa się tylko z `main` i tylko przy zmiennej repozytorium `PUBLIKUJ_PAGES = tak`, którą ustawia Jozz. Wymaga też pełnego pokrycia i przejścia testów. Strona zmienia się, gdy zmienił się fakt albo kod, a gdy nic się nie zmieniło, raz na dobę (`tools/publikuj_pages.py`, `tools/publikuj_test.py`).
-- **Znane błędy testów** są spisane z powodem w `tools/znane_bledy.json`. `tools/testy.py` przepuszcza tylko te, a gdy któryś znowu przejdzie, mówi o tym głośno.
+- **Brama testów** (`tools/testy.py`, jej reguły sprawdza `tools/testy_test.py`):
+  - ciągłość nie ma wyjątków;
+  - testy stanu Ownera (układy, magazyn, karty, starsze karty, zapisy Ruchu) nie mają powtórek, a znany błąd przepuszczają tylko wtedy, gdy kod strony jest taki sam jak opublikowany, czyli gdy zmieniają się tylko dane;
+  - pozostałe testy mają jedną powtórkę, a błąd, który przy niej nie wrócił, jest raportowany jako niestabilny.
+  Znane błędy są spisane z powodem w `tools/znane_bledy.json`; gdy któryś znowu przejdzie, brama mówi o tym głośno. Tak zaostrzył to Menadżer (GPT) 10.11: pokazał, że pierwsza wersja przepuszczała błąd ciągłości, który przy powtórce nie wrócił.
 
 Bez zmian: prywatny zrzut (prywatne repo i słowa Jozza) dalej robi agent na prośbę, czyli droga A. Status całości: tymczasowe. Wraca do szuflady, gdy obserwator faktów przebudowanej Jaskini przejmie odświeżanie.
