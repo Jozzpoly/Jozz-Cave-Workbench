@@ -36,7 +36,8 @@ on:
         options: [odswiez, cofnij, wznow]
         default: odswiez
   push:
-    branches: [claude/dom-sam-sie-odswieza-2026-11-10]
+    # main: the merge that activates the automat runs it at once, and so does every later change of main
+    branches: [main, claude/dom-sam-sie-odswieza-2026-11-10]
 
 permissions:
   contents: read
