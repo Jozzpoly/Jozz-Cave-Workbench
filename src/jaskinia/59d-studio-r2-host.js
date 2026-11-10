@@ -35,24 +35,26 @@
   const redo=()=>{if(H.redo()){save();emit();}};
   function replace(d){if(!M.valid(d))throw Error('To nie jest dokument Studio R2');if(H.replace(d)){save();emit();}}
   function subscribe(fn){subscribers.add(fn);fn(state());return()=>subscribers.delete(fn);}
-  function watch(fn){viewers.add(fn);fn(sim.snap());return()=>viewers.delete(fn);}
-  // Another tab's writes may be newer. Stop overwriting; keep a manual export path.
-  const storageListener=e=>{
-    if(e.key===KEY){blocked=true;warning='Ten sam dokument zmieniono w innej karcie. Nie nadpisuję obcej pracy. Wyeksportuj swój JSON.';emit();}
-  };
-  window.addEventListener('storage',storageListener);
-
-  // Simulation owns its state, not its world window. Closing/reopening cannot reset it.
-  let last=performance.now();
-  function step(now) {
-    sim.tick(now-last);last=now;
-    if(viewers.size) {
-      const snapshot=sim.snap();
-      for(const fn of [...viewers]){try{fn(snapshot);}catch(e){console.error(e);}}
-    }
-    requestAnimationFrame(step);
+  // Lazy execution: a dormant lab must not animate forever just because Jaskinia loaded it.
+  // Source and world state survive closing the view; simulation time deliberately pauses
+  // while nobody observes this isolated research world (not a game-server policy).
+  let last=0,raf=0;
+  function watch(fn){
+    viewers.add(fn);fn(sim.snap());
+    if(!raf){last=performance.now();raf=requestAnimationFrame(step);}
+    return ()=>{
+      viewers.delete(fn);
+      if(!viewers.size&&raf){cancelAnimationFrame(raf);raf=0;}
+    };
   }
-  requestAnimationFrame(step);
+  function step(now){
+    raf=0;
+    if(!viewers.size)return;
+    sim.tick(now-last);last=now;
+    const snapshot=sim.snap();
+    for(const fn of [...viewers]){try{fn(snapshot);}catch(e){console.error(e);}}
+    raf=requestAnimationFrame(step);
+  }
 
   const css=document.createElement('style');
   css.textContent=[
