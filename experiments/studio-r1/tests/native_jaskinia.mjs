@@ -49,8 +49,11 @@ try {
   assert.equal(current.revision,1);
   assert.equal(current.pixels[2*24+2],3);
   // Real Jaskinia's own maximize/restore: must not replace or rewind authored content.
+  await page.evaluate(()=>{window.__r1CanvasBeforeMax=document.querySelector('[data-studio-r1="observer"] canvas');});
   await obsShell.locator('button.b-mx').click({force:true});
   await page.waitForFunction(()=>document.querySelector('[data-studio-r1="observer"]')?.closest('section.win')?.classList.contains('maxed'));
+  await page.waitForTimeout(430); // ResizeObserver in the real host defers potential re-render by 120 ms.
+  assert(await page.evaluate(()=>document.querySelector('[data-studio-r1="observer"] canvas')===window.__r1CanvasBeforeMax), 'Canvas was replaced by window maximize: Studio view lifecycle must remain continuous');
   assert((await obs.innerText()).includes('rewizja 1'),'Maximize lost shared document');
   await obsShell.locator('button.wback').click({force:true});
   await page.waitForFunction(()=>!document.querySelector('[data-studio-r1="observer"]')?.closest('section.win')?.classList.contains('maxed'));
