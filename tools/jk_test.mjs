@@ -39,6 +39,18 @@ await wait(900); await J(() => document.fonts.ready); await wait(300);
 // dismiss the first-run hint
 await page.click('.jk-hint .ib'); await wait(100);
 ok(errs.length === 0, 'load without errors', errs.join(' | '));
+// Medium: semantic action hints should survive the shell's compact responsive view.
+await page.setViewportSize({ width: 980, height: 760 }); await wait(150);
+ok(await page.getByRole('button', { name: 'Jak to działa' }).count() === 1,
+  'compact help control keeps its accessible action name');
+await page.setViewportSize({ width: 1918, height: 1030 }); await wait(150);
+const launchHints = await J(() => ['Tysi-c-The-Game', 'cloudflare-multiplayer-lab', 'voxel-aeronautics-workshop']
+  .map(key => __BIB.playA(__BIB.R[key], {}, 'Zagraj').title));
+ok(launchHints[0].includes('osobnej karcie') && launchHints[1].includes('osobnej karcie') &&
+   launchHints[2].includes('zależnie od ustawień'),
+   'play link descriptions do not promise an in-window launch to tab-only games',
+   launchHints.join(' | '));
+
 const t0 = await treeStr();
 console.log('tree', t0);
 ok(await page.locator('.win:not([hidden])').count() === 4, 'four windows in Przegląd');
