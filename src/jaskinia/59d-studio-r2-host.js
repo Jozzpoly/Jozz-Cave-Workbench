@@ -118,7 +118,7 @@
     let doc=H.get(),renderedRev=-1,framesCache=[],disposed=false,previewLast=performance.now(),previewTime=0;
     const framebar=node('div','r2-bar'),tools=node('div','r2-bar'),palette=node('div','r2-palette');
     const undoBtn=button('Cofnij',undo),redoBtn=button('Ponów',redo);
-    const worldBtn=button('Otwórz żywy świat',()=>ctx.openType('studio-r2-world',{fresh:true,w:.56,h:.7}));
+    const worldBtn=button('Otwórz żywy świat',()=>ctx.openType('studio-r2-world',{w:.48,h:.7}));
     const saveBtn=button('Eksport JSON',download),openBtn=button('Otwórz JSON',()=>file.click());
     const file=node('input');file.type='file';file.accept='.json,application/json';file.hidden=true;
     file.onchange=async()=>{if(!file.files?.length)return;
@@ -265,7 +265,7 @@
     const pauseBtn=button('Pauza świata',()=>{sim.pause(!sim.paused);});
     const autoBtn=button('Steruj ręcznie',()=>{sim.auto(!sim.snap().auto);});
     const clearBtn=button('Wyczyść ślad',()=>sim.clear());
-    const sourceBtn=button('Otwórz źródło',()=>ctx.openType('studio-r2-source',{fresh:true,w:.46,h:.7}));
+    const sourceBtn=button('Otwórz źródło',()=>ctx.openType('studio-r2-source',{w:.46,h:.7}));
     controls.append(pauseBtn,autoBtn,clearBtn,sourceBtn);
     const stage=node('div','r2-stage r2-world'),canvas=node('canvas');canvas.width=740;canvas.height=430;
     canvas.setAttribute('aria-label','Żywy świat: przeciągnij statek, by pozostawić ślad ognia');
