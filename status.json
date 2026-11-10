@@ -2,19 +2,31 @@
   "schema": "jaskinia-public-preview-v1",
   "preview": true,
   "public": true,
-  "title": "Jaskinia v6.4.1 — publiczny podgląd: Ruch (własne części poruszane ręką) z poprawkami z przeglądu PR #4; bez prywatnej warstwy",
+  "title": "Jaskinia v6.4.1 — publiczny podgląd odświeżany automatycznie; bez prywatnej warstwy",
   "source": {
     "repository": "Jozzpoly/Jozz-Cave-Workbench",
-    "ref": "v6-materialy",
-    "commit": "85aaaaec7334428cbc85ce9379930e17b4f5d6cb",
-    "pull_request": 4,
-    "html_blob": "2d444132b64fbc7b8936790a47726e25b21b5c70"
+    "ref": "main",
+    "commit": "17aceefba9760ca86227f9371ec9003b6acf29d0",
+    "html_blob": "4461db18d6dca0054b2f47b3809b2ec0cc1ccf0e",
+    "workflow_run": "https://github.com/Jozzpoly/Jozz-Cave-Workbench/actions/runs/42923672435"
   },
   "data": {
-    "repository_count": 26,
+    "repository_count": 28,
     "scope": "public-repositories-only",
-    "historical_snapshot": "2026-10-19",
-    "auto_refresh": false
+    "historical_snapshot": "2026-11-10",
+    "generated": "2026-11-10T23:29+00:00",
+    "generated_ts": 1794353352,
+    "auto_refresh": true,
+    "refresh": "checked every 6 h on main; published when a fact or the page changed, or the data is over 20 h old (.github/workflows/dom-odswiezanie.yml)",
+    "coverage": "28/28",
+    "api_unknown": [],
+    "zagraj": {
+      "checked_at": "2026-11-10 23:29 UTC",
+      "answering": 11,
+      "of": 11,
+      "method": "HTTP GET bez przeglądarki: adres odpowiada albo nie. To nie jest test samej gry."
+    },
+    "fingerprint": "8902661d5f3b7dc0"
   },
   "limitations": [
     "experimental_only",
@@ -31,10 +43,12 @@
     "old_downloaded_file_storage_compatibility_pending"
   ],
   "provenance": {
-    "packaged_by": "Claude (Opus), Jaskinia line",
-    "authored_through": "Jozzpoly GitHub, Claude Code session",
-    "owner_approval": "owner's standing approval for Pages and Cloudflare previews, given on 22 Oct 2026",
-    "previous_preview": "v6.3 (dd47f32, gh-pages 8e0186d, packaged by Claude)",
-    "agent": "Claude Opus 5.5, Jaskinia line"
+    "packaged_by": "GitHub Actions, .github/workflows/dom-odswiezanie.yml (written by Claude Opus 5.5, 10 Nov 2026)",
+    "owner_approval": "activated once by merging the workflow into main (owner, 10 Nov 2026); the repository variable PUBLIKUJ_PAGES = nie turns it off",
+    "tested_before_publishing": "Jaskinia's browser suites (tools/testy.py) and continuity from the page published before (tools/dom_ciaglosc_test.mjs)",
+    "previous": {
+      "commit": "85aaaaec7334428cbc85ce9379930e17b4f5d6cb",
+      "data": "2026-10-19"
+    }
   }
 }
