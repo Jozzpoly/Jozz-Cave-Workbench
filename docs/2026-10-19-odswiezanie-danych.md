@@ -24,3 +24,16 @@ Dziesiąta uwaga Jozza do v6 (w skrócie, jego słowa zostają prywatne): pora p
 - **Zrzut mówi, jak bardzo jest świeży.** Lista repo ma swoją datę (`data/connector_repos.json`, `checked_at`), dane z API swoją (`gh_collected_ts`), a pokrycie jest w `estate.coverage`. Medium (PR #4) słusznie zauważył, że pełne pokrycie wolno ogłosić dopiero po odświeżeniu samej listy: w pierwszym zrzucie v6.3 lista była jeszcze z 14.10, więc „wszystkie” znaczyło „wszystkie znane”. Odświeżanie danych nie może też przeładowywać otwartej Jaskini (stare karty).
 - **Publiczny i prywatny zrzut potrzebują osobnych dróg.** B rozwiązuje publiczny podgląd, ale nie dotyka prywatnej Jaskini Jozza.
 - **Najmniejszy uczciwy krok do rozmowy:** B dla publicznego podglądu, tylko na wyraźne „tak” Jozza, plus pasek „zrzut sprzed X dni” (już jest). Prywatny zrzut dalej A, dopóki „jeden dom” (C) nie zostanie postanowiony z linią GPT od infrastruktury.
+
+## 10.11.2026: droga B zbudowana, publikacja czeka na „tak” Jozza
+
+Claude (Opus 5.5, czat), gałąź `claude/dom-sam-sie-odswieza-2026-11-10`. 9.11 Jozz wymienił samoaktualizujące się dane jako pierwszy punkt przebudowy, a 10.11 powiedział, że swoje gry uruchamia na co dzień przez Jaskinię. Dlatego B powstało teraz, z tymi warunkami:
+
+- `.github/workflows/dom-odswiezanie.yml` co 6 godzin, tylko publiczne repo. Lista repo jest odświeżana w każdym przebiegu (uwaga Medium z PR #4).
+- **Nieznane nie jest zerem.** Gdy API odmówi albo urwie się na którejś stronie, repo dostaje „nieznane”, sumy go pomijają, a strona mówi to słowami (`tools/luki_test.py`).
+- **Wejścia „Zagraj”** są otwierane automatycznie (`tools/sprawdz_wejscia.py`). To sprawdza adres, nie samą grę. `data/wejscia.json` zostaje ręcznym źródłem adresów.
+- **Stare karty:** `tools/dom_ciaglosc_test.mjs` otwiera opublikowaną stronę i nową kompilację pod jednym adresem. Sprawdza przeładowanie oraz kartę otwartą przez cały dzień obok nowej. Układy, okna, notatki i wybór muszą przejść.
+- **Publikacja na Pages** odbywa się tylko z `main` i tylko przy zmiennej repozytorium `PUBLIKUJ_PAGES = tak`, którą ustawia Jozz. Wymaga też pełnego pokrycia i przejścia testów. Strona zmienia się, gdy zmienił się fakt albo kod, a gdy nic się nie zmieniło, raz na dobę (`tools/publikuj_pages.py`, `tools/publikuj_test.py`).
+- **Znane błędy testów** są spisane z powodem w `tools/znane_bledy.json`. `tools/testy.py` przepuszcza tylko te, a gdy któryś znowu przejdzie, mówi o tym głośno.
+
+Bez zmian: prywatny zrzut (prywatne repo i słowa Jozza) dalej robi agent na prośbę, czyli droga A. Status całości: tymczasowe. Wraca do szuflady, gdy obserwator faktów przebudowanej Jaskini przejmie odświeżanie.

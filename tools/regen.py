@@ -69,6 +69,20 @@ def list_from_gh():
     return data
 
 
+def list_from_public():
+    """Public repositories only, for a machine whose token cannot see private ones (GitHub Actions, 10 Nov)."""
+    r, _ = run(["gh", "api", "--paginate", f"users/{OWNER}/repos?per_page=100&type=owner"])
+    if r.returncode != 0:
+        sys.exit(f"gh api users/{OWNER}/repos: " + (r.stderr or r.stdout)[:400])
+    txt = r.stdout.strip().replace("]\n[", ",").replace("][", ",")
+    repos = [x for x in json.loads(txt or "[]") if (x.get("owner") or {}).get("login") == OWNER and not x.get("private")]
+    data = {"source": f"GitHub API · users/{OWNER}/repos (tylko publiczne)",
+            "checked_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "repos": [{"name": x["name"], "pushed_at": x.get("pushed_at"), "visibility": x.get("visibility")} for x in repos]}
+    json.dump(data, open(P("data", "connector_repos.json"), "w"), ensure_ascii=False, indent=1)
+    return data
+
+
 def local_clones(repos_dir):
     """lower-case GitHub name -> clone path, read from each clone's remote URL (dir names may differ in case)"""
     out = {}
@@ -99,7 +113,9 @@ def sync(name, repos_dir, have):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("--list", choices=["connector", "gh"], default="connector")
+    ap.add_argument("--list", choices=["connector", "gh", "public"], default="connector")
+    ap.add_argument("--sprawdz-wejscia", action="store_true",
+                    help="open every Zagraj entry and record whether it answers (needs network access to the pages)")
     ap.add_argument("--no-fetch", action="store_true")
     ap.add_argument("--host", choices=["artifact", "web"], default="artifact")
     ap.add_argument("--shoot", action="store_true")
@@ -110,7 +126,8 @@ def main():
     os.makedirs(repos_dir, exist_ok=True)
 
     # 1. what exists on the account right now (declared coverage, case C16)
-    lst = list_from_gh() if a.list == "gh" else json.load(open(P("data", "connector_repos.json")))
+    lst = (list_from_gh() if a.list == "gh" else list_from_public() if a.list == "public"
+           else json.load(open(P("data", "connector_repos.json"))))
     age_min = (time.time() - datetime.fromisoformat(lst["checked_at"].replace("Z", "+00:00")).timestamp()) / 60
     print(f"· lista: {len(lst['repos'])} repo · {lst['source']} · sprawdzona {age_min:.0f} min temu")
     if age_min > 60:
@@ -141,6 +158,9 @@ def main():
     lst_path = P("data", "connector_repos.json")
     step("git → data/git.json", py + [P("tools", "collect_git.py"), repos_dir, P("data", "git.json"), lst_path])
     step("GitHub API → data/gh.json", py + [P("tools", "collect_gh.py"), P("data", "gh.json"), lst_path])
+    if a.sprawdz_wejscia:
+        step("Zagraj → data/zagraj.json", py + [P("tools", "sprawdz_wejscia.py"), P("data", "gh.json"),
+                                                P("data", "wejscia.json"), P("data", "zagraj.json")])
     step("wiedza → data/knowledge.json", py + [P("tools", "knowledge.py"), P("data", "knowledge.json")])
     step("build → data/library.json", py + [P("tools", "build.py")])
     step("strona", py + [P("tools", "render.py"), "--host", a.host])

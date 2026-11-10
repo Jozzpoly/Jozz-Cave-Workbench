@@ -61,7 +61,12 @@ for g in G["repos"]:
     name = g["name"]
     h = GH_BY.get(name, {})
     meta = h.get("meta", {})
-    api_ok = bool(h) and "_error" not in h  # False: description, PRs and CI are unknown, not zero
+    # A part the collector could not read (PRs, CI runs, issues) makes this repo's GitHub numbers unknown
+    # as a whole: the page then says "nieznane" instead of a zero that only looks like data (10 Nov).
+    # Snapshots from before 10 Nov have no "parts" and keep their old meaning.
+    parts = h.get("parts") or {}
+    api_gaps = sorted(k for k in ("prs", "runs", "issues", "languages") if parts.get(k) not in (None, "ok"))
+    api_ok = bool(h) and "_error" not in h and not any(k in api_gaps for k in ("prs", "runs", "issues"))
     c = g.get("commits") or {}
     last_ts = max([b["ts"] for b in g.get("branches", [])] + ([c.get("last")] if c.get("last") else []), default=None)
     age = round((NOW - last_ts) / DAY, 2) if last_ts else None
@@ -113,12 +118,15 @@ for g in G["repos"]:
     ci_any = latest(runs)
     has_pages = bool(meta.get("has_pages"))
     tree = g.get("tree") or {}
-    langs = h.get("languages") or {}
+    langs = h.get("languages")
+    if not isinstance(langs, dict) or "_error" in langs:  # an old snapshot kept the error dict as if it were languages
+        langs = {}
     tot = sum(langs.values()) or 1
     stems = Counter((b["pre"], b["stem"]) for b in branches if not "domyślna" in b["roles"])
     repos.append({
         "name": name, "short": K["short"].get(name, name), "family": FAMILY_OF.get(name),
         "private": bool(meta.get("private")) if meta else VIS.get(name) == "private", "desc": meta.get("description"), "api": api_ok,
+        "api_gaps": api_gaps, "api_fetched": h.get("fetched_at"),
         "identity": K["identity"].get(name), "stated": K["stated"].get(name, []),
         "readme": {**(g.get("readme") or {}), "lead": clean_lead((g.get("readme") or {}).get("lead"))}, "url": f"{GHB}/{name}",
         "pages": (WEJ[name].get("url") if name in WEJ else f"https://jozzpoly.github.io/{name}/" if has_pages else None),
@@ -253,6 +261,39 @@ def changes_since(prev_path):
 
 
 estate["changes"] = changes_since(os.path.join(HERE, "data/prev_library.json"))
+
+# Where the GitHub side did not fully arrive (10 Nov): those repos say "nieznane" and the totals leave them out.
+estate["coverage"]["api_gaps"] = {r["name"]: r["api_gaps"] for r in repos if r.get("api_gaps")}
+estate["coverage"]["api_unknown"] = sorted(r["name"] for r in repos if r["api"] is False)
+if estate["coverage"]["api_unknown"]:
+    estate["coverage"]["limits"].insert(0, f"API GitHuba nie podało wszystkiego dla {len(estate['coverage']['api_unknown'])} repo "
+                                           f"({', '.join(estate['coverage']['api_unknown'])}). Tam liczby PR, CI i issues są nieznane, "
+                                           "a sumy na stronie ich nie obejmują.")
+
+# Play entries checked from a machine that can open them (data/zagraj.json, written by tools/sprawdz_wejscia.py).
+ZAG = os.path.join(HERE, "data/zagraj.json")
+if os.path.exists(ZAG):
+    try:
+        Z = json.load(open(ZAG))
+    except Exception:
+        Z = None
+    if Z and Z.get("checked_ts") and NOW - Z["checked_ts"] < 2 * DAY:
+        res = Z.get("results") or {}
+        for r in repos:
+            z = res.get(r["name"])
+            if z and z.get("url") == r["pages"]:
+                r["zagraj"] = {"ok": bool(z.get("ok")), "status": z.get("status"), "title": z.get("title"), "ts": Z["checked_ts"]}
+        n_ok = sum(1 for r in repos if (r.get("zagraj") or {}).get("ok"))
+        n_all = sum(1 for r in repos if r.get("zagraj"))
+        bad = sorted(r["name"] for r in repos if r.get("zagraj") and not r["zagraj"]["ok"])
+        lim = estate["coverage"]["limits"]
+        old = next((i for i, x in enumerate(lim) if x.startswith("Strony GitHub Pages nie były otwierane")), None)
+        line = (f"Wejścia „Zagraj” otwarte automatycznie {Z.get('checked_at')}: odpowiada {n_ok} z {n_all}"
+                + (f"; nie odpowiada: {', '.join(bad)}." if bad else "."))
+        if old is None:
+            lim.append(line)
+        else:
+            lim[old] = line
 
 # compact history of snapshots (for "since yesterday / since your last visit" once refresh is automatic)
 HIST = os.path.join(HERE, "data/history.json")

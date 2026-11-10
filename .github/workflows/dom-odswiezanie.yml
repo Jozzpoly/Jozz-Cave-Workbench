@@ -1,0 +1,163 @@
+# Dom odświeża się sam: Jaskinia, którą Owner otwiera codziennie, z faktami sprzed kilku godzin, nie z 19 X.
+# Status: tymczasowe (10 XI 2026, Claude Opus 5.5 w czacie). Wraca do szuflady, gdy obserwator faktów
+# przebudowanej Jaskini przejmie odświeżanie.
+#
+# Każdy przebieg:
+#   - zbiera fakty z publicznych repo Jozzpoly (git i API GitHuba; czego API nie poda, strona pokazuje jako
+#     nieznane, nie jako zero),
+#   - otwiera każde wejście „Zagraj” (sprawdza adres, nie samą grę),
+#   - buduje Jaskinię i puszcza jej testy w przeglądarce,
+#   - sprawdza ciągłość: układy, okna, notatki i wybór z opublikowanej strony przechodzą do nowej.
+# Wynik zostaje jako artefakt przebiegu (7 dni).
+#
+# Na GitHub Pages (strona, której Owner używa na co dzień) trafia tylko wtedy, gdy spełnione jest wszystko naraz:
+#   - przebieg idzie z main (main należy do Ownera),
+#   - Owner włączył publikację zmienną repozytorium PUBLIKUJ_PAGES = tak
+#     (Settings → Secrets and variables → Actions → Variables); usunięcie zmiennej wyłącza publikację,
+#   - każde repo z listy zostało przeczytane, API podało wszystko i testy przeszły,
+#   - zmienił się fakt albo kod strony, albo opublikowane dane mają ponad 20 h (tools/publikuj_pages.py).
+name: Dom odświeża się sam
+
+on:
+  schedule:
+    - cron: "23 */6 * * *"
+  workflow_dispatch:
+  push:
+    branches: [claude/dom-sam-sie-odswieza-2026-11-10]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dom-odswiezanie-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  buduj:
+    name: Fakty, strona, testy
+    runs-on: ubuntu-24.04 # Playwright 1.56 does not install on the 26.04 runner (seen in this repo's CI, Nov 2026)
+    timeout-minutes: 90
+    outputs:
+      pelne: ${{ steps.fakty.outputs.pelne }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Zależności (czcionki, Playwright 1.56 z Chromium)
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+          python3 --version
+      - name: Strona opublikowana teraz (punkt odniesienia)
+        run: |
+          mkdir -p "$RUNNER_TEMP/teraz"
+          if git fetch --quiet --depth=1 origin gh-pages; then
+            git show FETCH_HEAD:index.html > "$RUNNER_TEMP/teraz/index.html"
+            git show FETCH_HEAD:dane/library.json > "$RUNNER_TEMP/teraz/library.json" 2>/dev/null || rm -f "$RUNNER_TEMP/teraz/library.json"
+          fi
+          ls -la "$RUNNER_TEMP/teraz"
+      - name: Fakty z repo, wejścia „Zagraj”, strona
+        id: fakty
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BIB_REPOS: ${{ runner.temp }}/repos
+          BIB_PUBLIC: "1"
+        run: |
+          # the build time in the page is the commit's time, so the same code and facts give the same page
+          export SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
+          since=()
+          if [ -s "$RUNNER_TEMP/teraz/library.json" ]; then since=(--since "$RUNNER_TEMP/teraz/library.json"); fi
+          set +e
+          python3 -I tools/regen.py --list public --sprawdz-wejscia "${since[@]}" 2>&1 | tee "$RUNNER_TEMP/regen.txt"
+          code=${PIPESTATUS[0]}
+          set -e
+          echo "regen.py: kod $code (0 pełne pokrycie, 2 któregoś repo nie dało się przeczytać, 1 błąd)"
+          if [ "$code" = "1" ]; then exit 1; fi
+          pelne=$(python3 -I -c "import json; c = json.load(open('data/library.json'))['estate']['coverage']; print('tak' if not c['missing'] and not c.get('api_unknown') else 'nie')")
+          if [ "$code" != "0" ]; then pelne=nie; fi
+          echo "pelne=$pelne" >> "$GITHUB_OUTPUT"
+          { echo "### Fakty (komplet: $pelne)"; echo; echo '```'; tail -n 14 "$RUNNER_TEMP/regen.txt"; echo '```'; echo; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Testy bez przeglądarki (luki w danych, publikacja)
+        run: |
+          python3 -I tools/luki_test.py
+          python3 -I tools/publikuj_test.py
+      - name: Testy Jaskini w przeglądarce i ciągłość z opublikowaną stroną
+        shell: bash
+        run: |
+          stara=()
+          if [ -s "$RUNNER_TEMP/teraz/index.html" ]; then stara=(--stara "$RUNNER_TEMP/teraz/index.html"); fi
+          python3 -I tools/testy.py "${stara[@]}"
+      - name: Czy ten przebieg publikuje
+        if: always()
+        env:
+          PUB: ${{ vars.PUBLIKUJ_PAGES }}
+          PELNE: ${{ steps.fakty.outputs.pelne }}
+        run: |
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then m="nie: przebieg z gałęzi $GITHUB_REF_NAME, a publikuje tylko main";
+          elif [ "$PUB" != "tak" ]; then m="nie: publikacja wyłączona (zmienna PUBLIKUJ_PAGES nie jest „tak”)";
+          elif [ "$PELNE" != "tak" ]; then m="nie: fakty niepełne, strona zostaje taka, jaka jest";
+          elif [ "${{ job.status }}" != "success" ]; then m="nie: coś po drodze nie przeszło";
+          else m="tak, jeśli od ostatniej publikacji zmienił się fakt albo kod strony, albo minęło 20 h"; fi
+          echo "### Publikacja na GitHub Pages: $m" >> "$GITHUB_STEP_SUMMARY"
+      - name: Zbierz wynik
+        if: always()
+        run: |
+          w="$RUNNER_TEMP/wynik"; mkdir -p "$w/testy"
+          cp dist/jaskinia-web.html dist/jaskinia.html "$w"/ 2>/dev/null || true
+          for f in library git gh zagraj knowledge wejscia connector_repos; do cp "data/$f.json" "$w"/ 2>/dev/null || true; done
+          cp "$RUNNER_TEMP/regen.txt" "$w"/ 2>/dev/null || true
+          cp shots/logi/*.txt "$w/testy"/ 2>/dev/null || true
+          ls -la "$w" "$w/testy"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: jaskinia-${{ github.run_id }}
+          path: ${{ runner.temp }}/wynik
+          retention-days: 7
+          if-no-files-found: warn
+
+  publikuj:
+    name: Publikacja na GitHub Pages
+    needs: buduj
+    if: github.ref == 'refs/heads/main' && vars.PUBLIKUJ_PAGES == 'tak' && needs.buduj.outputs.pelne == 'tak'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    concurrency:
+      group: gh-pages-publikacja
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: _strona
+      - uses: actions/download-artifact@v4
+        with:
+          name: jaskinia-${{ github.run_id }}
+          path: _nowa
+      - name: Co się zmieniło od ostatniej publikacji
+        id: pub
+        run: python3 -I tools/publikuj_pages.py _strona _nowa --commit "$GITHUB_SHA" --run "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+      - name: Commit na gh-pages
+        if: steps.pub.outputs.zmiana == 'tak'
+        working-directory: _strona
+        env:
+          POWOD: ${{ steps.pub.outputs.powod }}
+          DANE: ${{ steps.pub.outputs.dane }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "dom(odświeżenie): dane z $DANE" -m "$POWOD. Zbudowane z main@${GITHUB_SHA::7} po testach; przebieg $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          git push -q origin HEAD:gh-pages
+          echo "### Opublikowane: dane z $DANE ($POWOD)" >> "$GITHUB_STEP_SUMMARY"
+      - name: Strona zostaje
+        if: steps.pub.outputs.zmiana != 'tak'
+        env:
+          POWOD: ${{ steps.pub.outputs.powod }}
+        run: echo "### Strona na GitHub Pages zostaje bez zmian ($POWOD)" >> "$GITHUB_STEP_SUMMARY"
