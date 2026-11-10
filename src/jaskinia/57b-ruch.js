@@ -288,6 +288,10 @@ function ruchWindow(view, opt) {
   let base = [];
   const me = 'rw' + (++ruchSeq).toString(36);
   const saveTs = new Map();
+  // the newest save per material, and the saves already sent and not answered yet (10 Nov 2026): an older save's answer
+  // that lands late holds fewer parts, so taking it in made the part he had just made vanish for a moment and lose its
+  // selection (traced in jk64: the window held 2 of 4 parts for 100-300 ms)
+  const saveN = new Map(), flying = new Map();
   let THREE = null, ray = null, ndc = null;
   const state = () => opt.onState?.({ on, n: defs.length });
   const api = {
@@ -295,7 +299,7 @@ function ruchWindow(view, opt) {
     get saved() { return savedP; }, get inner() { return inner; }, get me() { return me; }, get dragging() { return !!drag; },
     /* another window of this tab changed the motion of the model shown here: take its parts in, keep this window's own
        changes still on their way (they merge into the record when their save lands) */
-    sync(m) { if (!mat || !m || m.id !== mat.id || saveTs.has(mat.id) || drag) return; mat = m; adopt(m.ruch?.parts || []); },
+    sync(m) { if (!mat || !m || m.id !== mat.id || saveTs.has(mat.id) || flying.has(mat.id) || drag) return; mat = m; adopt(m.ruch?.parts || []); },
     toggle() { on ? api.off() : api.start(); return on; },
     start() { on = true; panel.hidden = false; view.classList.add('ruch'); if (inner) attachObj(); draw(); state(); },
     off() { halt(); on = false; panel.hidden = true; view.classList.remove('ruch'); clearPomoc(); sel = null; custom = []; pickPivot = false; hoverN = null; if (stage) stage.canvas.style.cursor = ''; stage?.redraw(); state(); },
@@ -615,12 +619,17 @@ function ruchWindow(view, opt) {
     const touched = [...new Set([...was.keys(), ...now.keys()])].filter(k => was.get(k) !== now.get(k));
     mat = { ...mat, ruch: { v: 1, at: Date.now(), parts } };
     clearTimeout(saveTs.get(id));
+    const n = (saveN.get(id) || 0) + 1;
+    saveN.set(id, n);
     savedP = new Promise(res => {
       saveTs.set(id, setTimeout(() => {
         saveTs.delete(id);
+        flying.set(id, n);
         Promise.resolve().then(() => opt.save(id, parts, touched, me))
-          .then(merged => { if (Array.isArray(merged) && mat && mat.id === id && !saveTs.has(id)) adopt(merged); })
-          .catch(err => jtoast(t('Nie zapisałem ruchu: {0}', err.message))).finally(res);
+          // only the newest save's answer comes in: it is the record with every part this window sent, merged with the rest
+          .then(merged => { if (Array.isArray(merged) && mat && mat.id === id && !saveTs.has(id) && saveN.get(id) === n) adopt(merged); })
+          .catch(err => jtoast(t('Nie zapisałem ruchu: {0}', err.message)))
+          .finally(() => { if (flying.get(id) === n) flying.delete(id); res(); });
       }, 200));
     });
   }

@@ -268,6 +268,11 @@ if (!ONLY || ONLY === 'ruch' || ONLY === 'guess') {
   ok(d4.name === 'ogniwo' && d4.z === 'bryla' && d4.zp === 'klocek:Axis' && JSON.stringify(d4.pivot) === '[7.5,1,38]', 'an "Axis" that is a plate (16 by 15) gives the pivot, not the direction', JSON.stringify(d4));
   ok(await J(() => ![...document.querySelectorAll('.mt-ruch .jk-tb')].some(b => /^z „Axis”$/.test(b.textContent))), 'and its direction is not offered as an axis');
   ok(await J(() => window.__jkRuch.defs.length === 4), 'four wheels set in motion, each its own part');
+  // 6.4.2: while the saves land, the window never falls back to an older record. On 6.4.1 it did (2,2,4,4… parts),
+  // and a part changed in that moment was made twice (3,3,3,4,5,5…), 10 Nov 2026
+  await pickN('teeth'); await J(() => window.__jkRuch.kind('przesuw'));
+  const seen = []; for (let i = 0; i < 24; i++) { seen.push(await J(() => window.__jkRuch.defs.length)); await wait(50); }
+  ok(seen.every(n => n === 4) && await J(() => window.__jkRuch.sel?.part?.kind === 'przesuw'), 'a part changed right after another one: all four stay through every save, and it stays selected', seen.join(','));
   await ctx.close();
 }
 
