@@ -14,7 +14,8 @@ that is listed there is reported with its reason. A listed failure that passes a
 ::warning:: in GitHub Actions): the list says when it has stopped being true instead of hardening into scenery.
 An entry marked "niestabilne" is a check known to fail only sometimes: it is let through either way and stays
 listed until its cause is fixed.
-A suite that stops without its PASS/FAIL lines fails the run. Each suite's full output goes to
+A suite that stops without its PASS/FAIL lines fails the run, and a part a suite skips by itself (a line like
+"(… skipped)") is named in the summary, so fewer checks never pass for the usual number. Each suite's full output goes to
 shots/logi/<suite>.txt; a Markdown table goes to $GITHUB_STEP_SUMMARY when that is set.
 Status: tymczasowe, together with the self-refreshing Home (.github/workflows/dom-odswiezanie.yml).
 """
@@ -22,6 +23,7 @@ import argparse
 import glob
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -49,7 +51,8 @@ def judge(name, out, code, known):
         k = next((k for k in mine if f.startswith(k["test"])), None)
         (hits.append(k) if k else unknown.append(f))
     healed = [k for k in mine if not k.get("niestabilne") and any(p.startswith(k["test"]) for p in passes)]
-    return {"passes": passes, "fails": fails, "known": hits, "unknown": unknown, "healed": healed,
+    inner = [l.strip() for l in lines if re.match(r"^\s*\(.*\bskipped\b.*\)\s*$", l)]
+    return {"passes": passes, "fails": fails, "known": hits, "unknown": unknown, "healed": healed, "inner": inner,
             "broken": code != 0 and not fails, "tail": "\n".join(lines[-12:])}
 
 
@@ -69,7 +72,7 @@ def main():
     if a.stara:
         plan.append(("dom_ciaglosc_test", [P("tools", "dom_ciaglosc_test.mjs"), os.path.abspath(a.stara)]))
     os.makedirs(a.logi, exist_ok=True)
-    rows, let_through, unknown, healed, broken, unstable = [], [], [], [], [], []
+    rows, let_through, unknown, healed, broken, unstable, inner = [], [], [], [], [], [], []
     for name, args in plan:
         t0 = time.time()
         out, code = run_suite(args, a.timeout)
@@ -91,6 +94,7 @@ def main():
         let_through += [(name, k) for k in r["known"]]
         unknown += [(name, f) for f in r["unknown"]]
         healed += [(name, k) for k in r["healed"]]
+        inner += [(name, x) for x in r["inner"]]
         if r["broken"]:
             broken.append((name, code, r["tail"]))
         dt = round(time.time() - t0)
@@ -123,6 +127,9 @@ def main():
     if healed:
         md += ["", "**Znany błąd już nie występuje — zdejmij go z listy:**"]
         md += [f"- {n}: „{k['test']}”" for n, k in healed]
+    if inner:
+        md += ["", "**Części pominięte przez same zestawy** (mniej sprawdzeń niż zwykle):"]
+        md += [f"- {n}: {x}" for n, x in inner]
     if skipped:
         md += ["", "**Pominięte zestawy** (nie da się ich tu uruchomić):"]
         md += [f"- {s['zestaw']}: {s['dlaczego']} Zdejmij, gdy: {s['zdejmij_gdy']}." for s in skipped]

@@ -41,6 +41,8 @@ jobs:
       pelne: ${{ steps.fakty.outputs.pelne }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # tools/jk63_test.mjs takes the published v6 build from git; without history it skips 14 checks
       - uses: actions/setup-node@v4
         with:
           node-version: "22"

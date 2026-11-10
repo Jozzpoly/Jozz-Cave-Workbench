@@ -9,7 +9,14 @@ import os from 'node:os';
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const shots = process.argv[2] || path.join(root, 'shots/jk4t');
 fs.mkdirSync(shots, { recursive: true });
-const body = fs.readFileSync(path.join(root, 'dist/jaskinia.html'), 'utf8');
+// F3 needs a repo the GitHub API did not see. The 19 Oct snapshot had one (Mini_Feniks); a fresh snapshot may have
+// none, so the test makes that case itself instead of depending on whichever snapshot was built (10 Nov 2026)
+const unseen = html => html.replace(/(<script[^>]*id="lib-data"[^>]*>)([\s\S]*?)(<\/script>)/, (all, a, json, b) => {
+  const d = JSON.parse(json), r = d.repos.find(x => x.name === 'Mini_Feniks');
+  if (r) r.api = false;
+  return a + JSON.stringify(d).replace(/<\//g, '<\\/') + b;
+});
+const body = unseen(fs.readFileSync(path.join(root, 'dist/jaskinia.html'), 'utf8'));
 const skel = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light}body{margin:0;font:14px system-ui,sans-serif}[hidden]{display:none!important}</style></head><body>${body}</body></html>`;
 const test = path.join(root, 'dist/_jk4_test.html');
 fs.writeFileSync(test, skel);

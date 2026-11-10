@@ -4,18 +4,20 @@
   {
    "zestaw": "jk62_test",
    "test": "the stage has a \"Ostre piksele\" switch, on",
-   "dlaczego": "Fails the same way on untouched main 7fcedfa (Jaskinia 6.4.1) in headless Chromium with SwiftShader, checked 10 Nov 2026. Not caused by the data refresh. The cause was not investigated: the stage, or this check, may have changed with v6.4.",
+   "dlaczego": "Passes in GitHub Actions (Playwright 1.56 and its Chromium, run 42863614055) and fails in Claude's sandbox (a newer Playwright and Chromium), on untouched main 7fcedfa as well: it depends on the browser build, not on the page or the data. The stage, or this check, may also have changed with v6.4.",
    "od": "2026-11-10",
    "kto": "Claude (Opus 5.5), czat",
-   "zdejmij_gdy": "the check passes again (testy.py warns), or the rebuilt Jaskinia replaces this page"
+   "zdejmij_gdy": "it passes in both places, or the rebuilt Jaskinia replaces this page",
+   "niestabilne": true
   },
   {
    "zestaw": "jk62_test",
    "test": "dragging with the wheel button moves the view and does not zoom",
-   "dlaczego": "Fails the same way on untouched main 7fcedfa (Jaskinia 6.4.1) in headless Chromium with SwiftShader, checked 10 Nov 2026. Not caused by the data refresh. The cause was not investigated: a middle-button drag in a headless browser may not reach the 3D view the way a real mouse does.",
+   "dlaczego": "Passes in GitHub Actions (Playwright 1.56 and its Chromium, run 42863614055) and fails in Claude's sandbox (a newer Playwright and Chromium), on untouched main 7fcedfa as well: it depends on the browser build, not on the page or the data. A middle-button drag in some headless builds may not reach the 3D view the way a real mouse does.",
    "od": "2026-11-10",
    "kto": "Claude (Opus 5.5), czat",
-   "zdejmij_gdy": "the check passes again (testy.py warns), or the rebuilt Jaskinia replaces this page"
+   "zdejmij_gdy": "it passes in both places, or the rebuilt Jaskinia replaces this page",
+   "niestabilne": true
   },
   {
    "zestaw": "jk64_test",
@@ -25,6 +27,51 @@
    "od": "2026-11-10",
    "kto": "Claude (Opus 5.5), czat",
    "zdejmij_gdy": "the race is fixed in the page and the check passes in 10 runs in a row"
+  },
+  {
+   "zestaw": "jk61_test",
+   "test": "the same layout rearranged in two tabs at once: one valid shape in both",
+   "niestabilne": true,
+   "dlaczego": "Fails in GitHub Actions (Playwright 1.56, run 42863614055, again on the retry) and passes in Claude's sandbox. The code is the same as the page published now, so the refresh does not cause it. Not investigated yet. Both tabs end with a valid layout, but not yet the same one 1.5 s after both changed it at once.",
+   "od": "2026-11-10",
+   "kto": "Claude (Opus 5.5), czat",
+   "zdejmij_gdy": "it passes in GitHub Actions in 5 runs in a row"
+  },
+  {
+   "zestaw": "jk641_test",
+   "test": "two Materiały windows show the same model, Ruch on in both",
+   "niestabilne": true,
+   "dlaczego": "Fails in GitHub Actions (Playwright 1.56, run 42863614055, again on the retry) and passes in Claude's sandbox. The code is the same as the page published now, so the refresh does not cause it. Not investigated yet. In Actions the two Materiały windows on one model do not come up with Ruch on in both (the first of these checks), and the three that build on that fail with it.",
+   "od": "2026-11-10",
+   "kto": "Claude (Opus 5.5), czat",
+   "zdejmij_gdy": "it passes in GitHub Actions in 5 runs in a row"
+  },
+  {
+   "zestaw": "jk641_test",
+   "test": "the piston set in window B is added to the record; the wheel from A stays",
+   "niestabilne": true,
+   "dlaczego": "Fails in GitHub Actions (Playwright 1.56, run 42863614055, again on the retry) and passes in Claude's sandbox. The code is the same as the page published now, so the refresh does not cause it. Not investigated yet. In Actions the two Materiały windows on one model do not come up with Ruch on in both (the first of these checks), and the three that build on that fail with it.",
+   "od": "2026-11-10",
+   "kto": "Claude (Opus 5.5), czat",
+   "zdejmij_gdy": "it passes in GitHub Actions in 5 runs in a row"
+  },
+  {
+   "zestaw": "jk641_test",
+   "test": "and window A shows both",
+   "niestabilne": true,
+   "dlaczego": "Fails in GitHub Actions (Playwright 1.56, run 42863614055, again on the retry) and passes in Claude's sandbox. The code is the same as the page published now, so the refresh does not cause it. Not investigated yet. In Actions the two Materiały windows on one model do not come up with Ruch on in both (the first of these checks), and the three that build on that fail with it.",
+   "od": "2026-11-10",
+   "kto": "Claude (Opus 5.5), czat",
+   "zdejmij_gdy": "it passes in GitHub Actions in 5 runs in a row"
+  },
+  {
+   "zestaw": "jk641_test",
+   "test": "\"Stoi\" in one window takes back only that part",
+   "niestabilne": true,
+   "dlaczego": "Fails in GitHub Actions (Playwright 1.56, run 42863614055, again on the retry) and passes in Claude's sandbox. The code is the same as the page published now, so the refresh does not cause it. Not investigated yet. In Actions the two Materiały windows on one model do not come up with Ruch on in both (the first of these checks), and the three that build on that fail with it.",
+   "od": "2026-11-10",
+   "kto": "Claude (Opus 5.5), czat",
+   "zdejmij_gdy": "it passes in GitHub Actions in 5 runs in a row"
   }
  ],
  "pominiete": [
