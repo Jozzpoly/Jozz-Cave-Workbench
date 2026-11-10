@@ -130,6 +130,24 @@ try{
   await page.waitForFunction(()=>Number(document.querySelector('[data-studio-r2="source"]')?.dataset.sourceRev)>=3);
   const recovered=await page.evaluate(()=>JSON.parse(localStorage.getItem('jaskinia-studio-r2:source:1')));
   assert.equal(recovered.frames[0].pixels[11*24+12],2,'browser reload lost edit');
+  // A different tab writes the same source. This tab must NOT silently overwrite its bytes.
+  const remote=await context.newPage();
+  await remote.goto(address,{waitUntil:'domcontentloaded'});
+  await remote.waitForFunction(()=>!!window.Jaskinia?.ext?.open);
+  const foreignBytes=await remote.evaluate(()=>{
+    const key='jaskinia-studio-r2:source:1';
+    const d=JSON.parse(localStorage.getItem(key));
+    d.frames[0].pixels[0]=6;d.revision+=1;
+    const content=JSON.stringify(d);localStorage.setItem(key,content);return content;
+  });
+  await page.waitForFunction(()=>document.querySelector('[data-studio-r2="source"] .r2-warn')?.textContent?.includes('innej karcie'));
+  const canvasAgain=page.locator('[data-studio-r2="source"] canvas[aria-label^="Rysuj"]');
+  const b=await canvasAgain.boundingBox();
+  assert(b&&b.width>24);
+  await page.mouse.click(b.x+(1.5/24)*b.width,b.y+(1.5/32)*b.height);
+  await page.waitForFunction(()=>Number(document.querySelector('[data-studio-r2="source"]')?.dataset.sourceRev)>=6);
+  assert.equal(await page.evaluate(()=>localStorage.getItem('jaskinia-studio-r2:source:1')),foreignBytes,'Old tab overwrote a second tab after conflict');
+  await remote.close();
   await page.screenshot({path:'studio-r2-native-pass.png',fullPage:true});
   assert.equal(errors.length,0,'Browser runtime errors: '+errors.join(' | '));
   console.log('PASS Studio R2 native: authoring source + autonomous living world, manual time, particle visuals update without reset, real host lifecycle, local recovery');
