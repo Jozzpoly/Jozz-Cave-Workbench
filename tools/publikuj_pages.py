@@ -12,7 +12,8 @@ Writes only when something real changed since the page was last published: a fac
 is not a change, so the branch does not grow by a 2.5 MB page every few hours. One exception: once the published
 data is more than 20 hours old it is written anyway, because the page works out "how long ago" and "still fresh"
 when it is built, and those must not drift by more than a day.
-It never commits or pushes; the workflow does, and only when the owner has switched publishing on.
+It never commits or pushes; the workflow does. After a rollback the workflow marks the page paused (--wstrzymaj),
+and nothing is published until a run with --wznow (the workflow's "wznow" action) clears it.
 Prints zmiana=tak|nie, powod, dane=<snapshot time> and odcisk, also to $GITHUB_OUTPUT when that is set.
 Status: tymczasowe, together with the self-refreshing Home (.github/workflows/dom-odswiezanie.yml).
 """
@@ -22,6 +23,7 @@ import json
 import os
 import re
 import shutil
+import time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 REPO = "Jozzpoly/Jozz-Cave-Workbench"
@@ -70,7 +72,17 @@ def main():
     ap.add_argument("build")
     ap.add_argument("--commit", default="")
     ap.add_argument("--run", default="")
+    ap.add_argument("--wznow", action="store_true", help="publish even though an earlier rollback paused the automat")
+    ap.add_argument("--wstrzymaj", metavar="POWOD", help="only mark the published page as paused (after a rollback)")
     a = ap.parse_args()
+    if a.wstrzymaj:
+        # after a rollback: the next scheduled run must not put the same build back by itself
+        st = load(os.path.join(a.pages, "status.json"), {}) or {}
+        st["wstrzymane"] = {"od": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "powod": a.wstrzymaj, "przebieg": a.run,
+                            "wznowienie": "Actions → Dom odświeża się sam → Run workflow, akcja: wznow"}
+        json.dump(st, open(os.path.join(a.pages, "status.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=2)
+        print("zmiana=tak")
+        return
     html = open(os.path.join(a.build, "jaskinia-web.html"), encoding="utf-8").read()
     lib = load(os.path.join(a.build, "library.json"))
     zag = load(os.path.join(a.build, "zagraj.json"), {}) or {}
@@ -78,7 +90,9 @@ def main():
     fp = fingerprint(a.build, html)
     gen, gen_ts = lib["estate"]["generated"], lib["estate"]["generated_ts"]
     od = old.get("data") or {}
-    if fp != od.get("fingerprint"):
+    if old.get("wstrzymane") and not a.wznow:
+        why = "bez zmian: automat wstrzymany po cofnięciu (" + str(old["wstrzymane"].get("powod", "")) + "); wznowienie: akcja wznow"
+    elif fp != od.get("fingerprint"):
         why = "nowe fakty albo nowy kod strony" if od.get("fingerprint") else "pierwsza publikacja z automatu"
     elif gen_ts - (od.get("generated_ts") or 0) > STALE_H * 3600:
         why = f"bez nowych faktów, ale opublikowane dane mają ponad {STALE_H} h"
@@ -114,7 +128,7 @@ def main():
             "limitations": old.get("limitations", []),
             "provenance": {
                 "packaged_by": "GitHub Actions, .github/workflows/dom-odswiezanie.yml (written by Claude Opus 5.5, 10 Nov 2026)",
-                "owner_approval": "publishing is on only while the repository variable PUBLIKUJ_PAGES is 'tak'",
+                "owner_approval": "activated once by merging the workflow into main (owner, 10 Nov 2026); the repository variable PUBLIKUJ_PAGES = nie turns it off",
                 "tested_before_publishing": "Jaskinia's browser suites (tools/testy.py) and continuity from the page published before (tools/dom_ciaglosc_test.mjs)",
                 "previous": {"commit": (old.get("source") or {}).get("commit"),
                              "data": (old.get("data") or {}).get("generated") or (old.get("data") or {}).get("historical_snapshot")},

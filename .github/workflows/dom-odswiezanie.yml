@@ -10,19 +10,31 @@
 #   - sprawdza ciągłość: układy, okna, notatki i wybór z opublikowanej strony przechodzą do nowej.
 # Wynik zostaje jako artefakt przebiegu (7 dni).
 #
-# Na GitHub Pages (strona, której Owner używa na co dzień) trafia tylko wtedy, gdy spełnione jest wszystko naraz:
-#   - przebieg idzie z main (main należy do Ownera),
-#   - Owner włączył publikację zmienną repozytorium PUBLIKUJ_PAGES = tak
-#     (Settings → Secrets and variables → Actions → Variables); usunięcie zmiennej wyłącza publikację,
+# Na GitHub Pages (strona, której Owner używa na co dzień) trafia sam, bez pytania, gdy wszystko naraz:
+#   - przebieg idzie z main; scalenie PR, który wnosi ten plik na main, jest jedyną aktywacją automatu,
+#   - zmienna repozytorium PUBLIKUJ_PAGES nie jest „nie” (Settings → Secrets and variables → Actions → Variables);
+#     ustawienie jej na „nie” wyłącza publikację, budowanie i testy działają dalej,
 #   - każde repo z listy zostało przeczytane, API podało wszystko i testy przeszły; ciągłość nie ma wyjątków,
 #     a gdy kod strony różni się od opublikowanego, testy stanu Ownera nie mają ich także (tools/testy.py),
-#   - zmienił się fakt albo kod strony, albo opublikowane dane mają ponad 20 h (tools/publikuj_pages.py).
+#   - zmienił się fakt albo kod strony, albo opublikowane dane mają ponad 20 h (tools/publikuj_pages.py),
+#   - automat nie jest wstrzymany po cofnięciu.
+# Po wypchnięciu na gh-pages przebieg zamawia budowę Pages (push tokenem GITHUB_TOKEN jej nie uruchamia; Astra i
+# Menadżer, 10 XI) i czeka, aż adres na żywo poda nowy status.json, a strona wstanie w przeglądarce
+# (tools/sprawdz_strone.mjs). Jeśli nie: cofa gh-pages do poprzedniej strony, wstrzymuje automat i kończy się błędem.
+# Przyciski (Actions → Dom odświeża się sam → Run workflow, akcja): odswiez (teraz), cofnij (poprzednia strona i
+# wstrzymanie), wznow (zdejmuje wstrzymanie i odświeża).
 name: Dom odświeża się sam
 
 on:
   schedule:
     - cron: "23 */6 * * *"
   workflow_dispatch:
+    inputs:
+      akcja:
+        description: "odswiez: zbuduj i opublikuj teraz; cofnij: wróć do poprzedniej strony i wstrzymaj automat; wznow: zdejmij wstrzymanie i odśwież"
+        type: choice
+        options: [odswiez, cofnij, wznow]
+        default: odswiez
   push:
     branches: [claude/dom-sam-sie-odswieza-2026-11-10]
 
@@ -36,6 +48,7 @@ concurrency:
 jobs:
   buduj:
     name: Fakty, strona, testy
+    if: github.event_name != 'workflow_dispatch' || inputs.akcja != 'cofnij'
     runs-on: ubuntu-24.04 # Playwright 1.56 does not install on the 26.04 runner (seen in this repo's CI, Nov 2026)
     timeout-minutes: 90
     outputs:
@@ -102,6 +115,7 @@ jobs:
           python3 -I tools/luki_test.py
           python3 -I tools/publikuj_test.py
           python3 -I tools/testy_test.py
+          python3 -I tools/cofnij_test.py
       - name: Testy Jaskini w przeglądarce i ciągłość z opublikowaną stroną
         shell: bash
         run: |
@@ -110,6 +124,7 @@ jobs:
           scisle=()
           if [ "${{ steps.kod.outputs.scisle }}" != "nie" ]; then scisle=(--scisle); fi
           python3 -I tools/testy.py "${stara[@]}" "${scisle[@]}"
+          node tools/sprawdz_strone_test.mjs
       - name: Czy ten przebieg publikuje
         if: always()
         env:
@@ -117,7 +132,7 @@ jobs:
           PELNE: ${{ steps.fakty.outputs.pelne }}
         run: |
           if [ "$GITHUB_REF" != "refs/heads/main" ]; then m="nie: przebieg z gałęzi $GITHUB_REF_NAME, a publikuje tylko main";
-          elif [ "$PUB" != "tak" ]; then m="nie: publikacja wyłączona (zmienna PUBLIKUJ_PAGES nie jest „tak”)";
+          elif [ "$PUB" = "nie" ]; then m="nie: publikacja wyłączona (zmienna PUBLIKUJ_PAGES = nie)";
           elif [ "$PELNE" != "tak" ]; then m="nie: fakty niepełne, strona zostaje taka, jaka jest";
           elif [ "${{ job.status }}" != "success" ]; then m="nie: coś po drodze nie przeszło";
           else m="tak, jeśli od ostatniej publikacji zmienił się fakt albo kod strony, albo minęło 20 h"; fi
@@ -142,28 +157,48 @@ jobs:
   publikuj:
     name: Publikacja na GitHub Pages
     needs: buduj
-    if: github.ref == 'refs/heads/main' && vars.PUBLIKUJ_PAGES == 'tak' && needs.buduj.outputs.pelne == 'tak'
+    if: github.ref == 'refs/heads/main' && vars.PUBLIKUJ_PAGES != 'nie' && needs.buduj.outputs.pelne == 'tak'
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 30
     permissions:
       contents: write
+      pages: write
     concurrency:
       group: gh-pages-publikacja
       cancel-in-progress: false
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PRZEBIEG: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
     steps:
+      - name: Adres strony
+        run: echo "ADRES=https://${GITHUB_REPOSITORY_OWNER,,}.github.io/${GITHUB_REPOSITORY#*/}/" >> "$GITHUB_ENV"
+        shell: bash
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
         with:
           ref: gh-pages
           path: _strona
+          fetch-depth: 5
       - uses: actions/download-artifact@v4
         with:
           name: jaskinia-${{ github.run_id }}
           path: _nowa
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Przeglądarka do sprawdzenia adresu na żywo
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
       - name: Co się zmieniło od ostatniej publikacji
         id: pub
-        run: python3 -I tools/publikuj_pages.py _strona _nowa --commit "$GITHUB_SHA" --run "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
-      - name: Commit na gh-pages
+        run: |
+          wznow=()
+          if [ "${{ inputs.akcja }}" = "wznow" ]; then wznow=(--wznow); fi
+          python3 -I tools/publikuj_pages.py _strona _nowa --commit "$GITHUB_SHA" --run "$PRZEBIEG" "${wznow[@]}"
+        shell: bash
+      - name: Wypchnij na gh-pages i zamów budowę Pages
         if: steps.pub.outputs.zmiana == 'tak'
         working-directory: _strona
         env:
@@ -173,11 +208,66 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
-          git commit -q -m "dom(odświeżenie): dane z $DANE" -m "$POWOD. Zbudowane z main@${GITHUB_SHA::7} po testach; przebieg $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          git commit -q -m "dom(odświeżenie): dane z $DANE" -m "$POWOD. Zbudowane z main@${GITHUB_SHA::7} po testach; przebieg $PRZEBIEG"
           git push -q origin HEAD:gh-pages
-          echo "### Opublikowane: dane z $DANE ($POWOD)" >> "$GITHUB_STEP_SUMMARY"
-      - name: Strona zostaje
-        if: steps.pub.outputs.zmiana != 'tak'
+          gh api -X POST "repos/$GITHUB_REPOSITORY/pages/builds" --silent || echo "::warning::Nie udało się zamówić budowy Pages; sprawdzam, czy ruszyła sama"
+      - name: Sprawdź adres na żywo
+        id: zywo
+        if: steps.pub.outputs.zmiana == 'tak'
+        continue-on-error: true
+        run: node tools/sprawdz_strone.mjs "$ADRES" "${{ steps.pub.outputs.odcisk }}" --czekaj 900
+      - name: Cofnij, jeśli adres na żywo nie działa
+        if: steps.pub.outputs.zmiana == 'tak' && steps.zywo.outcome != 'success'
+        run: |
+          tools/cofnij_pages.sh _strona "adres na żywo nie podał nowej strony albo ta nie wstała" "$PRZEBIEG"
+          git -C _strona push -q origin HEAD:gh-pages
+          gh api -X POST "repos/$GITHUB_REPOSITORY/pages/builds" --silent || true
+          echo "### Cofnięte do poprzedniej strony i wstrzymane. Wznowienie: Run workflow, akcja wznow." >> "$GITHUB_STEP_SUMMARY"
+          exit 1
+      - name: Wynik
+        if: always()
         env:
           POWOD: ${{ steps.pub.outputs.powod }}
-        run: echo "### Strona na GitHub Pages zostaje bez zmian ($POWOD)" >> "$GITHUB_STEP_SUMMARY"
+          DANE: ${{ steps.pub.outputs.dane }}
+          ZMIANA: ${{ steps.pub.outputs.zmiana }}
+          ZYWO: ${{ steps.zywo.outcome }}
+        run: |
+          if [ "$ZMIANA" != "tak" ]; then echo "### Strona na Pages zostaje bez zmian ($POWOD)" >> "$GITHUB_STEP_SUMMARY";
+          elif [ "$ZYWO" = "success" ]; then echo "### Opublikowane i sprawdzone na żywo: dane z $DANE ($POWOD), $ADRES" >> "$GITHUB_STEP_SUMMARY"; fi
+
+  cofnij:
+    name: Cofnięcie strony na Pages
+    if: github.event_name == 'workflow_dispatch' && inputs.akcja == 'cofnij' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    permissions:
+      contents: write
+      pages: write
+    concurrency:
+      group: gh-pages-publikacja
+      cancel-in-progress: false
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PRZEBIEG: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - name: Adres strony
+        run: echo "ADRES=https://${GITHUB_REPOSITORY_OWNER,,}.github.io/${GITHUB_REPOSITORY#*/}/" >> "$GITHUB_ENV"
+        shell: bash
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: _strona
+          fetch-depth: 50
+      - name: Wróć do strony sprzed ostatniego odświeżenia i wstrzymaj automat
+        id: cof
+        run: |
+          git -C _strona config user.name "github-actions[bot]"
+          git -C _strona config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          tools/cofnij_pages.sh _strona "cofnięte ręcznie (Run workflow, akcja cofnij)" "$PRZEBIEG" | tee -a "$GITHUB_OUTPUT"
+          git -C _strona push -q origin HEAD:gh-pages
+          gh api -X POST "repos/$GITHUB_REPOSITORY/pages/builds" --silent || true
+          echo "### Cofnięte do strony sprzed ostatniego odświeżenia; automat wstrzymany do akcji wznow." >> "$GITHUB_STEP_SUMMARY"
+      - name: Sprawdź adres na żywo
+        if: steps.cof.outputs.fp != ''
+        run: node tools/sprawdz_strone.mjs "$ADRES" "${{ steps.cof.outputs.fp }}" --czekaj 900 --bez-przegladarki

@@ -52,7 +52,7 @@ def build(repo, shift_h=0, issue=False):
     return json.load(open(os.path.join(repo, "data", "library.json")))
 
 
-def publish(tmp, repo, pages, lib, code="v1"):
+def publish(tmp, repo, pages, lib, code="v1", extra=()):
     b = os.path.join(tmp, "build")
     shutil.rmtree(b, ignore_errors=True)
     os.makedirs(b)
@@ -61,7 +61,7 @@ def publish(tmp, repo, pages, lib, code="v1"):
     for f in ("git.json", "gh.json", "knowledge.json", "wejscia.json"):
         shutil.copy(os.path.join(repo, "data", f), os.path.join(b, f))
     env = {k: v for k, v in os.environ.items() if k != "GITHUB_OUTPUT"}
-    r = subprocess.run([sys.executable, "-I", os.path.join(HERE, "tools", "publikuj_pages.py"), pages, b, "--commit", "abc1234def"],
+    r = subprocess.run([sys.executable, "-I", os.path.join(HERE, "tools", "publikuj_pages.py"), pages, b, "--commit", "abc1234def", *extra],
                        capture_output=True, text=True, env=env)
     assert r.returncode == 0, r.stderr[-400:]
     return dict(l.split("=", 1) for l in r.stdout.splitlines() if "=" in l)
@@ -98,6 +98,14 @@ def main():
         ok(code.get("zmiana") == "tak", "the same facts in a page whose code changed: the page is written", code.get("powod", ""))
         stale = publish(tmp, repo, pages, build(repo, shift_h=21), code="v2")
         ok(stale.get("zmiana") == "tak" and "20 h" in stale.get("powod", ""), "nothing new for 21 hours: written anyway, so ages never drift by more than a day", stale.get("powod", ""))
+        # after a rollback the automat is paused: a changed build waits, "wznow" publishes it and clears the pause
+        r = subprocess.run([sys.executable, "-I", os.path.join(HERE, "tools", "publikuj_pages.py"), pages, os.path.join(tmp, "build"),
+                            "--wstrzymaj", "strona nie wstała"], capture_output=True, text=True)
+        ok(r.returncode == 0 and json.load(open(os.path.join(pages, "status.json"))).get("wstrzymane"), "a rollback marks the page paused")
+        paused = publish(tmp, repo, pages, build(repo, issue=True), code="v3")
+        ok(paused.get("zmiana") == "nie" and "wstrzymany" in paused.get("powod", ""), "while paused, even a changed build waits", paused.get("powod", ""))
+        back = publish(tmp, repo, pages, build(repo, issue=True), code="v3", extra=("--wznow",))
+        ok(back.get("zmiana") == "tak" and not json.load(open(os.path.join(pages, "status.json"))).get("wstrzymane"), "wznow publishes it and clears the pause")
     print(f"\n{'all passed' if not FAILS else str(len(FAILS)) + ' failed'}")
     sys.exit(1 if FAILS else 0)
 

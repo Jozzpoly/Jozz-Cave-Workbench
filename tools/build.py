@@ -308,6 +308,21 @@ hist = sorted(hist, key=lambda x: x["ts"])[-120:]
 json.dump(hist, open(HIST, "w"), ensure_ascii=False, separators=(",", ":"))
 lib = {"estate": estate, "families": families, "repos": repos,
        **{k: K[k] for k in ("estate_stated", "prolog", "laws", "dna", "lessons", "methods", "cases", "ledger", "open")}}
+# A public build names no private repository, even where a public PR body mentions one (10 Nov 2026: two open PRs
+# linked the private Commons; the page would have carried the links onto GitHub Pages). BIB_UKRYJ lists the names.
+if os.environ.get("BIB_PUBLIC") == "1":
+    import re as _re
+    _hide = [n for n in os.environ.get("BIB_UKRYJ", "Jozz-Commons").split(",") if n.strip()]
+    _pat = _re.compile(r"(https?://github\.com/Jozzpoly/)?(" + "|".join(_re.escape(n.strip()) for n in _hide) + r")(/[^\s)\]\"']*)?", _re.I)
+    def _scrub(x):
+        if isinstance(x, str):
+            return _pat.sub("(prywatne repo)", x)
+        if isinstance(x, list):
+            return [_scrub(v) for v in x]
+        if isinstance(x, dict):
+            return {k: _scrub(v) for k, v in x.items()}
+        return x
+    lib = _scrub(lib)
 os.makedirs(os.path.join(HERE, "dist"), exist_ok=True)
 json.dump(lib, open(os.path.join(HERE, "data/library.json"), "w"), ensure_ascii=False, separators=(",", ":"))
 json.dump(lib, open(os.path.join(HERE, "dist/biblioteka-data.json"), "w"), ensure_ascii=False, indent=1)
