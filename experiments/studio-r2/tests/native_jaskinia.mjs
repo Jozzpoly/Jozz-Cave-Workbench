@@ -126,7 +126,7 @@ try{
   }
   await page.reload({waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>!!window.Jaskinia?.ext?.open && !!document.querySelector('section.win'),{timeout:30000});
-  await page.evaluate(()=>window.Jaskinia.ext.open('studio-r2-source',{fresh:true,w:.46,h:.7}));
+  await page.evaluate(()=>window.Jaskinia.ext.open('studio-r2-source',{w:.46,h:.7}));
   await page.waitForFunction(()=>Number(document.querySelector('[data-studio-r2="source"]')?.dataset.sourceRev)>=3);
   const recovered=await page.evaluate(()=>JSON.parse(localStorage.getItem('jaskinia-studio-r2:source:1')));
   assert.equal(recovered.frames[0].pixels[11*24+12],2,'browser reload lost edit');
@@ -141,7 +141,7 @@ try{
     const content=JSON.stringify(d);localStorage.setItem(key,content);return content;
   });
   await page.waitForFunction(()=>document.querySelector('[data-studio-r2="source"] .r2-warn')?.textContent?.includes('innej karcie'));
-  const canvasAgain=page.locator('[data-studio-r2="source"] canvas[aria-label^="Rysuj"]');
+  const canvasAgain=page.locator('[data-studio-r2="source"] canvas[aria-label^="Rysuj"]').last();
   const b=await canvasAgain.boundingBox();
   assert(b&&b.width>24);
   await page.mouse.click(b.x+(1.5/24)*b.width,b.y+(1.5/32)*b.height);
