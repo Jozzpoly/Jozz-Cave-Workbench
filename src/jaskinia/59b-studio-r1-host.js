@@ -154,6 +154,6 @@
       c.onDispose(() => { if (drawing) finish(); });
     }
   }
-  API.type('studio-r1-painter', {group:'misc', name:'Studio R1 — obraz', desc:'Izolowany test wspólnego dokumentu — możesz malować.', glyph:'t_wybor', fill:true, noZoom:true, sized:true, render:(box,c)=>build(box,c,true)});
-  API.type('studio-r1-observer', {group:'misc', name:'Studio R1 — obserwator', desc:'Ten sam dokument w drugim oknie.', glyph:'t_wybor', fill:true, noZoom:true, sized:true, render:(box,c)=>build(box,c,false)});
+  API.type('studio-r1-painter', {group:'misc', name:'Studio R1 — obraz', desc:'Izolowany test wspólnego dokumentu — możesz malować.', glyph:'t_wybor', fill:true, noZoom:true, sized:false, render:(box,c)=>build(box,c,true)});
+  API.type('studio-r1-observer', {group:'misc', name:'Studio R1 — obserwator', desc:'Ten sam dokument w drugim oknie.', glyph:'t_wybor', fill:true, noZoom:true, sized:false, render:(box,c)=>build(box,c,false)});
 })();
