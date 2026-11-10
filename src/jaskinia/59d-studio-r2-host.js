@@ -253,7 +253,7 @@
   function worldView(box,ctx){
     const ui=base('world'),{root,status,controls,main,warningEl}=ui;
     const pauseBtn=button('Pauza świata',()=>{sim.pause(!sim.paused);});
-    const autoBtn=button('Steruj ręcznie',()=>{sim.auto(false);autoBtn.textContent='Ruch automatyczny';autoBtn.onclick=()=>{sim.auto(true);autoBtn.textContent='Steruj ręcznie';autoBtn.onclick=()=>{sim.auto(false);autoBtn.textContent='Ruch automatyczny';};};});
+    const autoBtn=button('Steruj ręcznie',()=>{sim.auto(!sim.snap().auto);});
     const clearBtn=button('Wyczyść ślad',()=>sim.clear());
     const sourceBtn=button('Otwórz źródło',()=>ctx.openType('studio-r2-source',{fresh:true,w:.46,h:.7}));
     controls.append(pauseBtn,autoBtn,clearBtn,sourceBtn);
@@ -294,6 +294,7 @@
       root.dataset.sourceRev=String(doc.revision);
       root.dataset.worldPaused=String(s.paused);
       pauseBtn.textContent=s.paused?'Wznów świat':'Pauza świata';
+      autoBtn.textContent=s.auto?'Steruj ręcznie':'Ruch automatyczny';
     }
     const unsubWorld=watch(render);
     function move(e){
