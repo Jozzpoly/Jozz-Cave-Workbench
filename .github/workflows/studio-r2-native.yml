@@ -1,0 +1,49 @@
+name: Studio R2 source + living-world (isolated)
+on:
+  push:
+    branches:
+      - experiment/browser-studio-r2-source-world-2026-11-10
+    paths:
+      - "experiments/studio-r2/**"
+      - "src/jaskinia/59c-studio-r2-model.js"
+      - "src/jaskinia/59d-studio-r2-host.js"
+      - ".github/workflows/studio-r2-native.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: studio-r2-native-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Locked dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Source syntax and document/world model
+        run: |
+          node --check src/jaskinia/59c-studio-r2-model.js
+          node --check src/jaskinia/59d-studio-r2-host.js
+          node --check experiments/studio-r2/tests/native_jaskinia.mjs
+          node experiments/studio-r2/tests/model.test.cjs
+      - name: Compile real Jaskinia
+        run: |
+          python3 tools/render.py --app jaskinia
+          python3 tools/render.py --app jaskinia --host web
+      - name: Test native Jaskinia authoring and living simulation
+        run: node experiments/studio-r2/tests/native_jaskinia.mjs
+      - name: Archive CI screenshots (evidence, not deployment)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: studio-r2-native-evidence
+          path: studio-r2-native-*.png
+          if-no-files-found: ignore
+          retention-days: 7
