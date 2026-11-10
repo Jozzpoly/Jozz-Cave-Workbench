@@ -81,15 +81,6 @@
    "od": "2026-11-10",
    "kto": "Claude (Opus 5.5), czat",
    "zdejmij_gdy": "it passes in GitHub Actions in 5 runs in a row"
-  },
-  {
-   "zestaw": "jk2_test",
-   "test": "a sheet offers the project after a tap",
-   "niestabilne": true,
-   "dlaczego": "A phone check inside a suite that guards the owner's state: in GitHub Actions run 42907873842 the sheet did not open after a tap and the eight phone checks after it did not run; it passed in the five other Actions runs on 10 Nov and every run in Claude's sandbox. The page's code was the same as the published page's. Not investigated.",
-   "od": "2026-11-10",
-   "kto": "Claude (Opus 5.5), czat",
-   "zdejmij_gdy": "it passes in GitHub Actions in 5 runs in a row, or the phone checks move to a suite of their own"
   }
  ],
  "pominiete": [

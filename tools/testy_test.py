@@ -71,6 +71,10 @@ def main():
     # a suite that stops without PASS/FAIL lines blocks
     d, _ = run("jk5_test", out("Error: boom", code=1), out("Error: boom", code=1))
     ok(any("przerwał się" in f for f, _ in d["blocking"]), "a suite that stops without its PASS/FAIL lines blocks")
+    # a listed failure followed by an uncaught error: the checks after it never ran, so it blocks
+    crash = "PASS a\nFAIL a lab in a window\n--- stderr ---\nTimeoutError: locator.tap: Timeout 30000ms exceeded\n    at /x/jk5_test.mjs:9:1"
+    d = T.decide("jk5_test", "inne", T.judge("jk5_test", crash, 1, KNOWN), None, False)
+    ok(any("przerwał się" in f for f, _ in d["blocking"]), "a suite that dies after a listed failure blocks: its later checks never ran")
     # a known failure elsewhere is let through; when it passes again it is reported
     d, _ = run("jk5_test", out("FAIL a lab in a window"))
     ok(not d["blocking"] and len(d["let_through"]) == 1, "a known failure elsewhere is let through with its reason")

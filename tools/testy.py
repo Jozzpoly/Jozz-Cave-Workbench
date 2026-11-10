@@ -56,8 +56,12 @@ def judge(name, out, code, known):
         (hits.append(k) if k else unknown.append(f))
     healed = [k for k in mine if not k.get("niestabilne") and any(p.startswith(k["test"]) for p in passes)]
     inner = [l.strip() for l in lines if re.match(r"^\s*\(.*\bskipped\b.*\)\s*$", l)]
+    # a suite that dies of an uncaught error stops checking; with a FAIL line before it, the exit code alone would
+    # not show it (10 Nov 2026: jk2 lost 8 phone checks this way behind a listed failure)
+    err = out.split("\n--- stderr ---\n", 1)[1] if "\n--- stderr ---\n" in out else ""
+    crashed = code not in (0, 1) or bool(re.search(r"^(\w*Error\b|node:internal|\s+at \S)", err, re.M))
     return {"passes": passes, "fails": fails, "known": hits, "unknown": unknown, "healed": healed, "inner": inner,
-            "broken": code != 0 and not fails, "code": code, "tail": "\n".join(lines[-12:])}
+            "broken": code != 0 and (not fails or crashed), "code": code, "tail": "\n".join(lines[-12:])}
 
 
 def kind_of(name, state_suites):
