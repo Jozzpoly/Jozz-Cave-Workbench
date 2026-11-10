@@ -101,6 +101,10 @@ function buildChrome() {
   selStyle = h('style', { id: 'jk-selstyle' });
   document.head.append(selStyle);
   renderSnap();
+  // a tab kept open all day says how old its data is now, not how old it was when it opened (10 Nov 2026: with the
+  // refresh automat stopped, an open Home would have said "sprzed chwili" for days)
+  setInterval(renderSnap, 5 * 60 * 1000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) renderSnap(); });
 }
 /* how old the snapshot is, said in the bar itself: a day-old snapshot must not pass for today */
 function snapAgeText() {

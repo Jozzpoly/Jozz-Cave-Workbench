@@ -1,0 +1,30 @@
+// Jaskinia v6.4.2: the bar says how old the data is now, also in a tab that stays open (10 Nov 2026).
+// node tools/jk642_test.mjs [shotdir]     (served over http; the page's clock is moved by Playwright)
+import { chromium } from 'playwright';
+import { serve } from './serve.mjs';
+import fs from 'node:fs';
+import path from 'node:path';
+const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
+const dist = path.join(root, 'dist');
+const body = fs.readFileSync(path.join(dist, 'jaskinia.html'), 'utf8');
+const snap = JSON.parse(body.match(/<script[^>]*id="lib-data"[^>]*>([\s\S]*?)<\/script>/)[1]).estate.generated_ts;
+fs.writeFileSync(path.join(dist, '_jk642_test.html'), `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body>${body}</body></html>`);
+const SRV = await serve(dist);
+const browser = await chromium.launch();
+let pass = 0, fail = 0;
+const ok = (c, n, x = '') => { if (c) { pass++; console.log('PASS', n, x); } else { fail++; console.log('FAIL', n, x); } };
+const ctx = await browser.newContext({ viewport: { width: 1400, height: 900 } });
+await ctx.addInitScript(() => { try { localStorage.setItem('jaskinia:hint', '1'); localStorage.setItem('jaskinia:v6', '1'); } catch { /* fine */ } });
+const page = await ctx.newPage();
+await page.clock.install({ time: new Date((snap + 600) * 1000) });
+await page.goto(SRV.base + '/_jk642_test.html');
+await page.waitForFunction(() => window.__JASK && document.querySelector('.jk-snap'));
+const label = () => page.evaluate(() => document.querySelector('.jk-snap').textContent);
+ok(/sprzed chwili/.test(await label()), 'ten minutes after the snapshot the bar says "sprzed chwili"', await label());
+await page.clock.fastForward('03:00:00');
+ok(/sprzed 3 godz/.test(await label()), 'three hours later, without a reload, it says "sprzed 3 godz."', await label());
+await page.clock.fastForward('48:00:00');
+ok(/sprzed 2 dni/.test(await label()) && await page.evaluate(() => document.querySelector('.jk-snap').classList.contains('stale')), 'two days later it says "sprzed 2 dni" and is marked stale', await label());
+await browser.close(); SRV.close();
+console.log(`\n${pass} PASS, ${fail} FAIL`);
+process.exit(fail ? 1 : 0);
