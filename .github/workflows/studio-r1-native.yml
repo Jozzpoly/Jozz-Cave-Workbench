@@ -1,0 +1,36 @@
+name: Studio R1 native shell (isolated experiment)
+on:
+  push:
+    branches:
+      - experiment/browser-studio-r1-shared-doc-2026-11-10
+    paths:
+      - "experiments/studio-r1/**"
+      - "src/jaskinia/59a-studio-r1-model.js"
+      - "src/jaskinia/59b-studio-r1-host.js"
+      - ".github/workflows/studio-r1-native.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Check isolated Studio code
+        run: |
+          node --check src/jaskinia/59a-studio-r1-model.js
+          node --check src/jaskinia/59b-studio-r1-host.js
+          node --check experiments/studio-r1/tests/native_jaskinia.mjs
+          node experiments/studio-r1/tests/model.test.cjs
+      - name: Build full legacy Jaskinia
+        run: python3 tools/render.py --app jaskinia --host web
+      - name: Test native host, shared document and reload
+        run: node experiments/studio-r1/tests/native_jaskinia.mjs
