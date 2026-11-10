@@ -232,8 +232,18 @@
     canvas.addEventListener('pointercancel',finish);
     canvas.addEventListener('pointerleave',()=>{hover=null;if(!pending)paint();});
     root.addEventListener('keydown',e=>{
-      if(e.target.closest('input,textarea,select')||e.ctrlKey||e.metaKey)return;
-      const k=e.key.toLowerCase();
+      const k=e.key.toLowerCase(),modified=(e.ctrlKey||e.metaKey)&&!e.altKey;
+      const typing=!!e.target.closest('input,textarea,select,[contenteditable="true"]');
+      // Scope document history to the focused editor. Prevent the older Jaskinia shell
+      // from interpreting Ctrl+Z/Y as undo/redo of window layout.
+      if(modified&&(k==='z'||k==='y')){
+        e.stopPropagation();
+        if(typing)return; // native text editing keeps its own undo
+        e.preventDefault();
+        if(k==='z'&&e.shiftKey||k==='y')redo();else undo();
+        return;
+      }
+      if(typing||e.ctrlKey||e.metaKey||e.altKey)return;
       if(k==='b'||k==='e'||k==='i'){setTool({b:'brush',e:'erase',i:'pick'}[k]);e.preventDefault();}
     });
     function previewLoop(now){
