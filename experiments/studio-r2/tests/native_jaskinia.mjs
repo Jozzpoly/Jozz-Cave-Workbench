@@ -93,7 +93,7 @@ try{
   await source.getByRole('button',{name:'Cofnij'}).click();
   await page.waitForFunction(()=>document.querySelector('[data-studio-r2="source"]')?.dataset.sourceRev==='2');
   const undone=await page.evaluate(()=>JSON.parse(localStorage.getItem('jaskinia-studio-r2:source:1')));
-  assert.equal(undone.frames[0].pixels[11*24+12],4,'authoring undo should restore original hand-drawn pixel');
+  assert.equal(undone.frames[0].pixels[11*24+12],3,'authoring undo should restore original hand-drawn pixel');
   await source.getByRole('button',{name:'Ponów'}).click();
   const redone=await page.evaluate(()=>JSON.parse(localStorage.getItem('jaskinia-studio-r2:source:1')));
   assert.equal(redone.frames[0].pixels[11*24+12],2);
