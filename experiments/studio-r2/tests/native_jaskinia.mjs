@@ -99,6 +99,7 @@ try{
   await waitData('[data-studio-r2="world"]','time');
   assert(Number(await liveAgain.getAttribute('data-sim-ms'))>=liveAt,'world time reset when opening a new native view');
   assert(Number(await liveAgain.getAttribute('data-emitted'))>=emittedLive,'particle emitter reset when view closed');
+  assert(Number(await liveAgain.getAttribute('data-sim-ms'))<liveAt+150,'world kept burning CPU while no world view existed');
   // Source history is separate from shell layout undo.
   await activate(sourceShell);
   await source.getByRole('button',{name:'Cofnij'}).click();
