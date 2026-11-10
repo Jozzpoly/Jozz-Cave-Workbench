@@ -31,6 +31,12 @@ try{
   const world=page.locator('[data-studio-r2="world"]');
   await world.waitFor({state:'visible',timeout:15000});
   const worldShell=page.locator('section.win').filter({has:world});
+  // Arrange focus via the REAL shell's pointerdown handling; R2 never accesses private host globals.
+  // The old ext.open always floats two panels over one another; focus is explicit in this test.
+  const activate=async(shell)=>shell.evaluate(el=>el.dispatchEvent(new PointerEvent('pointerdown',{
+    button:0,bubbles:true,cancelable:true,pointerType:'mouse'
+  })));
+  const sourceShell=page.locator('section.win').filter({has:source});
   // Move the native Jaskinia floating window away from the editor's drawing surface.
   const hd=await worldShell.locator('header.whead').boundingBox();
   if(hd){const x=hd.x+hd.width*.5,y=hd.y+Math.min(12,hd.height*.4);await page.mouse.move(x,y);await page.mouse.down();await page.mouse.move(x+290,y+7,{steps:12});await page.mouse.up();}
@@ -46,11 +52,13 @@ try{
   const afterBrowse=Number(await world.getAttribute('data-sim-ms'));
   assert(afterBrowse>=beforeBrowse,'manual frame selection moved world clock backwards');
   await source.getByRole('button',{name:'1',exact:true}).click();
+  await activate(worldShell);
   await world.getByRole('button',{name:'Pauza świata'}).click();
   await page.waitForFunction(()=>document.querySelector('[data-studio-r2="world"]')?.dataset.worldPaused==='true');
   const pausedAt=Number(await world.getAttribute('data-sim-ms'));
   const emittedBefore=Number(await world.getAttribute('data-emitted'));
   const beforeBitmap=await wCanvas.evaluate(c=>c.toDataURL('image/png'));
+  await activate(sourceShell);
   const paintBox=await eCanvas.boundingBox();
   assert(paintBox&&paintBox.width>40,'source canvas not on screen');
   const px=(ix,iy)=>({x:paintBox.x+(ix+.5)/24*paintBox.width,y:paintBox.y+(iy+.5)/32*paintBox.height});
@@ -69,6 +77,7 @@ try{
   assert.notEqual(afterBitmap,beforeBitmap,'Existing living particles did not visually respond to changed source');
   // Native resizing of an actual Jaskinia window may not replace the canvas.
   await page.evaluate(()=>{window.__r2CanvasBeforeMax=document.querySelector('[data-studio-r2="world"] canvas');});
+  await activate(worldShell);
   await worldShell.locator('button.b-mx').click({force:true});
   await page.waitForFunction(()=>document.querySelector('[data-studio-r2="world"]')?.closest('section.win')?.classList.contains('maxed'));
   await page.waitForTimeout(450);
@@ -76,6 +85,7 @@ try{
   await worldShell.locator('button.wback').click({force:true});
   await page.waitForFunction(()=>!document.querySelector('[data-studio-r2="world"]')?.closest('section.win')?.classList.contains('maxed'));
   // The entire world survives closing its viewport.
+  await activate(worldShell);
   await world.getByRole('button',{name:'Wznów świat'}).click();
   await page.waitForFunction(t=>Number(document.querySelector('[data-studio-r2="world"]')?.dataset.simMs)>t+170,pausedAt,{timeout:10000});
   const liveAt=Number(await world.getAttribute('data-sim-ms'));
@@ -90,6 +100,7 @@ try{
   assert(Number(await liveAgain.getAttribute('data-sim-ms'))>=liveAt,'world time reset when opening a new native view');
   assert(Number(await liveAgain.getAttribute('data-emitted'))>=emittedLive,'particle emitter reset when view closed');
   // Source history is separate from shell layout undo.
+  await activate(sourceShell);
   await source.getByRole('button',{name:'Cofnij'}).click();
   await page.waitForFunction(()=>document.querySelector('[data-studio-r2="source"]')?.dataset.sourceRev==='2');
   const undone=await page.evaluate(()=>JSON.parse(localStorage.getItem('jaskinia-studio-r2:source:1')));
