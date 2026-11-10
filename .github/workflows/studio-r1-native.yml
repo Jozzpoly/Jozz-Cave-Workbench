@@ -31,6 +31,12 @@ jobs:
           node --check experiments/studio-r1/tests/native_jaskinia.mjs
           node experiments/studio-r1/tests/model.test.cjs
       - name: Build full legacy Jaskinia
-        run: python3 tools/render.py --app jaskinia --host web
+        run: |
+          python3 tools/render.py --app jaskinia
+          python3 tools/render.py --app jaskinia --host web
+      - name: Legacy Jaskinia layout and state regressions
+        run: |
+          node tools/jk_test.mjs
+          node tools/jk2_test.mjs
       - name: Test native host, shared document and reload
         run: node experiments/studio-r1/tests/native_jaskinia.mjs
