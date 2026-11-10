@@ -16,6 +16,15 @@
    "od": "2026-11-10",
    "kto": "Claude (Opus 5.5), czat",
    "zdejmij_gdy": "the check passes again (testy.py warns), or the rebuilt Jaskinia replaces this page"
+  },
+  {
+   "zestaw": "jk64_test",
+   "test": "four wheels set in motion, each its own part",
+   "niestabilne": true,
+   "dlaczego": "Unstable on untouched main 7fcedfa (Jaskinia 6.4.1): on 10 Nov 2026 it failed in 6 of 8 runs here, every other check of the part passing. Counting the parts every 100 ms right after the fourth one is set in motion gave 2,2,4,4… and 2,4,4…: for 100 to 300 ms the window holds an older record, then the right one. Likely cause, not yet proven: in src/jaskinia/57b-ruch.js the answer of an older save can arrive after the newer save's timer has fired, and adopt() takes it; the part he has just made then disappears for a moment and its selection is dropped. A probable fix: adopt only the answer of the newest save.",
+   "od": "2026-11-10",
+   "kto": "Claude (Opus 5.5), czat",
+   "zdejmij_gdy": "the race is fixed in the page and the check passes in 10 runs in a row"
   }
  ],
  "pominiete": [

@@ -12,6 +12,8 @@ A failure that is not in tools/znane_bledy.json fails the run, unless it does no
 second time: then it is reported as unstable (a ::warning:: and its own section) and lets the run through. A failure
 that is listed there is reported with its reason. A listed failure that passes again is reported out loud (a
 ::warning:: in GitHub Actions): the list says when it has stopped being true instead of hardening into scenery.
+An entry marked "niestabilne" is a check known to fail only sometimes: it is let through either way and stays
+listed until its cause is fixed.
 A suite that stops without its PASS/FAIL lines fails the run. Each suite's full output goes to
 shots/logi/<suite>.txt; a Markdown table goes to $GITHUB_STEP_SUMMARY when that is set.
 Status: tymczasowe, together with the self-refreshing Home (.github/workflows/dom-odswiezanie.yml).
@@ -46,7 +48,7 @@ def judge(name, out, code, known):
     for f in fails:
         k = next((k for k in mine if f.startswith(k["test"])), None)
         (hits.append(k) if k else unknown.append(f))
-    healed = [k for k in mine if any(p.startswith(k["test"]) for p in passes)]
+    healed = [k for k in mine if not k.get("niestabilne") and any(p.startswith(k["test"]) for p in passes)]
     return {"passes": passes, "fails": fails, "known": hits, "unknown": unknown, "healed": healed,
             "broken": code != 0 and not fails, "tail": "\n".join(lines[-12:])}
 
