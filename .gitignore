@@ -11,3 +11,6 @@ frames/
 *.mp4
 *.mov
 *.webm
+
+# written by tools/sprawdz_wejscia.py for one build; a stale copy must never be committed
+data/zagraj.json

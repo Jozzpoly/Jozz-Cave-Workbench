@@ -328,6 +328,10 @@ async function mouseDrag(page, a, b, steps = 12) {
   ok(await J(() => __JASK.L.wins[__JASK.L.focus].type) === 'kataster', 'tapping a dock chip shows that window');
   // map: a tap selects, no tooltip
   await page.locator('.dk-i').nth(0).tap(); await wait(400);
+  // the sheet comes when the tap changes the selection; with a fresh snapshot Combat-Lab may already be the chosen
+  // project, so the test first chooses another one (10 Nov 2026: two CI runs on fresh data had no sheet)
+  await J(() => { if (__JASK.store.sel === 'Combat-Lab') __JASK.select(JSON.parse(document.getElementById('lib-data').textContent).repos.map(r => r.name).find(n => n !== 'Combat-Lab')); });
+  await wait(200);
   const pb = await page.locator('.win[data-type="mapa"] .parcel[data-repo="Combat-Lab"] rect.body').boundingBox();
   await page.touchscreen.tap(pb.x + pb.width / 2, pb.y + pb.height / 2); await wait(400);
   ok(await J(() => __JASK.store.sel) === 'Combat-Lab', 'tapping a parcel selects it');

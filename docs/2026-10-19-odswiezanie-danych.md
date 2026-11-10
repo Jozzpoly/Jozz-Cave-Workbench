@@ -24,3 +24,20 @@ Dziesiąta uwaga Jozza do v6 (w skrócie, jego słowa zostają prywatne): pora p
 - **Zrzut mówi, jak bardzo jest świeży.** Lista repo ma swoją datę (`data/connector_repos.json`, `checked_at`), dane z API swoją (`gh_collected_ts`), a pokrycie jest w `estate.coverage`. Medium (PR #4) słusznie zauważył, że pełne pokrycie wolno ogłosić dopiero po odświeżeniu samej listy: w pierwszym zrzucie v6.3 lista była jeszcze z 14.10, więc „wszystkie” znaczyło „wszystkie znane”. Odświeżanie danych nie może też przeładowywać otwartej Jaskini (stare karty).
 - **Publiczny i prywatny zrzut potrzebują osobnych dróg.** B rozwiązuje publiczny podgląd, ale nie dotyka prywatnej Jaskini Jozza.
 - **Najmniejszy uczciwy krok do rozmowy:** B dla publicznego podglądu, tylko na wyraźne „tak” Jozza, plus pasek „zrzut sprzed X dni” (już jest). Prywatny zrzut dalej A, dopóki „jeden dom” (C) nie zostanie postanowiony z linią GPT od infrastruktury.
+
+## 10.11.2026: droga B zbudowana, publikacja czeka na „tak” Jozza
+
+Claude (Opus 5.5, czat), gałąź `claude/dom-sam-sie-odswieza-2026-11-10`. 9.11 Jozz wymienił samoaktualizujące się dane jako pierwszy punkt przebudowy, a 10.11 powiedział, że swoje gry uruchamia na co dzień przez Jaskinię. Dlatego B powstało teraz, z tymi warunkami:
+
+- `.github/workflows/dom-odswiezanie.yml` co 6 godzin, tylko publiczne repo. Lista repo jest odświeżana w każdym przebiegu (uwaga Medium z PR #4).
+- **Nieznane nie jest zerem.** Gdy API odmówi albo urwie się na którejś stronie, repo dostaje „nieznane”, sumy go pomijają, a strona mówi to słowami (`tools/luki_test.py`).
+- **Wejścia „Zagraj”** są otwierane automatycznie (`tools/sprawdz_wejscia.py`). To sprawdza adres, nie samą grę. `data/wejscia.json` zostaje ręcznym źródłem adresów.
+- **Stare karty:** `tools/dom_ciaglosc_test.mjs` otwiera opublikowaną stronę i nową kompilację pod jednym adresem. Sprawdza przeładowanie oraz kartę otwartą przez cały dzień obok nowej. Układy, okna, notatki i wybór muszą przejść.
+- **Publikacja na Pages** (zmienione 10.11 wieczorem na prośbę Jozza: chce prawdziwego automatu bez zatwierdzania każdej aktualizacji): scalenie tego PR do `main` jest jedyną aktywacją. Potem automat publikuje sam, gdy pokrycie jest pełne, testy przeszły i zmienił się fakt albo kod (albo dane mają ponad 20 h). Po wypchnięciu zamawia budowę Pages (push tokenem `GITHUB_TOKEN` jej nie uruchamia, co wykryła Astra), czeka na nowy `status.json` pod adresem na żywo i otwiera stronę w przeglądarce (`tools/sprawdz_strone.mjs`). Jeśli strona nie wstanie, cofa `gh-pages` do poprzedniej strony i wstrzymuje automat (`tools/cofnij_pages.sh`). Wyłącznik: zmienna `PUBLIKUJ_PAGES = nie`. Przyciski w Actions → Run workflow: `odswiez`, `cofnij` (poprzednia strona i wstrzymanie), `wznow`.
+- **Brama testów** (`tools/testy.py`, jej reguły sprawdza `tools/testy_test.py`):
+  - ciągłość nie ma wyjątków;
+  - testy stanu Ownera (układy, magazyn, karty, starsze karty, zapisy Ruchu) nie mają powtórek, a znany błąd przepuszczają tylko wtedy, gdy kod strony jest taki sam jak opublikowany, czyli gdy zmieniają się tylko dane;
+  - pozostałe testy mają jedną powtórkę, a błąd, który przy niej nie wrócił, jest raportowany jako niestabilny.
+  Znane błędy są spisane z powodem w `tools/znane_bledy.json`; gdy któryś znowu przejdzie, brama mówi o tym głośno. Tak zaostrzył to Menadżer (GPT) 10.11: pokazał, że pierwsza wersja przepuszczała błąd ciągłości, który przy powtórce nie wrócił.
+
+Bez zmian: prywatny zrzut (prywatne repo i słowa Jozza) dalej robi agent na prośbę, czyli droga A. Status całości: tymczasowe. Wraca do szuflady, gdy obserwator faktów przebudowanej Jaskini przejmie odświeżanie.

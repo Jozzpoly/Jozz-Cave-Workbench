@@ -1,0 +1,274 @@
+# Dom odświeża się sam: Jaskinia, którą Owner otwiera codziennie, z faktami sprzed kilku godzin, nie z 19 X.
+# Status: tymczasowe (10 XI 2026, Claude Opus 5.5 w czacie). Wraca do szuflady, gdy obserwator faktów
+# przebudowanej Jaskini przejmie odświeżanie.
+#
+# Każdy przebieg:
+#   - zbiera fakty z publicznych repo Jozzpoly (git i API GitHuba; czego API nie poda, strona pokazuje jako
+#     nieznane, nie jako zero),
+#   - otwiera każde wejście „Zagraj” (sprawdza adres, nie samą grę),
+#   - buduje Jaskinię i puszcza jej testy w przeglądarce,
+#   - sprawdza ciągłość: układy, okna, notatki i wybór z opublikowanej strony przechodzą do nowej.
+# Wynik zostaje jako artefakt przebiegu (7 dni).
+#
+# Na GitHub Pages (strona, której Owner używa na co dzień) trafia sam, bez pytania, gdy wszystko naraz:
+#   - przebieg idzie z main; scalenie PR, który wnosi ten plik na main, jest jedyną aktywacją automatu,
+#   - zmienna repozytorium PUBLIKUJ_PAGES nie jest „nie” (Settings → Secrets and variables → Actions → Variables);
+#     ustawienie jej na „nie” wyłącza publikację, budowanie i testy działają dalej,
+#   - każde repo z listy zostało przeczytane, API podało wszystko i testy przeszły; ciągłość nie ma wyjątków,
+#     a gdy kod strony różni się od opublikowanego, testy stanu Ownera nie mają ich także (tools/testy.py),
+#   - zmienił się fakt albo kod strony, albo opublikowane dane mają ponad 20 h (tools/publikuj_pages.py),
+#   - automat nie jest wstrzymany po cofnięciu.
+# Po wypchnięciu na gh-pages przebieg zamawia budowę Pages (push tokenem GITHUB_TOKEN jej nie uruchamia; Astra i
+# Menadżer, 10 XI) i czeka, aż adres na żywo poda nowy status.json, a strona wstanie w przeglądarce
+# (tools/sprawdz_strone.mjs). Jeśli nie: cofa gh-pages do poprzedniej strony, wstrzymuje automat i kończy się błędem.
+# Przyciski (Actions → Dom odświeża się sam → Run workflow, akcja): odswiez (teraz), cofnij (poprzednia strona i
+# wstrzymanie), wznow (zdejmuje wstrzymanie i odświeża).
+name: Dom odświeża się sam
+
+on:
+  schedule:
+    - cron: "23 */6 * * *"
+  workflow_dispatch:
+    inputs:
+      akcja:
+        description: "odswiez: zbuduj i opublikuj teraz; cofnij: wróć do poprzedniej strony i wstrzymaj automat; wznow: zdejmij wstrzymanie i odśwież"
+        type: choice
+        options: [odswiez, cofnij, wznow]
+        default: odswiez
+  push:
+    # main: the merge that activates the automat runs it at once, and so does every later change of main
+    branches: [main, claude/dom-sam-sie-odswieza-2026-11-10]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dom-odswiezanie-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  buduj:
+    name: Fakty, strona, testy
+    if: github.event_name != 'workflow_dispatch' || inputs.akcja != 'cofnij'
+    runs-on: ubuntu-24.04 # Playwright 1.56 does not install on the 26.04 runner (seen in this repo's CI, Nov 2026)
+    timeout-minutes: 90
+    outputs:
+      pelne: ${{ steps.fakty.outputs.pelne }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # tools/jk63_test.mjs takes the published v6 build from git; without history it skips 14 checks
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Zależności (czcionki, Playwright 1.56 z Chromium)
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+          python3 --version
+      - name: Strona opublikowana teraz (punkt odniesienia)
+        run: |
+          mkdir -p "$RUNNER_TEMP/teraz"
+          if git fetch --quiet --depth=1 origin gh-pages; then
+            git show FETCH_HEAD:index.html > "$RUNNER_TEMP/teraz/index.html"
+            git show FETCH_HEAD:dane/library.json > "$RUNNER_TEMP/teraz/library.json" 2>/dev/null || rm -f "$RUNNER_TEMP/teraz/library.json"
+            git show FETCH_HEAD:status.json > "$RUNNER_TEMP/teraz/status.json" 2>/dev/null || rm -f "$RUNNER_TEMP/teraz/status.json"
+          fi
+          ls -la "$RUNNER_TEMP/teraz"
+      - name: Czy kod strony różni się od opublikowanego
+        id: kod
+        shell: bash
+        run: |
+          # the files tools/render.py builds the page from; data is not code
+          pub=$(python3 -I -c "import json, sys; print((json.load(open(sys.argv[1])).get('source') or {}).get('commit') or '')" "$RUNNER_TEMP/teraz/status.json" 2>/dev/null || true)
+          if [ -n "$pub" ] && git cat-file -e "$pub^{commit}" 2>/dev/null && git diff --quiet "$pub" HEAD -- src docs/przyrzad tools/render.py package-lock.json; then
+            echo "scisle=nie" >> "$GITHUB_OUTPUT"
+            echo "### Kod strony: taki sam jak opublikowany (${pub:0:7}); zmieniają się tylko dane" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "scisle=tak" >> "$GITHUB_OUTPUT"
+            echo "### Kod strony: inny niż opublikowany (${pub:0:7}); testy stanu Ownera w trybie ścisłym" >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Fakty z repo, wejścia „Zagraj”, strona
+        id: fakty
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BIB_REPOS: ${{ runner.temp }}/repos
+          BIB_PUBLIC: "1"
+        run: |
+          # the build time in the page is the commit's time, so the same code and facts give the same page
+          export SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
+          since=()
+          if [ -s "$RUNNER_TEMP/teraz/library.json" ]; then since=(--since "$RUNNER_TEMP/teraz/library.json"); fi
+          set +e
+          python3 -I tools/regen.py --list public --sprawdz-wejscia "${since[@]}" 2>&1 | tee "$RUNNER_TEMP/regen.txt"
+          code=${PIPESTATUS[0]}
+          set -e
+          echo "regen.py: kod $code (0 pełne pokrycie, 2 któregoś repo nie dało się przeczytać, 1 błąd)"
+          if [ "$code" = "1" ]; then exit 1; fi
+          pelne=$(python3 -I -c "import json; c = json.load(open('data/library.json'))['estate']['coverage']; print('tak' if not c['missing'] and not c.get('api_unknown') else 'nie')")
+          if [ "$code" != "0" ]; then pelne=nie; fi
+          echo "pelne=$pelne" >> "$GITHUB_OUTPUT"
+          { echo "### Fakty (komplet: $pelne)"; echo; echo '```'; tail -n 14 "$RUNNER_TEMP/regen.txt"; echo '```'; echo; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Testy bez przeglądarki (luki w danych, publikacja)
+        run: |
+          python3 -I tools/luki_test.py
+          python3 -I tools/publikuj_test.py
+          python3 -I tools/testy_test.py
+          python3 -I tools/cofnij_test.py
+      - name: Testy Jaskini w przeglądarce i ciągłość z opublikowaną stroną
+        shell: bash
+        run: |
+          stara=()
+          if [ -s "$RUNNER_TEMP/teraz/index.html" ]; then stara=(--stara "$RUNNER_TEMP/teraz/index.html"); fi
+          scisle=()
+          if [ "${{ steps.kod.outputs.scisle }}" != "nie" ]; then scisle=(--scisle); fi
+          python3 -I tools/testy.py "${stara[@]}" "${scisle[@]}"
+          node tools/sprawdz_strone_test.mjs
+      - name: Czy ten przebieg publikuje
+        if: always()
+        env:
+          PUB: ${{ vars.PUBLIKUJ_PAGES }}
+          PELNE: ${{ steps.fakty.outputs.pelne }}
+        run: |
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then m="nie: przebieg z gałęzi $GITHUB_REF_NAME, a publikuje tylko main";
+          elif [ "$PUB" = "nie" ]; then m="nie: publikacja wyłączona (zmienna PUBLIKUJ_PAGES = nie)";
+          elif [ "$PELNE" != "tak" ]; then m="nie: fakty niepełne, strona zostaje taka, jaka jest";
+          elif [ "${{ job.status }}" != "success" ]; then m="nie: coś po drodze nie przeszło";
+          else m="tak, jeśli od ostatniej publikacji zmienił się fakt albo kod strony, albo minęło 20 h"; fi
+          echo "### Publikacja na GitHub Pages: $m" >> "$GITHUB_STEP_SUMMARY"
+      - name: Zbierz wynik
+        if: always()
+        run: |
+          w="$RUNNER_TEMP/wynik"; mkdir -p "$w/testy"
+          cp dist/jaskinia-web.html dist/jaskinia.html "$w"/ 2>/dev/null || true
+          for f in library git gh zagraj knowledge wejscia connector_repos; do cp "data/$f.json" "$w"/ 2>/dev/null || true; done
+          cp "$RUNNER_TEMP/regen.txt" "$w"/ 2>/dev/null || true
+          cp shots/logi/*.txt "$w/testy"/ 2>/dev/null || true
+          ls -la "$w" "$w/testy"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: jaskinia-${{ github.run_id }}
+          path: ${{ runner.temp }}/wynik
+          retention-days: 7
+          if-no-files-found: warn
+
+  publikuj:
+    name: Publikacja na GitHub Pages
+    needs: buduj
+    if: github.ref == 'refs/heads/main' && vars.PUBLIKUJ_PAGES != 'nie' && needs.buduj.outputs.pelne == 'tak'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      pages: write
+    concurrency:
+      group: gh-pages-publikacja
+      cancel-in-progress: false
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PRZEBIEG: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - name: Adres strony
+        run: echo "ADRES=https://${GITHUB_REPOSITORY_OWNER,,}.github.io/${GITHUB_REPOSITORY#*/}/" >> "$GITHUB_ENV"
+        shell: bash
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: _strona
+          fetch-depth: 5
+      - uses: actions/download-artifact@v4
+        with:
+          name: jaskinia-${{ github.run_id }}
+          path: _nowa
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Przeglądarka do sprawdzenia adresu na żywo
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: Co się zmieniło od ostatniej publikacji
+        id: pub
+        run: |
+          wznow=()
+          if [ "${{ inputs.akcja }}" = "wznow" ]; then wznow=(--wznow); fi
+          python3 -I tools/publikuj_pages.py _strona _nowa --commit "$GITHUB_SHA" --run "$PRZEBIEG" "${wznow[@]}"
+        shell: bash
+      - name: Wypchnij na gh-pages i zamów budowę Pages
+        if: steps.pub.outputs.zmiana == 'tak'
+        working-directory: _strona
+        env:
+          POWOD: ${{ steps.pub.outputs.powod }}
+          DANE: ${{ steps.pub.outputs.dane }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "dom(odświeżenie): dane z $DANE" -m "$POWOD. Zbudowane z main@${GITHUB_SHA::7} po testach; przebieg $PRZEBIEG"
+          git push -q origin HEAD:gh-pages
+          gh api -X POST "repos/$GITHUB_REPOSITORY/pages/builds" --silent || echo "::warning::Nie udało się zamówić budowy Pages; sprawdzam, czy ruszyła sama"
+      - name: Sprawdź adres na żywo
+        id: zywo
+        if: steps.pub.outputs.zmiana == 'tak'
+        continue-on-error: true
+        run: node tools/sprawdz_strone.mjs "$ADRES" "${{ steps.pub.outputs.odcisk }}" --czekaj 900
+      - name: Cofnij, jeśli adres na żywo nie działa
+        if: steps.pub.outputs.zmiana == 'tak' && steps.zywo.outcome != 'success'
+        run: |
+          tools/cofnij_pages.sh _strona "adres na żywo nie podał nowej strony albo ta nie wstała" "$PRZEBIEG"
+          git -C _strona push -q origin HEAD:gh-pages
+          gh api -X POST "repos/$GITHUB_REPOSITORY/pages/builds" --silent || true
+          echo "### Cofnięte do poprzedniej strony i wstrzymane. Wznowienie: Run workflow, akcja wznow." >> "$GITHUB_STEP_SUMMARY"
+          exit 1
+      - name: Wynik
+        if: always()
+        env:
+          POWOD: ${{ steps.pub.outputs.powod }}
+          DANE: ${{ steps.pub.outputs.dane }}
+          ZMIANA: ${{ steps.pub.outputs.zmiana }}
+          ZYWO: ${{ steps.zywo.outcome }}
+        run: |
+          if [ "$ZMIANA" != "tak" ]; then echo "### Strona na Pages zostaje bez zmian ($POWOD)" >> "$GITHUB_STEP_SUMMARY";
+          elif [ "$ZYWO" = "success" ]; then echo "### Opublikowane i sprawdzone na żywo: dane z $DANE ($POWOD), $ADRES" >> "$GITHUB_STEP_SUMMARY"; fi
+
+  cofnij:
+    name: Cofnięcie strony na Pages
+    if: github.event_name == 'workflow_dispatch' && inputs.akcja == 'cofnij' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    permissions:
+      contents: write
+      pages: write
+    concurrency:
+      group: gh-pages-publikacja
+      cancel-in-progress: false
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PRZEBIEG: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - name: Adres strony
+        run: echo "ADRES=https://${GITHUB_REPOSITORY_OWNER,,}.github.io/${GITHUB_REPOSITORY#*/}/" >> "$GITHUB_ENV"
+        shell: bash
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: _strona
+          fetch-depth: 50
+      - name: Wróć do strony sprzed ostatniego odświeżenia i wstrzymaj automat
+        id: cof
+        run: |
+          git -C _strona config user.name "github-actions[bot]"
+          git -C _strona config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          tools/cofnij_pages.sh _strona "cofnięte ręcznie (Run workflow, akcja cofnij)" "$PRZEBIEG" | tee -a "$GITHUB_OUTPUT"
+          git -C _strona push -q origin HEAD:gh-pages
+          gh api -X POST "repos/$GITHUB_REPOSITORY/pages/builds" --silent || true
+          echo "### Cofnięte do strony sprzed ostatniego odświeżenia; automat wstrzymany do akcji wznow." >> "$GITHUB_STEP_SUMMARY"
+      - name: Sprawdź adres na żywo
+        if: steps.cof.outputs.fp != ''
+        run: node tools/sprawdz_strone.mjs "$ADRES" "${{ steps.cof.outputs.fp }}" --czekaj 900 --bez-przegladarki

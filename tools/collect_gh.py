@@ -29,20 +29,31 @@ def api(path, paginate=False):
 
 
 def api_lines(path):
-    """Manual pagination (the proxy blocks numeric-id 'next' links)."""
+    """Manual pagination (the proxy blocks numeric-id 'next' links).
+
+    Returns the list only when every page arrived. A failed or capped page returns
+    {"_error": ..., "_partial": items_so_far}: a shorter list must not pass for a complete one
+    (unknown is not zero; Astra's 403 trial of 9 Nov, reproduced from source on 10 Nov).
+    """
     items, page = [], 1
-    while page < 30:
+    while True:
+        if page >= 30:
+            return {"_error": "page limit 30 reached", "_partial": items}
         sep = "&" if "?" in path else "?"
         r = subprocess.run(["gh", "api", "-H", "Accept: application/vnd.github+json", f"{path}{sep}page={page}"],
                            capture_output=True, text=True)
         if r.returncode != 0:
-            return items if items else {"_error": (r.stderr or r.stdout)[:300]}
-        chunk = json.loads(r.stdout or "[]")
+            return {"_error": (r.stderr or r.stdout)[:300], "_partial": items}
+        try:
+            chunk = json.loads(r.stdout or "[]")
+        except json.JSONDecodeError:
+            return {"_error": "json", "_partial": items}
+        if not isinstance(chunk, list):
+            return {"_error": "not a list", "_partial": items}
         items += chunk
         if len(chunk) < 100:
-            break
+            return items
         page += 1
-    return items
 
 
 def first_line(t, n=200):
@@ -67,10 +78,22 @@ def collect(name):
                                          "language", "default_branch", "open_issues_count", "archived",
                                          "stargazers_count", "forks_count", "has_issues", "has_wiki")}
     out["meta"]["license"] = (m.get("license") or {}).get("spdx_id")
-    out["languages"] = api(f"{base}/languages") or {}
+    # Every part says whether it arrived: "ok", "partial" or "error". A part that did not arrive
+    # is None, never an empty list, so nothing downstream can show it as zero.
+    parts = {}
+    langs = api(f"{base}/languages")
+    if isinstance(langs, dict) and "_error" not in langs:
+        out["languages"], parts["languages"] = langs, "ok"
+    else:
+        out["languages"], parts["languages"] = None, "error"
     prs = api_lines(f"{base}/pulls?state=all&per_page=100")
-    plist = []
     if isinstance(prs, list):
+        parts["prs"] = "ok"
+    else:
+        parts["prs"] = "partial" if isinstance(prs, dict) and prs.get("_partial") else "error"
+        prs = None
+    plist = None if prs is None else []
+    if prs is not None:
         for p in prs:
             item = {"n": p["number"], "title": p.get("title"), "state": p.get("state"), "draft": p.get("draft"),
                     "merged_at": p.get("merged_at"), "created_at": p.get("created_at"), "closed_at": p.get("closed_at"),
@@ -83,8 +106,10 @@ def collect(name):
             plist.append(item)
     out["prs"] = plist
     runs = api(f"{base}/actions/runs?per_page=100")
-    rl = []
+    rl = None
     if isinstance(runs, dict) and "workflow_runs" in runs:
+        parts["runs"] = "ok"
+        rl = []
         out["runs_total"] = runs.get("total_count")
         seen = set()
         for w in runs["workflow_runs"]:
@@ -95,10 +120,19 @@ def collect(name):
             rl.append({"branch": w.get("head_branch"), "name": w.get("name"), "status": w.get("status"),
                        "conclusion": w.get("conclusion"), "created_at": w.get("created_at"),
                        "sha": w.get("head_sha"), "url": w.get("html_url"), "event": w.get("event")})
+    else:
+        parts["runs"] = "error"
     out["runs_latest"] = rl
     iss = api(f"{base}/issues?state=open&per_page=100")
-    out["issues_open"] = [{"n": i["number"], "title": i.get("title"), "created_at": i.get("created_at"),
-                           "comments": i.get("comments")} for i in (iss if isinstance(iss, list) else []) if "pull_request" not in i]
+    if isinstance(iss, list):
+        parts["issues"] = "ok"
+        out["issues_open"] = [{"n": i["number"], "title": i.get("title"), "created_at": i.get("created_at"),
+                               "comments": i.get("comments")} for i in iss if "pull_request" not in i]
+    else:
+        parts["issues"] = "error"
+        out["issues_open"] = None
+    out["parts"] = parts
+    out["fetched_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     return out
 
 
@@ -112,7 +146,10 @@ def main():
         res = list(ex.map(collect, REPOS))
     json.dump({"collected_ts": int(time.time()), "repos": res}, open(OUT, "w"), ensure_ascii=False)
     errs = [r["name"] for r in res if "_error" in r]
-    print(f"{len(res)} repos, {sum(len(r.get('prs', [])) for r in res)} PRs, errors={errs}, {round(time.time()-t0,1)} s")
+    gaps = {r["name"]: sorted(k for k, v in (r.get("parts") or {}).items() if v != "ok") for r in res}
+    gaps = {k: v for k, v in gaps.items() if v}
+    print(f"{len(res)} repos, {sum(len(r.get('prs') or []) for r in res)} PRs, errors={errs}, "
+          f"parts missing={gaps}, {round(time.time()-t0,1)} s")
 
 
 if __name__ == "__main__":

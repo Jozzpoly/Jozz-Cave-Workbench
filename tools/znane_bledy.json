@@ -1,0 +1,95 @@
+{
+ "_o": "Known failures of Jaskinia's browser suites, each with its reason, and suites that cannot run on the machine that runs them. tools/testy.py lets the listed failures through and nothing else, and says out loud when one passes again, so this list cannot quietly harden into scenery. A skipped suite is named in every summary with its reason; asking for it by name runs it anyway. Remove an entry when its check passes, when the suite can run, or when the page it describes is replaced. Status: tymczasowe (10 Nov 2026).",
+ "klasa_stanu": [
+  "jk_test",
+  "jk2_test",
+  "jk61_test",
+  "jk63_test",
+  "jk64_test",
+  "jk641_test"
+ ],
+ "_klasa_stanu": "Suites that guard the owner's state: layouts and their persistence, storage, notes, trash and copies, tabs that merge, older tabs, the records of his Ruch parts. tools/testy.py never retries a new failure in them, and lets a known one through only when the page's code is the same as the published page's (only the data changed). Continuity (tools/dom_ciaglosc_test.mjs) has no exceptions at all.",
+ "bledy": [
+  {
+   "zestaw": "jk62_test",
+   "test": "the stage has a \"Ostre piksele\" switch, on",
+   "dlaczego": "Passes in GitHub Actions (Playwright 1.56 and its Chromium, run 42863614055) and fails in Claude's sandbox (a newer Playwright and Chromium), on untouched main 7fcedfa as well: it depends on the browser build, not on the page or the data. The stage, or this check, may also have changed with v6.4.",
+   "od": "2026-11-10",
+   "kto": "Claude (Opus 5.5), czat",
+   "zdejmij_gdy": "it passes in both places, or the rebuilt Jaskinia replaces this page",
+   "niestabilne": true
+  },
+  {
+   "zestaw": "jk62_test",
+   "test": "dragging with the wheel button moves the view and does not zoom",
+   "dlaczego": "Passes in GitHub Actions (Playwright 1.56 and its Chromium, run 42863614055) and fails in Claude's sandbox (a newer Playwright and Chromium), on untouched main 7fcedfa as well: it depends on the browser build, not on the page or the data. A middle-button drag in some headless builds may not reach the 3D view the way a real mouse does.",
+   "od": "2026-11-10",
+   "kto": "Claude (Opus 5.5), czat",
+   "zdejmij_gdy": "it passes in both places, or the rebuilt Jaskinia replaces this page",
+   "niestabilne": true
+  },
+  {
+   "zestaw": "jk64_test",
+   "test": "four wheels set in motion, each its own part",
+   "niestabilne": true,
+   "dlaczego": "Unstable on untouched main 7fcedfa (Jaskinia 6.4.1): on 10 Nov 2026 it failed in 6 of 8 runs here, every other check of the part passing. Counting the parts every 100 ms right after the fourth one is set in motion gave 2,2,4,4… and 2,4,4…: for 100 to 300 ms the window holds an older record, then the right one. Likely cause, not yet proven: in src/jaskinia/57b-ruch.js the answer of an older save can arrive after the newer save's timer has fired, and adopt() takes it; the part he has just made then disappears for a moment and its selection is dropped. A probable fix: adopt only the answer of the newest save.",
+   "od": "2026-11-10",
+   "kto": "Claude (Opus 5.5), czat",
+   "zdejmij_gdy": "the race is fixed in the page and the check passes in 10 runs in a row"
+  },
+  {
+   "zestaw": "jk61_test",
+   "test": "the same layout rearranged in two tabs at once: one valid shape in both",
+   "niestabilne": true,
+   "dlaczego": "Fails in GitHub Actions (Playwright 1.56, run 42863614055, again on the retry) and passes in Claude's sandbox. The code is the same as the page published now, so the refresh does not cause it. Not investigated yet. Both tabs end with a valid layout, but not yet the same one 1.5 s after both changed it at once.",
+   "od": "2026-11-10",
+   "kto": "Claude (Opus 5.5), czat",
+   "zdejmij_gdy": "it passes in GitHub Actions in 5 runs in a row"
+  },
+  {
+   "zestaw": "jk641_test",
+   "test": "two Materiały windows show the same model, Ruch on in both",
+   "niestabilne": true,
+   "dlaczego": "Fails in GitHub Actions (Playwright 1.56, run 42863614055, again on the retry) and passes in Claude's sandbox. The code is the same as the page published now, so the refresh does not cause it. Not investigated yet. In Actions the two Materiały windows on one model do not come up with Ruch on in both (the first of these checks), and the three that build on that fail with it.",
+   "od": "2026-11-10",
+   "kto": "Claude (Opus 5.5), czat",
+   "zdejmij_gdy": "it passes in GitHub Actions in 5 runs in a row"
+  },
+  {
+   "zestaw": "jk641_test",
+   "test": "the piston set in window B is added to the record; the wheel from A stays",
+   "niestabilne": true,
+   "dlaczego": "Fails in GitHub Actions (Playwright 1.56, run 42863614055, again on the retry) and passes in Claude's sandbox. The code is the same as the page published now, so the refresh does not cause it. Not investigated yet. In Actions the two Materiały windows on one model do not come up with Ruch on in both (the first of these checks), and the three that build on that fail with it.",
+   "od": "2026-11-10",
+   "kto": "Claude (Opus 5.5), czat",
+   "zdejmij_gdy": "it passes in GitHub Actions in 5 runs in a row"
+  },
+  {
+   "zestaw": "jk641_test",
+   "test": "and window A shows both",
+   "niestabilne": true,
+   "dlaczego": "Fails in GitHub Actions (Playwright 1.56, run 42863614055, again on the retry) and passes in Claude's sandbox. The code is the same as the page published now, so the refresh does not cause it. Not investigated yet. In Actions the two Materiały windows on one model do not come up with Ruch on in both (the first of these checks), and the three that build on that fail with it.",
+   "od": "2026-11-10",
+   "kto": "Claude (Opus 5.5), czat",
+   "zdejmij_gdy": "it passes in GitHub Actions in 5 runs in a row"
+  },
+  {
+   "zestaw": "jk641_test",
+   "test": "\"Stoi\" in one window takes back only that part",
+   "niestabilne": true,
+   "dlaczego": "Fails in GitHub Actions (Playwright 1.56, run 42863614055, again on the retry) and passes in Claude's sandbox. The code is the same as the page published now, so the refresh does not cause it. Not investigated yet. In Actions the two Materiały windows on one model do not come up with Ruch on in both (the first of these checks), and the three that build on that fail with it.",
+   "od": "2026-11-10",
+   "kto": "Claude (Opus 5.5), czat",
+   "zdejmij_gdy": "it passes in GitHub Actions in 5 runs in a row"
+  }
+ ],
+ "pominiete": [
+  {
+   "zestaw": "jk6_test",
+   "dlaczego": "Needs a folder of real models: files from the owner's public repositories (MAT_REPO in src/jaskinia/57-materialy.js, earlier Box3D meshes) and a glTF sample with its .bin and textures, named as its header says, by default in /home/claude/models. No such folder exists in CI or in this sandbox on 10 Nov 2026. Without it the suite fails its first model checks (5 PASS, 4 FAIL) and then stops on a missing file (ENOENT Box3d___stairs.obj).",
+   "od": "2026-11-10",
+   "kto": "Claude (Opus 5.5), czat",
+   "zdejmij_gdy": "the workflow assembles that folder from the public repositories, or the suite learns to skip the checks whose files are missing"
+  }
+ ]
+}
