@@ -108,6 +108,16 @@ try{
   await source.getByRole('button',{name:'Ponów'}).click();
   const redone=await page.evaluate(()=>JSON.parse(localStorage.getItem('jaskinia-studio-r2:source:1')));
   assert.equal(redone.frames[0].pixels[11*24+12],2);
+  // RED contract test: after painting, Ctrl+Z must undo source pixels, not Jaskinia window layout.
+  const oldLayout=await page.evaluate(()=>JSON.stringify(window.__JASK.L.tree));
+  await source.focus();
+  await page.keyboard.press('Control+z');
+  await page.waitForFunction(()=>document.querySelector('[data-studio-r2="source"]')?.dataset.sourceRev==='4',{timeout:3000});
+  assert.equal((await page.evaluate(()=>JSON.parse(localStorage.getItem('jaskinia-studio-r2:source:1')))).frames[0].pixels[11*24+12],3,'Ctrl+Z must restore source pixel');
+  assert.equal(await page.evaluate(()=>JSON.stringify(window.__JASK.L.tree)),oldLayout,'Ctrl+Z must not alter Jaskinia layout when source is active');
+  await page.keyboard.press('Control+Shift+z');
+  await page.waitForFunction(()=>document.querySelector('[data-studio-r2="source"]')?.dataset.sourceRev==='5',{timeout:3000});
+  assert.equal((await page.evaluate(()=>JSON.parse(localStorage.getItem('jaskinia-studio-r2:source:1')))).frames[0].pixels[11*24+12],2);
   withBlock: {
     const exporter=source.getByRole('button',{name:'Eksport JSON'});
     const [dl]=await Promise.all([page.waitForEvent('download'),exporter.click({force:true})]);
