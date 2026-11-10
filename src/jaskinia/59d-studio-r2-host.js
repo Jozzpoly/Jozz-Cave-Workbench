@@ -35,6 +35,16 @@
   const redo=()=>{if(H.redo()){save();emit();}};
   function replace(d){if(!M.valid(d))throw Error('To nie jest dokument Studio R2');if(H.replace(d)){save();emit();}}
   function subscribe(fn){subscribers.add(fn);fn(state());return()=>subscribers.delete(fn);}
+
+  // Other tabs can author the same material. An external write must never be
+  // silently overwritten by this tab's older in-memory snapshot.
+  const storageListener=e=>{
+    if(e.key!==KEY)return;
+    blocked=true;
+    warning='Ten sam dokument zmieniono w innej karcie. Nie nadpisuję obcej pracy. Wyeksportuj swój JSON.';
+    emit();
+  };
+  window.addEventListener('storage',storageListener);
   // Lazy execution: a dormant lab must not animate forever just because Jaskinia loaded it.
   // Source and world state survive closing the view; simulation time deliberately pauses
   // while nobody observes this isolated research world (not a game-server policy).
