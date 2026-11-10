@@ -48,6 +48,23 @@ try {
   const current=await page.evaluate(()=>JSON.parse(localStorage.getItem('jaskinia-studio-r1:demo:1')));
   assert.equal(current.revision,1);
   assert.equal(current.pixels[2*24+2],3);
+  // Real Jaskinia's own maximize/restore: must not replace or rewind authored content.
+  await obsShell.locator('button.b-mx').click({force:true});
+  await page.waitForFunction(()=>document.querySelector('[data-studio-r1="observer"]')?.closest('section.win')?.classList.contains('maxed'));
+  assert((await obs.innerText()).includes('rewizja 1'),'Maximize lost shared document');
+  await obsShell.locator('button.wback').click({force:true});
+  await page.waitForFunction(()=>!document.querySelector('[data-studio-r1="observer"]')?.closest('section.win')?.classList.contains('maxed'));
+  assert((await obs.innerText()).includes('rewizja 1'),'Restore lost shared document');
+  // Native Jaskinia spaces should be independent from the authored document lifecycle.
+  const originalSpace=await page.locator('.jk-tab.on').first().getAttribute('data-sp');
+  const otherTab=page.locator('.jk-tab:not(.on)').first();
+  if(await otherTab.count()) {
+    await otherTab.click();
+    await page.waitForFunction(id=>document.querySelector('.jk-tab.on')?.getAttribute('data-sp')!==id,originalSpace);
+    await page.locator('.jk-tab[data-sp="'+originalSpace+'"]').click();
+    await page.waitForFunction(()=>document.querySelector('[data-studio-r1="observer"] .r1-status')?.textContent?.includes('rewizja 1'));
+  } else console.log('SKIP native space roundtrip: only one space in default Jaskinia');
+
   const painterShell=page.locator('section.win').filter({has:paint});
   await painterShell.locator('button.b-x').click({force:true});
   await page.waitForFunction(()=>!document.querySelector('[data-studio-r1="painter"]'));
