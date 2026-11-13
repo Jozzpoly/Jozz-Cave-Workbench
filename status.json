@@ -7,26 +7,26 @@
     "repository": "Jozzpoly/Jozz-Cave-Workbench",
     "ref": "main",
     "commit": "17aceefba9760ca86227f9371ec9003b6acf29d0",
-    "html_blob": "fbd357a1a928dc788253baed8b546ae7b016072c",
-    "workflow_run": "https://github.com/Jozzpoly/Jozz-Cave-Workbench/actions/runs/43382002730"
+    "html_blob": "9a25c26010c513c85798457d28c0577bf3f951a8",
+    "workflow_run": "https://github.com/Jozzpoly/Jozz-Cave-Workbench/actions/runs/43495877672"
   },
   "data": {
     "repository_count": 28,
     "scope": "public-repositories-only",
     "historical_snapshot": "2026-11-13",
-    "generated": "2026-11-13T06:55+00:00",
-    "generated_ts": 1794552934,
+    "generated": "2026-11-13T19:50+00:00",
+    "generated_ts": 1794599448,
     "auto_refresh": true,
     "refresh": "checked every 6 h on main; published when a fact or the page changed, or the data is over 20 h old (.github/workflows/dom-odswiezanie.yml)",
     "coverage": "28/28",
     "api_unknown": [],
     "zagraj": {
-      "checked_at": "2026-11-13 06:56 UTC",
+      "checked_at": "2026-11-13 19:51 UTC",
       "answering": 11,
       "of": 11,
       "method": "HTTP GET bez przeglądarki: adres odpowiada albo nie. To nie jest test samej gry."
     },
-    "fingerprint": "c23ee8b33a183bbb"
+    "fingerprint": "3565ffc608d1860b"
   },
   "limitations": [
     "experimental_only",
@@ -48,7 +48,7 @@
     "tested_before_publishing": "Jaskinia's browser suites (tools/testy.py) and continuity from the page published before (tools/dom_ciaglosc_test.mjs)",
     "previous": {
       "commit": "17aceefba9760ca86227f9371ec9003b6acf29d0",
-      "data": "2026-11-12T20:04+00:00"
+      "data": "2026-11-13T06:55+00:00"
     }
   }
 }
