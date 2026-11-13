@@ -83,3 +83,19 @@ docs/                         design decisions, notes from the owner's recording
 ## Working here
 
 Agents start with [AGENTS.md](AGENTS.md). In one line: the owner's judgment decides, facts and hypotheses stay apart, nothing is lost silently, the private layer never enters this repository, and every change comes with a test and a screenshot.
+
+## Where this is and what is next to it
+
+This workbench does not stand alone. The addresses are here so that nobody has to reconstruct them
+from memory again.
+
+| Thing | Address | What it is |
+| --- | --- | --- |
+| this workbench, live | [jozzpoly.github.io/Jozz-Cave-Workbench](https://jozzpoly.github.io/Jozz-Cave-Workbench/) | the owner's Dom today: windows, layouts, materials, the Kataster. Refreshed by CI every six hours |
+| Jaskinia on Cloudflare | [repo](https://github.com/Jozzpoly/Jaskinia) · [live](https://jaskinia.jozzpoly.workers.dev) | a newer workshop built from this one module by module; every branch there gets its own preview address, and `/dom/` there serves this page under that address |
+| Medium | [repo](https://github.com/Jozzpoly/Shared-Work-Medium-Lab) | research into what agents' bodies can actually reach and how to prove it; negative results that exist nowhere else |
+| Feniks Studio | [repo](https://github.com/Jozzpoly/Feniks-Studio) | a tool for authoring places and matter, paused until it is decided where it grows |
+
+> Po polsku: ten warsztat nie stoi sam. Adresy sąsiadów są tutaj, a nie w czyjejś pamięci, bo
+> 14 XI 2026 zmierzono, że z dwunastu możliwych kierunków między repozytoriami właściciela
+> dziewięć nie miało ani jednego odnośnika: repozytoria o sobie wspominały i nigdzie nie prowadziły.
