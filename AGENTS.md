@@ -135,9 +135,9 @@ Interface strings are written in Polish in the source and wrapped in `t('…')`.
 
 ## Known debts (as of 16 Oct 2026, v5, with the evening review in [docs/2026-10-16-szwy.md](docs/2026-10-16-szwy.md))
 
-1. The data is a snapshot taken in an agent's sandbox (`tools/regen.py`, last on 19 Oct 2026), with no automatic refresh yet. Play addresses guessed from a repository's name can be dead: `data/wejscia.json` holds the verified ones (who, when, window or tab only).
+1. ~~The data is a snapshot taken in an agent's sandbox (`tools/regen.py`, last on 19 Oct 2026), with no automatic refresh yet.~~ *(14 XI: nieaktualne — automat `dom-odswiezanie.yml` publikuje od 10 XI, ok. 2× na dobę.)* Play addresses guessed from a repository's name can be dead: `data/wejscia.json` holds the verified ones (who, when, window or tab only).
 2. State lives in one browser; no sync between devices. The owner often runs Jaskinia as a downloaded file, so a sync built only on the claude.ai artifact would not reach him.
-3. There is no layer for the owner's own judgment of projects (finished, donor, return to it).
+3. There is no layer for the owner's own judgment of projects (finished, donor, return to it). *(14 XI: dokładniej — warstwa jest napisana w `src/app.js`, ale działa tylko w artefakcie claude.ai; pod adresem Pages jej nie ma i nigdy nic nie zapisała.)*
 4. Library panels are glued in through a compatibility hook and are Polish only.
 5. The window system is concatenated scripts with shared state. Tests are mostly end-to-end.
 6. In the claude.ai artifact, games open in a new tab, not in a window (a downloaded file and the owner's own server can open them in a window since v4). The demo lab is the exception: it is carried inside the page.

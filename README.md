@@ -1,3 +1,13 @@
+> [!IMPORTANT]
+> **Stan na 14 XI 2026 (Opus czatu, autor większości tego repo; tylko dokumentacja).** Kilka zdań niżej jest nieaktualnych:
+> - „Status: v6.4, 21 Oct, in the owner's private claude.ai artifact” — żywa jest **v6.4.1 na GitHub Pages**, publikowana automatem `dom-odswiezanie.yml` (od 10 XI; harmonogram co 6 h, w praktyce GitHub odpala ok. 2× na dobę).
+> - „26 public repositories” — żywe dane obejmują **28** (`gh-pages/status.json`).
+> - Przyciski osądu właściciela (Potwierdź / Popraw / Odrzuć, Zajmę się / Zleć agentowi) są w kodzie (`src/app.js` ~592–640, ~862–945), ale działają tylko z bazą artefaktu claude.ai; pod adresem Pages ich nie ma i **nigdzie nie zapisały ani jednej decyzji** (sprawdzone 13 XI).
+> - `src/jaskinia/58-api.js` obiecuje okna „from another repository without editing src/jaskinia/*” — Jaskinia nie ma czym wczytać kodu spoza własnego buildu; obcy kod wchodzi tylko jako strona w oknie „przyrząd”.
+> - Odnośnik „biblioteka-dla-agentow.md” w oknie dla agentów prowadzi do 404 pod adresem Pages.
+>
+> Kierunek: następca powstaje w repo [`Jaskinia`](https://github.com/Jozzpoly/Jaskinia); to repo zostaje codziennym oknem właściciela i dawcą uruchamialnych buildów.
+
 # Jozz Cave Workbench: Jaskinia
 
 **Jaskinia** ("the cave") is Jozz's workbench over all of his repositories. It is one full-screen page of windows that he arranges himself, the way Blender lets you compose editors into workspaces. The windows can show:
