@@ -1,6 +1,6 @@
 # Biblioteka Jozzpoly — brief dla agentów
 
-Zrzut: 2026-11-14 03:53 UTC. Pokrycie: 28/28 repo (28 publicznych, 0 prywatnych). To migawka, nie żywa prawda: przed działaniem sprawdź żywy branch, PR i CI.
+Zrzut: 2026-11-14 04:47 UTC. Pokrycie: 28/28 repo (28 publicznych, 0 prywatnych). To migawka, nie żywa prawda: przed działaniem sprawdź żywy branch, PR i CI.
 
 ## Zasady pracy
 - Zdania „po co jest to repo” i przypisanie do rodzin to hipotezy Claude; Owner je zatwierdza, poprawia albo odrzuca w Bibliotece.
@@ -245,7 +245,7 @@ _Jak Ty i agenci dzielicie rzeczywistość projektów, żebyś nie był kurierem
 ### Jozz-Cave-Workbench
 - Po co (hipoteza): Dom Jaskini, Twojego okna na wszystkie projekty: kod, testy, kompas i publiczny podgląd. Twoja prywatna Jaskinia żyje jako artefakt.
 - README: [!IMPORTANT] Stan na 14 XI 2026 (Opus czatu, autor większości tego repo; tylko dokumentacja). Kilka zdań niżej jest nieaktualnych: - „Status: v6.4, 21 Oct, in the owner's private claude.ai artifact” — żywa jest v6.4.1 na GitHub Pages, publikowana automatem dom-odswiezanie.yml (od 10 XI; harmonogram 
-- Życie: żywe · ostatnia aktywność: dziś · commitów 298 · gałęzi 25 · PR otwartych 4
+- Życie: żywe · ostatnia aktywność: dziś · commitów 301 · gałęzi 26 · PR otwartych 4
 - Dokumenty wejścia wskazują gałęzie: `gh-pages`, `v6-materialy`
 - Dokumenty wejścia: `AGENTS.md`, `README.md`
 - Repo: https://github.com/Jozzpoly/Jozz-Cave-Workbench
@@ -253,11 +253,11 @@ _Jak Ty i agenci dzielicie rzeczywistość projektów, żebyś nie był kurierem
 ### Shared-Work-Medium-Lab
 - Po co (hipoteza): Medium: wspólna praca Ciebie, ChatGPT, Codexa i Claude nad rzeczywistością projektów. Stąd wyrasta ta Biblioteka.
 - README: Experimental public laboratory for a developing shared work medium between an Owner, Browser ChatGPT, Codex, other agents, tools, and project reality.
-- Życie: wstrzymane · ostatnia aktywność: dziś · commitów 968 · gałęzi 42 · PR otwartych 3
+- Życie: wstrzymane · ostatnia aktywność: dziś · commitów 971 · gałęzi 42 · PR otwartych 3
 - Stan według repo (`docs/RESEARCH_STATE.md`, 2026-10-18): „Live lifecycle checkpoint (2026-10-18, recheck GitHub): open Medium PRs #22 (deployed Worker donor/operational boundary), #26 (PRZESMYK source), #27 (active descendant based on #26); Issue #7 remains broad field…”
   - dalej według notatki: Read the preserved checkpoint.
 - [poważne] 42 gałęzie na remote; 33 z nich nie ruszało się od ponad 3 tygodni i nie mieści się w main.
-- [średnie] Na main nie ma kodu: 19 plików, same dokumenty i konfiguracja.
+- [średnie] Na main nie ma kodu: 21 plików, same dokumenty i konfiguracja.
 - [średnie] 7 dokumentów wejścia na main: AGENTS.md, README.md, START_HERE.md, docs/HANDOFF_2026-10-04_QUIET_PRESENCE_CODEX_COLLAB.md i inne.
 - Dokumenty wejścia wskazują gałęzie: `campaign/open-substrate-2026-10-04`, `campaign/quiet-presence-2026-10-04`, `experiment/agent-night-ii-2026-10-18`, `experiment/semantic-medium-v0`, `research/medium-physics-experiment-design`, `research/slack-live-substrate-2026-10-07`
 - Dokumenty wejścia: `AGENTS.md`, `README.md`, `START_HERE.md`, `docs/HANDOFF_2026-10-04_QUIET_PRESENCE_CODEX_COLLAB.md`, `docs/NORTH_STAR.md`, `docs/RESEARCH_STATE.md`
@@ -303,7 +303,7 @@ _Repo nowsze niż ostatni przegląd Claude. Przypisanie do rodziny to propozycja
 ### Jaskinia
 - Po co (hipoteza): None
 - README: Warsztat do tworzenia, uruchamiania i rozwijania gier oraz eksperymentów, budowany przez właściciela razem z agentami AI. W budowie.
-- Życie: żywe · ostatnia aktywność: dziś · commitów 77 · gałęzi 12 · PR otwartych 6
+- Życie: żywe · ostatnia aktywność: dziś · commitów 79 · gałęzi 12 · PR otwartych 6
 - [średnie] 8 dokumentów wejścia na main: AGENTS.md, README.md, proby/README.md, proby/e1-wersje/README.md i inne.
 - Dokumenty wejścia: `AGENTS.md`, `README.md`, `proby/README.md`, `proby/e1-wersje/README.md`, `proby/p1-organ-w-starym-domu/README.md`, `proby/r1-rdzen-minimalny/README.md`
 - Repo: https://github.com/Jozzpoly/Jaskinia
@@ -318,12 +318,10 @@ _Repo nowsze niż ostatni przegląd Claude. Przypisanie do rodziny to propozycja
 - Dokumenty wejścia: `AGENTS.md`, `AI_PROJECT_MEMORY.md`, `README.md`, `START_HERE.md`, `docs/decisions/README.md`, `docs/migration/README.md`
 - Repo: https://github.com/Jozzpoly/Coopege
 
-## Zmiany od poprzedniego zrzutu (2026-11-14 03:06 UTC)
+## Zmiany od poprzedniego zrzutu (2026-11-14 03:53 UTC)
 - Jozz-Cave-Workbench: +3 commity, +1 gałąź
-- Jaskinia: +2 commity, +1 gałąź
-- Llm-Live-NPC: +1 commit
-- Coopege: +1 commit
-- Shared-Work-Medium-Lab: +1 commit
+- Shared-Work-Medium-Lab: +3 commity
+- Jaskinia: +2 commity
 
 ## Lekcje, które przeszły między światami
 - **E17 — Najpierw intencja, potem skończone wykonanie** (Box3d-Character-Controler → Combat-Lab). Źródło: https://github.com/Jozzpoly/Box3d-Character-Controler/blob/e7a98beaca4c010e056c31db97b33c05b4610e38/docs/PROJECT_STATE.md#L83-L128. Droga: Natywnie. Combat znał E17 z własnego BODY_WORLD (7.10), a negatywną połowę doczytał u dawcy. Drzwi w Medium powstały minutę przed użyciem, więc były zapisem, nie odkryciem.
