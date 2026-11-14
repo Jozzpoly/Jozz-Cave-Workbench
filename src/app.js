@@ -1180,7 +1180,9 @@ function playA(r, attrs, ...kids) {
     if (e.shiftKey) return;
     if (HOSTED && !r.tab) { e.preventDefault(); openPlayer(r); } // a game that works only in its own tab (data/wejscia.json) keeps the link
   });
-  if (JASK && !a.title) a.title = 'Zagraj w oknie gry · Shift: w nowym oknie obok · Ctrl: w nowej karcie';
+  if (JASK && !a.title) a.title = r.tab
+    ? 'Otwórz grę w osobnej karcie (wymagane dla tej gry)'
+    : 'Zagraj w oknie Jaskini lub w nowej karcie, zależnie od ustawień · Shift: obok, gdy okna są włączone · Ctrl: w nowej karcie';
   return a;
 }
 let playerOpen = false;
