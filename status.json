@@ -6,27 +6,27 @@
   "source": {
     "repository": "Jozzpoly/Jozz-Cave-Workbench",
     "ref": "main",
-    "commit": "ce8994701e20f6fd69946f84f8235f3920e86f00",
-    "html_blob": "fd02da592195a554e6021792f58000fd4e1387ba",
-    "workflow_run": "https://github.com/Jozzpoly/Jozz-Cave-Workbench/actions/runs/43549833298"
+    "commit": "c70b57d2844c40fa4f778477c0d32f2915407d07",
+    "html_blob": "9525d59c6ec7a6b4ac2a701bad41ca5783a6a1a6",
+    "workflow_run": "https://github.com/Jozzpoly/Jozz-Cave-Workbench/actions/runs/43553831468"
   },
   "data": {
     "repository_count": 28,
     "scope": "public-repositories-only",
     "historical_snapshot": "2026-11-14",
-    "generated": "2026-11-14T03:06+00:00",
-    "generated_ts": 1794625608,
+    "generated": "2026-11-14T03:53+00:00",
+    "generated_ts": 1794628401,
     "auto_refresh": true,
     "refresh": "checked every 6 h on main; published when a fact or the page changed, or the data is over 20 h old (.github/workflows/dom-odswiezanie.yml)",
     "coverage": "28/28",
     "api_unknown": [],
     "zagraj": {
-      "checked_at": "2026-11-14 03:07 UTC",
+      "checked_at": "2026-11-14 03:53 UTC",
       "answering": 11,
       "of": 11,
       "method": "HTTP GET bez przeglądarki: adres odpowiada albo nie. To nie jest test samej gry."
     },
-    "fingerprint": "21ce76e934f6c254"
+    "fingerprint": "44f9b184e58f9348"
   },
   "limitations": [
     "experimental_only",
@@ -47,8 +47,8 @@
     "owner_approval": "activated once by merging the workflow into main (owner, 10 Nov 2026); the repository variable PUBLIKUJ_PAGES = nie turns it off",
     "tested_before_publishing": "Jaskinia's browser suites (tools/testy.py) and continuity from the page published before (tools/dom_ciaglosc_test.mjs)",
     "previous": {
-      "commit": "b3822520d6d720ab2e2db0e669e2db8552ce898a",
-      "data": "2026-11-13T22:14+00:00"
+      "commit": "ce8994701e20f6fd69946f84f8235f3920e86f00",
+      "data": "2026-11-14T03:06+00:00"
     }
   }
 }
