@@ -1,6 +1,6 @@
 # Biblioteka Jozzpoly — brief dla agentów
 
-Zrzut: 2026-11-14 13:41 UTC. Pokrycie: 28/28 repo (28 publicznych, 0 prywatnych). To migawka, nie żywa prawda: przed działaniem sprawdź żywy branch, PR i CI.
+Zrzut: 2026-11-14 19:59 UTC. Pokrycie: 28/28 repo (28 publicznych, 0 prywatnych). To migawka, nie żywa prawda: przed działaniem sprawdź żywy branch, PR i CI.
 
 ## Zasady pracy
 **Granica rozstrzygnięta przez właściciela, jego słowami (10 XI 2026):** „Istotne nieodwracalne decyzje dotyczące mojego dorobku, prywatności, dostępu, pieniędzy i rzeczywistego przełączenia używanej Jaskini” zostają z nim. Reszta to zawodowy osąd agentów.
@@ -54,7 +54,7 @@ _Czy postać w grze może naprawdę żyć: czuć, pamiętać, działać sama i b
 ### Cognitive-Ecology-Lab
 - Po co (hipoteza): Pytało, czy mechanizmy poznawcze, które współpracują albo rywalizują, dają przewagę, której żaden nie ma osobno. Zamknięte werdyktem Ownera 9 paź 2026 (FAIL); pytanie zostaje zapisane, laboratorium nie jest kontynuowane.
 - README: FINAL OWNER PRODUCT VERDICT (2026-10-09): FAIL. Do not resume, present, recommend or develop this lab. The Owner requested its removal.
-- Życie: zakończone · ostatnia aktywność: 35 dni temu · commitów 72 · gałęzi 2 · PR otwartych 0
+- Życie: zakończone · ostatnia aktywność: 36 dni temu · commitów 72 · gałęzi 2 · PR otwartych 0
 - Stan według repo (`docs/STATE.md`, 2026-10-09): „TERMINATED · OWNER FAIL · REPOSITORY REMOVAL REQUESTED.”
 - [poważne] Repo samo o sobie mówi: „TERMINATED” (9 paź).
 - Dokumenty wejścia: `AGENTS.md`, `README.md`, `docs/STATE.md`
@@ -63,7 +63,7 @@ _Czy postać w grze może naprawdę żyć: czuć, pamiętać, działać sama i b
 ### Gloopipelago
 - Po co (hipoteza): Obserwatorium żywej ewolucji: mały świat, w którym proste organizmy tworzą czytelne historie.
 - README: Gloopipelago is a living evolution observatory: a small spatial world where simple organisms and their environment can create legible evolutionary histories, while the same underlying world remains experimentally inspectable enough that surprising outcomes can be investigated rather than merely narr
-- Życie: uśpione · ostatnia aktywność: 64 dni temu · commitów 179 · gałęzi 20 · PR otwartych 4
+- Życie: uśpione · ostatnia aktywność: 65 dni temu · commitów 179 · gałęzi 20 · PR otwartych 4
 - Stan według repo (`docs/CURRENT_STATE.md`, 2026-09-10): „Gloopipelago is a living evolution observatory: the living world is primary; causal apparatus is enabling infrastructure.”
   - dalej według notatki: Promote the qualified M3 contract, then create a fresh bounded M3 implementation branch from the resulting live main.
 - [średnie] 10 gałęzi mieści się w całości w main: ich usunięcie nie straci żadnego commita.
@@ -170,7 +170,7 @@ _Zbuduj, uruchom, obserwuj, popraw, wsiądź i jedź: warsztat maszyn od wokseli
 ### WebXR-Lab
 - Po co (hipoteza): Riftworks: inżynieryjny sandbox w przeglądarce i VR z krótką pętlą zbuduj, uruchom, obserwuj, popraw.
 - README: Riftworks is a browser/VR engineering sandbox focused on a short creative loop: build → run → observe → improve
-- Życie: uśpione · ostatnia aktywność: 59 dni temu · commitów 300 · gałęzi 3 · PR otwartych 1
+- Życie: uśpione · ostatnia aktywność: 60 dni temu · commitów 300 · gałęzi 3 · PR otwartych 1
 - Dokumenty wejścia: `AGENTS.md`, `README.md`
 - Repo: https://github.com/Jozzpoly/WebXR-Lab
 
@@ -247,27 +247,27 @@ _Grać razem: karty przy wspólnym stole, wspólny fizyczny świat, kooperacja w
 ## Medium
 _Jak Ty i agenci dzielicie rzeczywistość projektów, żebyś nie był kurierem między nimi?_ (hipoteza)
 
+### Jozz-Cave-Workbench
+- Po co (hipoteza): Dom Jaskini, Twojego okna na wszystkie projekty: kod, testy, kompas i publiczny podgląd. Twoja prywatna Jaskinia żyje jako artefakt.
+- README: [!IMPORTANT] Stan na 14 XI 2026 (Opus czatu, autor większości tego repo; tylko dokumentacja). Kilka zdań niżej jest nieaktualnych: - „Status: v6.4, 21 Oct, in the owner's private claude.ai artifact” — żywa jest v6.4.1 na GitHub Pages, publikowana automatem dom-odswiezanie.yml (od 10 XI; harmonogram 
+- Życie: żywe · ostatnia aktywność: dziś · commitów 316 · gałęzi 31 · PR otwartych 2
+- [średnie] 11 gałęzi mieści się w całości w main: ich usunięcie nie straci żadnego commita.
+- Dokumenty wejścia wskazują gałęzie: `gh-pages`, `v6-materialy`
+- Dokumenty wejścia: `AGENTS.md`, `README.md`
+- Repo: https://github.com/Jozzpoly/Jozz-Cave-Workbench
+
 ### Shared-Work-Medium-Lab
 - Po co (hipoteza): Medium: wspólna praca Ciebie, ChatGPT, Codexa i Claude nad rzeczywistością projektów. Stąd wyrasta ta Biblioteka.
 - README: Experimental public laboratory for a developing shared work medium between an Owner, Browser ChatGPT, Codex, other agents, tools, and project reality.
 - Życie: wstrzymane · ostatnia aktywność: dziś · commitów 973 · gałęzi 42 · PR otwartych 3
 - Stan według repo (`docs/RESEARCH_STATE.md`, 2026-10-18): „Live lifecycle checkpoint (2026-10-18, recheck GitHub): open Medium PRs #22 (deployed Worker donor/operational boundary), #26 (PRZESMYK source), #27 (active descendant based on #26); Issue #7 remains broad field…”
   - dalej według notatki: Read the preserved checkpoint.
-- [poważne] 42 gałęzie na remote; 33 z nich nie ruszało się od ponad 3 tygodni i nie mieści się w main.
+- [poważne] 42 gałęzie na remote; 34 z nich nie ruszało się od ponad 3 tygodni i nie mieści się w main.
 - [średnie] Na main nie ma kodu: 22 pliki, same dokumenty i konfiguracja.
 - [średnie] 7 dokumentów wejścia na main: AGENTS.md, README.md, START_HERE.md, docs/HANDOFF_2026-10-04_QUIET_PRESENCE_CODEX_COLLAB.md i inne.
 - Dokumenty wejścia wskazują gałęzie: `campaign/open-substrate-2026-10-04`, `campaign/quiet-presence-2026-10-04`, `experiment/agent-night-ii-2026-10-18`, `experiment/semantic-medium-v0`, `research/medium-physics-experiment-design`, `research/slack-live-substrate-2026-10-07`
 - Dokumenty wejścia: `AGENTS.md`, `README.md`, `START_HERE.md`, `docs/HANDOFF_2026-10-04_QUIET_PRESENCE_CODEX_COLLAB.md`, `docs/NORTH_STAR.md`, `docs/RESEARCH_STATE.md`
 - Repo: https://github.com/Jozzpoly/Shared-Work-Medium-Lab
-
-### Jozz-Cave-Workbench
-- Po co (hipoteza): Dom Jaskini, Twojego okna na wszystkie projekty: kod, testy, kompas i publiczny podgląd. Twoja prywatna Jaskinia żyje jako artefakt.
-- README: [!IMPORTANT] Stan na 14 XI 2026 (Opus czatu, autor większości tego repo; tylko dokumentacja). Kilka zdań niżej jest nieaktualnych: - „Status: v6.4, 21 Oct, in the owner's private claude.ai artifact” — żywa jest v6.4.1 na GitHub Pages, publikowana automatem dom-odswiezanie.yml (od 10 XI; harmonogram 
-- Życie: żywe · ostatnia aktywność: dziś · commitów 315 · gałęzi 31 · PR otwartych 2
-- [średnie] 11 gałęzi mieści się w całości w main: ich usunięcie nie straci żadnego commita.
-- Dokumenty wejścia wskazują gałęzie: `gh-pages`, `v6-materialy`
-- Dokumenty wejścia: `AGENTS.md`, `README.md`
-- Repo: https://github.com/Jozzpoly/Jozz-Cave-Workbench
 
 ## Feniks
 _Czy da się złożyć całość: żywą krainę, w której mieszkańcy żyją z własnych powodów, a Ty ją tworzysz i przekształcasz?_ (hipoteza)
@@ -283,7 +283,7 @@ _Czy da się złożyć całość: żywą krainę, w której mieszkańcy żyją z
 ### Mini_Feniks
 - Po co (hipoteza): Poważna próba złożenia jak największej części marzenia o Feniksie w jedną żywą krainę; po pierwszym graniu budowa wstrzymana, trwa ocena fundamentu.
 - README: Poważna próba zrealizowania możliwie największej części marzenia o Feniksie, na jaką pozwalają nasze możliwości. Budujemy własne dzieło, konsekwentnie rozwijając jedną całość. Nie jest to demonstrator technologii ani celowo prowizoryczna wersja przyszłej gry.
-- Życie: stygnące · ostatnia aktywność: 22 dni temu · commitów 33 · gałęzi 2 · PR otwartych 1
+- Życie: stygnące · ostatnia aktywność: 23 dni temu · commitów 33 · gałęzi 2 · PR otwartych 1
 - Dokumenty wejścia: `AGENTS.md`, `README.md`
 - Repo: https://github.com/Jozzpoly/Mini_Feniks
 
@@ -308,7 +308,7 @@ _Repo nowsze niż ostatni przegląd Claude. Przypisanie do rodziny to propozycja
 ### Jaskinia
 - Po co (hipoteza): None
 - README: Warsztat do tworzenia, uruchamiania i rozwijania gier oraz eksperymentów, budowany przez właściciela razem z agentami AI. W budowie.
-- Życie: żywe · ostatnia aktywność: dziś · commitów 95 · gałęzi 17 · PR otwartych 5
+- Życie: żywe · ostatnia aktywność: dziś · commitów 106 · gałęzi 18 · PR otwartych 6
 - [średnie] 8 dokumentów wejścia na main: AGENTS.md, README.md, proby/README.md, proby/e1-wersje/README.md i inne.
 - Dokumenty wejścia: `AGENTS.md`, `README.md`, `proby/README.md`, `proby/e1-wersje/README.md`, `proby/p1-organ-w-starym-domu/README.md`, `proby/r1-rdzen-minimalny/README.md`
 - Repo: https://github.com/Jozzpoly/Jaskinia
@@ -318,15 +318,15 @@ _Repo nowsze niż ostatni przegląd Claude. Przypisanie do rodziny to propozycja
 - README: [!IMPORTANT] Stan na 14 XI 2026 (Opus czatu, tylko dokumentacja). main opisuje stan z 15 VI 2026 (M8 VS-3, „owner retest”). Nowsza praca nigdy nie trafiła na main: łańcuch B1–B5 i odrodzenie R0 z 22–23 X (PR #1–#8), dokument autorski A0/A1 i dwa eksperymenty edytora z 9–10 XI (PR #11–#13). Ostatnia 
 - Życie: żywe · ostatnia aktywność: dziś · commitów 298 · gałęzi 20 · PR otwartych 11
 - Stan według repo (`docs/process/CURRENT_MILESTONE.md`, 2026-06-14): „M7 TECH_VERIFIED / OWNER_ACCEPTED_WITH_DEBT / SUCCESSOR_REVIEWED”
+- [średnie] 20 gałęzi na remote; 12 z nich nie ruszało się od ponad 3 tygodni i nie mieści się w main.
 - [średnie] 9 dokumentów wejścia na main: AGENTS.md, AI_PROJECT_MEMORY.md, README.md, START_HERE.md i inne.
 - Dokumenty wejścia wskazują gałęzie: `dowody/ci-2026-10-23-24`, `experiment/coopege-portable-return-2026-10-26`
 - Dokumenty wejścia: `AGENTS.md`, `AI_PROJECT_MEMORY.md`, `README.md`, `START_HERE.md`, `docs/decisions/README.md`, `docs/migration/README.md`
 - Repo: https://github.com/Jozzpoly/Coopege
 
-## Zmiany od poprzedniego zrzutu (2026-11-14 06:43 UTC)
-- Jaskinia: +6 commitów, +2 gałęzie
-- Shared-Work-Medium-Lab: +1 commit
-- Jozz-Cave-Workbench: +2 commity, +1 gałąź
+## Zmiany od poprzedniego zrzutu (2026-11-14 13:41 UTC)
+- Jaskinia: +11 commitów, +1 gałąź
+- Jozz-Cave-Workbench: +1 commit
 
 ## Lekcje, które przeszły między światami
 - **E17 — Najpierw intencja, potem skończone wykonanie** (Box3d-Character-Controler → Combat-Lab). Źródło: https://github.com/Jozzpoly/Box3d-Character-Controler/blob/e7a98beaca4c010e056c31db97b33c05b4610e38/docs/PROJECT_STATE.md#L83-L128. Droga: Natywnie. Combat znał E17 z własnego BODY_WORLD (7.10), a negatywną połowę doczytał u dawcy. Drzwi w Medium powstały minutę przed użyciem, więc były zapisem, nie odkryciem.
