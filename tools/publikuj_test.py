@@ -58,6 +58,7 @@ def publish(tmp, repo, pages, lib, code="v1", extra=()):
     os.makedirs(b)
     open(os.path.join(b, "jaskinia-web.html"), "w", encoding="utf-8").write(page(lib, code))
     json.dump(lib, open(os.path.join(b, "library.json"), "w"), ensure_ascii=False)
+    open(os.path.join(b, "biblioteka-dla-agentow.md"), "w", encoding="utf-8").write("# Brief")
     for f in ("git.json", "gh.json", "knowledge.json", "wejscia.json"):
         shutil.copy(os.path.join(repo, "data", f), os.path.join(b, f))
     env = {k: v for k, v in os.environ.items() if k != "GITHUB_OUTPUT"}
@@ -82,6 +83,7 @@ def main():
         first = publish(tmp, repo, pages, build(repo))
         ok(first.get("zmiana") == "tak" and os.path.exists(os.path.join(pages, "index.html")), "the first publication writes the page")
         ok(os.path.exists(os.path.join(pages, "dane", "library.json")), "and its data, for the next diff")
+        ok(os.path.exists(os.path.join(pages, "biblioteka-dla-agentow.md")), "and the agent brief the page links to, so that link is not a 404 at the address")
         st = json.load(open(os.path.join(pages, "status.json")))
         ok(st["data"]["auto_refresh"] is True and st["data"]["fingerprint"] == first["odcisk"], "status.json says the refresh is automatic and holds the fingerprint")
         ok(st["limitations"] == ["experimental_only"] and st["provenance"]["previous"]["commit"] == "85aaaae", "status.json keeps the page's limits and names the page it replaced")

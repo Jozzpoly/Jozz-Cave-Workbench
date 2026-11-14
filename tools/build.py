@@ -305,7 +305,7 @@ hist = [x for x in hist if x.get("ts") != NOW]
 hist.append({"ts": NOW, "repos": {r["name"]: {"c": r["commits"], "l": r["last_ts"], "b": len(r["branches"]), "life": r["life"],
                                               "f": [f["rule"] + ":" + f["sev"][0] for f in r["findings"]]} for r in repos}})
 hist = sorted(hist, key=lambda x: x["ts"])[-120:]
-json.dump(hist, open(HIST, "w"), ensure_ascii=False, separators=(",", ":"))
+json.dump(hist, open(HIST, "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
 lib = {"estate": estate, "families": families, "repos": repos,
        **{k: K[k] for k in ("estate_stated", "prolog", "laws", "dna", "lessons", "methods", "cases", "ledger", "open")}}
 # A public build names no private repository, even where a public PR body mentions one (10 Nov 2026: two open PRs
@@ -324,8 +324,8 @@ if os.environ.get("BIB_PUBLIC") == "1":
         return x
     lib = _scrub(lib)
 os.makedirs(os.path.join(HERE, "dist"), exist_ok=True)
-json.dump(lib, open(os.path.join(HERE, "data/library.json"), "w"), ensure_ascii=False, separators=(",", ":"))
-json.dump(lib, open(os.path.join(HERE, "dist/biblioteka-data.json"), "w"), ensure_ascii=False, indent=1)
+json.dump(lib, open(os.path.join(HERE, "data/library.json"), "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
+json.dump(lib, open(os.path.join(HERE, "dist/biblioteka-data.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 
 # ---- agent brief (markdown) ----
 def ago(ts):
@@ -403,5 +403,5 @@ L.append("")
 L.append("## Prawa Biblioteki")
 for l in K["laws"]:
     L.append(f"- **{l['title']}** — {l['text']}")
-open(os.path.join(HERE, "dist/biblioteka-dla-agentow.md"), "w").write("\n".join(L) + "\n")
+open(os.path.join(HERE, "dist/biblioteka-dla-agentow.md"), "w", encoding="utf-8").write("\n".join(L) + "\n")
 print(f"library.json: {os.path.getsize(os.path.join(HERE, 'data/library.json'))//1024} KB · repos {len(repos)} · branches {tot_branches} · busiest {busiest}")

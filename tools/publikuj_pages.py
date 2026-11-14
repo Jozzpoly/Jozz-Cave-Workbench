@@ -5,7 +5,8 @@ Usage: python3 -I tools/publikuj_pages.py GH_PAGES_DIR BUILD_DIR [--commit SHA] 
     BUILD_DIR holds what the workflow's build job uploaded: jaskinia-web.html, library.json and the facts it was
     built from (git.json, gh.json, zagraj.json, knowledge.json, wejscia.json).
 
-Writes index.html (the page), dane/library.json (its data: the next build diffs against it, so the page's
+Writes index.html (the page), biblioteka-dla-agentow.md (the agent brief the page links to),
+dane/library.json (its data: the next build diffs against it, so the page's
 "what changed" means "since this page was published"), status.json and README.md (what this page is now).
 Writes only when something real changed since the page was last published: a fact collected from the repositories
 (git, the GitHub API, the Zagraj check, knowledge.json, wejscia.json) or the page's own code. Time passing alone
@@ -104,6 +105,12 @@ def main():
         shutil.copyfile(os.path.join(a.build, "jaskinia-web.html"), os.path.join(a.pages, "index.html"))
         os.makedirs(os.path.join(a.pages, "dane"), exist_ok=True)
         shutil.copyfile(os.path.join(a.build, "library.json"), os.path.join(a.pages, "dane", "library.json"))
+        # The agent brief the page links to ("biblioteka-dla-agentow.md" in the agents window).
+        # Until 14 Nov 2026 it was built but never published, so the link in the page was a 404
+        # at the address — the one entry point an agent is handed, and it led nowhere.
+        brief = os.path.join(a.build, "biblioteka-dla-agentow.md")
+        if os.path.exists(brief):
+            shutil.copyfile(brief, os.path.join(a.pages, "biblioteka-dla-agentow.md"))
         m = re.search(r"const JASK_BUILD = (\{[^}]*\});", html)
         ver = json.loads(m.group(1)).get("v") if m else open(os.path.join(ROOT, "src", "jaskinia", "version.txt"), encoding="utf-8").read().strip()
         cov = lib["estate"]["coverage"]
