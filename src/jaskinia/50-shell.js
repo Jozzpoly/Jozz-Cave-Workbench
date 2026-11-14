@@ -84,7 +84,7 @@ function buildChrome() {
   redoBtn = ibtn('redo', t('Ponów'), () => redo(), 'jk-redo');
   statusEl = h('div', { class: 'jk-status' });
   selBox = h('div', { class: 'jk-selbox' });
-  const helpBtn = h('button', { class: 'jk-help-b', type: 'button', onclick: e => openHelp(e.currentTarget) }, icon('help', 15), h('span', { text: t('Jak to działa') }));
+  const helpBtn = h('button', { class: 'jk-help-b', type: 'button', 'aria-label': t('Jak to działa'), onclick: e => openHelp(e.currentTarget) }, icon('help', 15), h('span', { text: t('Jak to działa') }));
   const uwBtn = h('button', { class: 'jk-uw-b', type: 'button', title: t('To mnie uwiera: zapisz uwagę przypiętą do tej chwili (Ctrl+.)'), 'aria-label': t('To mnie uwiera'), onclick: e => uwagaPop(e.currentTarget) }, icon('flag', 15));
   bar = h('header', { class: 'jk-bar' }, brand, snap, spaceBtn, tabsW,
     h('div', { class: 'jk-tools' }, statusEl, undoBtn, redoBtn, h('span', { class: 'jk-sep' }), selBox, uwBtn, helpBtn));

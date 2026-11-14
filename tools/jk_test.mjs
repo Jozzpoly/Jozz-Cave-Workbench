@@ -39,6 +39,27 @@ await wait(900); await J(() => document.fonts.ready); await wait(300);
 // dismiss the first-run hint
 await page.click('.jk-hint .ib'); await wait(100);
 ok(errs.length === 0, 'load without errors', errs.join(' | '));
+// Medium: semantic action hints should survive the shell's compact responsive view.
+await page.setViewportSize({ width: 980, height: 760 }); await wait(150);
+ok(await page.getByRole('button', { name: 'Jak to działa' }).count() === 1,
+  'compact help control keeps its accessible action name');
+await page.setViewportSize({ width: 1918, height: 1030 }); await wait(150);
+// Data-driven on purpose: the three repo names this probe first used could change in data, and a test
+// that names them would quietly stop checking anything. It picks a tab-only and a window-capable entry
+// from the live record set instead.
+const wskazowki = await J(() => {
+  const wpisy = Object.values(__BIB.R).filter(r => r && r.pages);
+  const karta = wpisy.find(r => r.tab), okno = wpisy.find(r => !r.tab);
+  return {
+    karta: karta && __BIB.playA(karta, {}, 'Zagraj').title,
+    okno: okno && __BIB.playA(okno, {}, 'Zagraj').title,
+  };
+});
+ok(!wskazowki.karta || wskazowki.karta.includes('osobnej karcie'),
+  'a tab-only game is described as tab-only', String(wskazowki.karta));
+ok(!wskazowki.okno || wskazowki.okno.includes('zależnie od ustawień'),
+  'a window-capable game does not promise a window unconditionally', String(wskazowki.okno));
+
 const t0 = await treeStr();
 console.log('tree', t0);
 ok(await page.locator('.win:not([hidden])').count() === 4, 'four windows in Przegląd');
