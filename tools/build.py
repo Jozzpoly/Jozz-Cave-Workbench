@@ -350,8 +350,9 @@ L.append("**Granica rozstrzygnięta przez właściciela, jego słowami (10 XI 20
          "decyzje dotyczące mojego dorobku, prywatności, dostępu, pieniędzy i rzeczywistego przełączenia "
          "używanej Jaskini” zostają z nim. Reszta to zawodowy osąd agentów.")
 L.append("")
-L.append("**I druga jego zasada (13 XI 2026), bez której pierwsza paraliżuje:** rzeczy tańsze do "
-         "wprowadzenia niż zapytanie go o zgodę, pozytywne i łatwe do cofnięcia — robi się bez pytania.")
+L.append("**I druga jego zasada, też jego słowami (13 XI 2026), bez której pierwsza paraliżuje:** "
+         "„jak coś ma być tańsze do wprowadzenia niż zapytanie mnie o zgodę, jest pozytywne i łatwe "
+         "do cofnięcia to tak właśnie powinieneś postępować”.")
 L.append("")
 L.append("Nasze własne reguły czytania tych danych (nie jego słowa):")
 L.append("- Zdania „po co jest to repo” i przypisanie do rodzin to hipotezy Claude; właściciel je zatwierdza, poprawia albo odrzuca w Bibliotece.")
