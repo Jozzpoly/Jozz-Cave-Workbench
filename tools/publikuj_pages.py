@@ -126,7 +126,7 @@ def main():
                        "workflow_run": a.run},
             "data": {"repository_count": n, "scope": "public-repositories-only",
                      "historical_snapshot": gen[:10], "generated": gen, "generated_ts": gen_ts, "auto_refresh": True,
-                     "refresh": "checked every 6 h on main; published when a fact or the page changed, or the data is over 20 h old (.github/workflows/dom-odswiezanie.yml)",
+                     "refresh": "scheduled every 3 h on main, but GitHub drops scheduled runs under load: measured 14 Nov 2026, only about two runs a day actually fire. Published when a fact or the page changed, or the data is over 20 h old; 'generated' above says how old this data really is (.github/workflows/dom-odswiezanie.yml)",
                      "coverage": f"{cov.get('collected')}/{cov.get('expected')}",
                      "api_unknown": cov.get("api_unknown", []),
                      "zagraj": {"checked_at": zag.get("checked_at"), "answering": sum(1 for v in res.values() if v.get("ok")),
@@ -145,7 +145,8 @@ def main():
         open(os.path.join(a.pages, "README.md"), "w", encoding="utf-8").write(
             f"# Jaskinia public preview v{ver}, refreshed automatically\n"
             f"Public data only ({n} public repositories, data of {gen.replace('T', ' ').replace('+00:00', ' UTC')}). "
-            "A workflow on main collects the facts every 6 hours, opens every Zagraj entry, builds the page and runs its "
+            "A workflow on main asks to collect the facts every 3 hours — GitHub drops some scheduled runs, so in "
+            "practice it is about twice a day; 'generated' above says how old this data really is. It opens every Zagraj entry, builds the page and runs its "
             "browser tests, including one that the layouts, windows and notes kept in your browser come through from the "
             "page published before. It publishes when a fact or the page changed, or at least once a day. "
             "status.json says what this page is.\n"

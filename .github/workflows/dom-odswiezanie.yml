@@ -27,7 +27,16 @@ name: Dom odświeża się sam
 
 on:
   schedule:
-    - cron: "23 */6 * * *"
+    # Zmierzone 14 XI 2026 (Opus Code): przy "23 */6 * * *" — czyli czterech slotach na dobe —
+    # przez szesc dob z rzedu odpalaly sie **tylko dwa**: slot 06:23 i slot 18:23 UTC, z opoznieniem
+    # od 17 do 100 minut. Sloty 00:23 i 12:23 nie odpalily sie ani razu. To nie jest losowe gubienie:
+    # GitHub odrzuca zaplanowane przebiegi pod obciazeniem, a pelna i polowa doby to najbardziej
+    # zatloczone okna cron. Czemu dokladnie — nie wiem i nie udaje, ze wiem.
+    # Dlatego prosimy o osiem slotow zamiast czterech. Repo jest publiczne, wiec minuty Actions sa
+    # darmowe, a publikacja i tak zachodzi tylko wtedy, gdy zmienil sie fakt albo minelo 20 h.
+    # Falsyfikator: jesli po tygodniu nadal beda wychodzic dwa przebiegi na dobe o tych samych
+    # godzinach, to dokladanie slotow nie pomaga i trzeba poprawic zdanie, a nie zegar.
+    - cron: "23 */3 * * *"
   workflow_dispatch:
     inputs:
       akcja:
