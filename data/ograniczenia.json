@@ -1,7 +1,9 @@
 {
- "_o": "Ograniczenia publicznego podgladu, pokazywane w status.json. Do 14 XI 2026 ta lista nie istniala w repozytorium: lezala wylacznie w status.json na galezi gh-pages i publikacja przepisywala ja z poprzedniej strony (`old.get('limitations')`). Przez to wpisy z 16 X jechaly dalej miesiacami, nie pokazujac sie w zadnym diffie i nie trafiajac pod niczyja ocene - wlasciciel zwrocil na to uwage 13 XI. Teraz lista jest tutaj: kazda zmiana przechodzi przez PR, a `przejrzane` mowi, kiedy ktos ostatnio na nia spojrzal. To nie jest ocena, czy wpisy sa prawdziwe - to jest zdjecie ich z autopilota.",
- "przejrzane": "2026-11-14",
- "przejrzal": "Opus Code (tylko przeniesienie; tresci wpisow nie oceniam)",
+ "_o": "Ograniczenia publicznego podgladu, pokazywane w status.json. Do 14 XI 2026 ta lista nie istniala w repozytorium: lezala wylacznie w status.json na galezi gh-pages i publikacja przepisywala ja z poprzedniej strony (`old.get('limitations')`). Przez to wpisy z 16 X jechaly dalej miesiacami, nie pokazujac sie w zadnym diffie i nie trafiajac pod niczyja ocene - wlasciciel zwrocil na to uwage 13 XI. Teraz lista jest tutaj: kazda zmiana przechodzi przez PR, a `przejrzane` mowi, kiedy ktos ostatnio na nia spojrzal. To nie jest ocena, czy wpisy sa prawdziwe - to jest zdjecie ich z autopilota. 14 XI po poludniu Fable (trzecia linia) zwrocil uwage, ze samo pole `przejrzane` obok ostrzezenia o bezpieczenstwie czyta sie jak ocena tego ostrzezenia. Dlatego pola nazywaja teraz dwie rozne rzeczy osobno: kiedy liste przeniesiono i spisano, oraz czy ktokolwiek ocenil, czy wpisy sa nadal prawdziwe.",
+ "spisane": "2026-11-14",
+ "spisal": "Opus Code (przeniesienie z gh-pages do repozytorium; tresci wpisow nie oceniam)",
+ "tresc_oceniona": false,
+ "_tresc_oceniona": "Nikt - ani wlasciciel, ani zaden agent - nie sprawdzil, czy te wpisy sa dzis prawdziwe. Data wyzej mowi wylacznie, kiedy liste spisano do repozytorium. Dotyczy to zwlaszcza `untrusted_parent_bridge_pending_security_fix`: to ostrzezenie o bezpieczenstwie i data obok niego nie znaczy, ze ktos je przejrzal. Kto to oceni, wpisuje `tresc_oceniona: true`, swoje imie i date, i mowi w PR, co sprawdzil.",
  "wpisy": [
   "experimental_only",
   "owner_feedback_pending",
