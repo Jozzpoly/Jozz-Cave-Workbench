@@ -11,7 +11,7 @@ import findings as FND
 from datetime import datetime, timezone, timedelta
 
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-J = lambda p: json.load(open(os.path.join(HERE, p)))
+J = lambda p: json.load(open(os.path.join(HERE, p), encoding="utf-8"))
 G, H, K = J("data/git.json"), J("data/gh.json"), J("data/knowledge.json")
 GH_BY = {r["name"]: r for r in H["repos"]}
 VIS = {x["name"]: x.get("visibility") for x in J("data/connector_repos.json")["repos"]}  # when the API cannot see a repo, the list still knows if it is private
@@ -231,7 +231,7 @@ estate = {
 }
 def changes_since(prev_path):
     try:
-        P = json.load(open(prev_path))
+        P = json.load(open(prev_path, encoding="utf-8"))
     except Exception:
         return None
     if P.get("estate", {}).get("generated_ts") == NOW:
@@ -274,7 +274,7 @@ if estate["coverage"]["api_unknown"]:
 ZAG = os.path.join(HERE, "data/zagraj.json")
 if os.path.exists(ZAG):
     try:
-        Z = json.load(open(ZAG))
+        Z = json.load(open(ZAG, encoding="utf-8"))
     except Exception:
         Z = None
     if Z and Z.get("checked_ts") and NOW - Z["checked_ts"] < 2 * DAY:
@@ -298,7 +298,7 @@ if os.path.exists(ZAG):
 # compact history of snapshots (for "since yesterday / since your last visit" once refresh is automatic)
 HIST = os.path.join(HERE, "data/history.json")
 try:
-    hist = json.load(open(HIST))
+    hist = json.load(open(HIST, encoding="utf-8"))
 except Exception:
     hist = []
 hist = [x for x in hist if x.get("ts") != NOW]
@@ -340,10 +340,23 @@ L.append(f"Zrzut: {estate['generated'].replace('+00:00', '').replace('T', ' ')} 
          f"({estate['coverage']['public']} publicznych, {estate['coverage']['private']} prywatnych). To migawka, nie żywa prawda: "
          "przed działaniem sprawdź żywy branch, PR i CI.")
 L.append("")
+# Zasady pracy. Do 14 XI 2026 stały tu cztery zdania napisane przez agenta, podane tak, jakby były
+# regułami właściciela — a trzecie z nich („nieodwracalne decyzje… kasowanie gałęzi, publikacja”)
+# było WĘŻSZE niż to, co właściciel naprawdę powiedział, i nie znało jego reguły o rzeczach tanich
+# i odwracalnych. Brief kłamał więc nie treścią, tylko podpisem. Teraz jego słowa stoją dosłownie
+# i są oznaczone jako jego, a reszta jest oznaczona jako nasza. Znalazł to Opus czatu 14 XI.
 L.append("## Zasady pracy")
-L.append("- Zdania „po co jest to repo” i przypisanie do rodzin to hipotezy Claude; Owner je zatwierdza, poprawia albo odrzuca w Bibliotece.")
+L.append("**Granica rozstrzygnięta przez właściciela, jego słowami (10 XI 2026):** „Istotne nieodwracalne "
+         "decyzje dotyczące mojego dorobku, prywatności, dostępu, pieniędzy i rzeczywistego przełączenia "
+         "używanej Jaskini” zostają z nim. Reszta to zawodowy osąd agentów.")
+L.append("")
+L.append("**I druga jego zasada (13 XI 2026), bez której pierwsza paraliżuje:** rzeczy tańsze do "
+         "wprowadzenia niż zapytanie go o zgodę, pozytywne i łatwe do cofnięcia — robi się bez pytania.")
+L.append("")
+L.append("Nasze własne reguły czytania tych danych (nie jego słowa):")
+L.append("- Zdania „po co jest to repo” i przypisanie do rodzin to hipotezy Claude; właściciel je zatwierdza, poprawia albo odrzuca w Bibliotece.")
 L.append("- Najnowsza gałąź to nie front. Gdzie żyje praca, mówią README/dokumenty wejścia i PR-y (pole `wskazana`).")
-L.append("- Nieodwracalne decyzje (kasowanie gałęzi, publikacja prywatnych rzeczy) tylko bezpośrednio od Ownera; wspólne konto nie jest podpisem.")
+L.append("- Gałęzi nie kasujemy: dla wielu prac gałąź jest jedyną kopią.")
 L.append("- Nic nie znika, dopóki jego sens nie jest zapisany gdzie indziej.")
 L.append("")
 for f in families:
