@@ -1,4 +1,4 @@
 # Jaskinia public preview v6.4.1, refreshed automatically
-Public data only (28 public repositories, data of 2026-11-14 04:47 UTC). A workflow on main collects the facts every 6 hours, opens every Zagraj entry, builds the page and runs its browser tests, including one that the layouts, windows and notes kept in your browser come through from the page published before. It publishes when a fact or the page changed, or at least once a day. status.json says what this page is.
+Public data only (28 public repositories, data of 2026-11-14 05:41 UTC). A workflow on main asks to collect the facts every 3 hours — GitHub drops some scheduled runs, so in practice it is about twice a day; 'generated' above says how old this data really is. It opens every Zagraj entry, builds the page and runs its browser tests, including one that the layouts, windows and notes kept in your browser come through from the page published before. It publishes when a fact or the page changed, or at least once a day. status.json says what this page is.
 This is not a private Owner workspace. Do not store private notes here. No cross-device sync. Materials (your models) and the motion you give their parts stay in this browser.
-Built from Jozzpoly/Jozz-Cave-Workbench@ea46c44.
+Built from Jozzpoly/Jozz-Cave-Workbench@3611f00.
