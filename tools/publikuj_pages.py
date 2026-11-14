@@ -132,7 +132,10 @@ def main():
                      "zagraj": {"checked_at": zag.get("checked_at"), "answering": sum(1 for v in res.values() if v.get("ok")),
                                 "of": len(res), "method": zag.get("method")},
                      "fingerprint": fp},
-            "limitations": old.get("limitations", []),
+            # Do 14 XI 2026 ograniczenia byly przepisywane z poprzedniej strony i nigdy nie pokazywaly sie
+            # w diffie, wiec wpisy z 16 X jechaly dalej bez niczyjej oceny. Teraz zrodlem jest plik w repo;
+            # gdy go nie ma (stary klon, test), zostaje stare zachowanie.
+            "limitations": (load(os.path.join(ROOT, "data", "ograniczenia.json"), {}) or {}).get("wpisy") or old.get("limitations", []),
             "provenance": {
                 "packaged_by": "GitHub Actions, .github/workflows/dom-odswiezanie.yml (written by Claude Opus 5.5, 10 Nov 2026)",
                 "owner_approval": "activated once by merging the workflow into main (owner, 10 Nov 2026); the repository variable PUBLIKUJ_PAGES = nie turns it off",
