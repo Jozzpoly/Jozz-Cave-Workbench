@@ -86,7 +86,9 @@ def main():
         ok(os.path.exists(os.path.join(pages, "biblioteka-dla-agentow.md")), "and the agent brief the page links to, so that link is not a 404 at the address")
         st = json.load(open(os.path.join(pages, "status.json")))
         ok(st["data"]["auto_refresh"] is True and st["data"]["fingerprint"] == first["odcisk"], "status.json says the refresh is automatic and holds the fingerprint")
-        ok(st["limitations"] == ["experimental_only"] and st["provenance"]["previous"]["commit"] == "85aaaae", "status.json keeps the page's limits and names the page it replaced")
+        wpisy = json.load(open(os.path.join(HERE, "data", "ograniczenia.json"), encoding="utf-8"))["wpisy"]
+        ok(st["limitations"] == wpisy and st["provenance"]["previous"]["commit"] == "85aaaae",
+           "status.json takes the page's limits from data/ograniczenia.json (not silently from the previous page) and names the page it replaced")
         ok(st["schema"] == "jaskinia-public-preview-v1" and st["data"]["historical_snapshot"] and st["data"]["repository_count"] > 0, "the fields earlier readers knew are still there")
         mtime = os.path.getmtime(os.path.join(pages, "index.html"))
         lib6 = build(repo, shift_h=6)

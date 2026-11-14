@@ -1,0 +1,19 @@
+{
+ "_o": "Ograniczenia publicznego podgladu, pokazywane w status.json. Do 14 XI 2026 ta lista nie istniala w repozytorium: lezala wylacznie w status.json na galezi gh-pages i publikacja przepisywala ja z poprzedniej strony (`old.get('limitations')`). Przez to wpisy z 16 X jechaly dalej miesiacami, nie pokazujac sie w zadnym diffie i nie trafiajac pod niczyja ocene - wlasciciel zwrocil na to uwage 13 XI. Teraz lista jest tutaj: kazda zmiana przechodzi przez PR, a `przejrzane` mowi, kiedy ktos ostatnio na nia spojrzal. To nie jest ocena, czy wpisy sa prawdziwe - to jest zdjecie ich z autopilota.",
+ "przejrzane": "2026-11-14",
+ "przejrzal": "Opus Code (tylko przeniesienie; tresci wpisow nie oceniam)",
+ "wpisy": [
+  "experimental_only",
+  "owner_feedback_pending",
+  "not_shared_across_devices",
+  "local_browser_state_is_origin_scoped",
+  "materials_live_in_this_browsers_indexeddb_on_the_shared_jozzpoly_github_io_origin",
+  "no_private_layer",
+  "no_answers_to_owner_remarks_in_public_build",
+  "no_owner_recordings",
+  "do_not_enter_private_notes",
+  "no_external_lab_is_contract_integrated",
+  "untrusted_parent_bridge_pending_security_fix",
+  "old_downloaded_file_storage_compatibility_pending"
+ ]
+}
