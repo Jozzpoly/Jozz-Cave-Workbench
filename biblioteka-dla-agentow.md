@@ -1,11 +1,16 @@
 # Biblioteka Jozzpoly — brief dla agentów
 
-Zrzut: 2026-11-14 05:41 UTC. Pokrycie: 28/28 repo (28 publicznych, 0 prywatnych). To migawka, nie żywa prawda: przed działaniem sprawdź żywy branch, PR i CI.
+Zrzut: 2026-11-14 05:56 UTC. Pokrycie: 28/28 repo (28 publicznych, 0 prywatnych). To migawka, nie żywa prawda: przed działaniem sprawdź żywy branch, PR i CI.
 
 ## Zasady pracy
-- Zdania „po co jest to repo” i przypisanie do rodzin to hipotezy Claude; Owner je zatwierdza, poprawia albo odrzuca w Bibliotece.
+**Granica rozstrzygnięta przez właściciela, jego słowami (10 XI 2026):** „Istotne nieodwracalne decyzje dotyczące mojego dorobku, prywatności, dostępu, pieniędzy i rzeczywistego przełączenia używanej Jaskini” zostają z nim. Reszta to zawodowy osąd agentów.
+
+**I druga jego zasada (13 XI 2026), bez której pierwsza paraliżuje:** rzeczy tańsze do wprowadzenia niż zapytanie go o zgodę, pozytywne i łatwe do cofnięcia — robi się bez pytania.
+
+Nasze własne reguły czytania tych danych (nie jego słowa):
+- Zdania „po co jest to repo” i przypisanie do rodzin to hipotezy Claude; właściciel je zatwierdza, poprawia albo odrzuca w Bibliotece.
 - Najnowsza gałąź to nie front. Gdzie żyje praca, mówią README/dokumenty wejścia i PR-y (pole `wskazana`).
-- Nieodwracalne decyzje (kasowanie gałęzi, publikacja prywatnych rzeczy) tylko bezpośrednio od Ownera; wspólne konto nie jest podpisem.
+- Gałęzi nie kasujemy: dla wielu prac gałąź jest jedyną kopią.
 - Nic nie znika, dopóki jego sens nie jest zapisany gdzie indziej.
 
 ## Żywe istoty
@@ -245,7 +250,7 @@ _Jak Ty i agenci dzielicie rzeczywistość projektów, żebyś nie był kurierem
 ### Jozz-Cave-Workbench
 - Po co (hipoteza): Dom Jaskini, Twojego okna na wszystkie projekty: kod, testy, kompas i publiczny podgląd. Twoja prywatna Jaskinia żyje jako artefakt.
 - README: [!IMPORTANT] Stan na 14 XI 2026 (Opus czatu, autor większości tego repo; tylko dokumentacja). Kilka zdań niżej jest nieaktualnych: - „Status: v6.4, 21 Oct, in the owner's private claude.ai artifact” — żywa jest v6.4.1 na GitHub Pages, publikowana automatem dom-odswiezanie.yml (od 10 XI; harmonogram 
-- Życie: żywe · ostatnia aktywność: dziś · commitów 305 · gałęzi 28 · PR otwartych 2
+- Życie: żywe · ostatnia aktywność: dziś · commitów 307 · gałęzi 28 · PR otwartych 1
 - Dokumenty wejścia wskazują gałęzie: `gh-pages`, `v6-materialy`
 - Dokumenty wejścia: `AGENTS.md`, `README.md`
 - Repo: https://github.com/Jozzpoly/Jozz-Cave-Workbench
@@ -317,11 +322,8 @@ _Repo nowsze niż ostatni przegląd Claude. Przypisanie do rodziny to propozycja
 - Dokumenty wejścia: `AGENTS.md`, `AI_PROJECT_MEMORY.md`, `README.md`, `START_HERE.md`, `docs/decisions/README.md`, `docs/migration/README.md`
 - Repo: https://github.com/Jozzpoly/Coopege
 
-## Zmiany od poprzedniego zrzutu (2026-11-14 04:47 UTC)
-- Jozz-Cave-Workbench: +4 commity, +2 gałęzie
-- Feniks-Studio: +2 commity, +1 gałąź
-- Jaskinia: +9 commitów, +3 gałęzie
-- ustalenie zniknęło: Jaskinia: 3 szkice PR; najdawniej ruszany 4 lis.
+## Zmiany od poprzedniego zrzutu (2026-11-14 05:41 UTC)
+- Jozz-Cave-Workbench: +2 commity
 
 ## Lekcje, które przeszły między światami
 - **E17 — Najpierw intencja, potem skończone wykonanie** (Box3d-Character-Controler → Combat-Lab). Źródło: https://github.com/Jozzpoly/Box3d-Character-Controler/blob/e7a98beaca4c010e056c31db97b33c05b4610e38/docs/PROJECT_STATE.md#L83-L128. Droga: Natywnie. Combat znał E17 z własnego BODY_WORLD (7.10), a negatywną połowę doczytał u dawcy. Drzwi w Medium powstały minutę przed użyciem, więc były zapisem, nie odkryciem.
