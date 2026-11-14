@@ -1,6 +1,6 @@
 # Biblioteka Jozzpoly — brief dla agentów
 
-Zrzut: 2026-11-14 19:59 UTC. Pokrycie: 28/28 repo (28 publicznych, 0 prywatnych). To migawka, nie żywa prawda: przed działaniem sprawdź żywy branch, PR i CI.
+Zrzut: 2026-11-14 22:50 UTC. Pokrycie: 28/28 repo (28 publicznych, 0 prywatnych). To migawka, nie żywa prawda: przed działaniem sprawdź żywy branch, PR i CI.
 
 ## Zasady pracy
 **Granica rozstrzygnięta przez właściciela, jego słowami (10 XI 2026):** „Istotne nieodwracalne decyzje dotyczące mojego dorobku, prywatności, dostępu, pieniędzy i rzeczywistego przełączenia używanej Jaskini” zostają z nim. Reszta to zawodowy osąd agentów.
@@ -130,7 +130,7 @@ _Z czego jest zrobiony świat: edytowalna materia, cała planeta, skan, który m
 ### Jozz-Splat-Game-Lab
 - Po co (hipoteza): Prawdziwe skany Gaussian Splatting zamienione w światy gry, które można fizycznie testować.
 - README: Evidence-driven R&D for turning real Gaussian Splatting captures into spatially grounded, physically testable game worlds.
-- Życie: uśpione · ostatnia aktywność: 90 dni temu · commitów 184 · gałęzi 13 · PR otwartych 1
+- Życie: uśpione · ostatnia aktywność: 91 dni temu · commitów 184 · gałęzi 13 · PR otwartych 1
 - Stan według repo (`docs/PROJECT_STATE.md`, 2026-08-15): „W0.2 GRAVITY — VERIFIED / W0.3 METRIC SCALE NEXT”
   - dalej według notatki: W0.3 must infer one metric scale from independently known real-world distances while preserving raw source evidence.
   - dalej według notatki: W0.3a — two-point foreground distance measurement;
@@ -197,7 +197,7 @@ _Zbuduj, uruchom, obserwuj, popraw, wsiądź i jedź: warsztat maszyn od wokseli
 ### PROJECT-ANVIL-Machine-Matter-Physical-Fabric-Laboratory
 - Po co (hipoteza): Maszyny z materii zamiast katalogu części: malujesz w materii właściwości, a laboratorium kompiluje je do fizyki.
 - README: Machine Matter / Physical Fabric Laboratory PROJECT ANVIL is an experimental R&D laboratory for a deliberately unusual idea: Author persistent semantic matter and local physical intent, then compile them into disposable runtime representations appropriate to the simulation.
-- Życie: uśpione · ostatnia aktywność: 74 dni temu · commitów 602 · gałęzi 55 · PR otwartych 3
+- Życie: uśpione · ostatnia aktywność: 75 dni temu · commitów 602 · gałęzi 55 · PR otwartych 3
 - Stan według repo (`docs/CURRENT_HANDOFF.md`): „SEALED — HANDOFF READY / ANVIL-10 ACCEPTED / EPOCH I CLOSED / P06 PRODUCT DESIGN ACCEPTED / C6 IMPLEMENTATION READY / NO ACTIVE MATERIAL WORK / I1 NEXT”
 - [średnie] 55 gałęzi na remote; 24 z nich nie ruszało się od ponad 3 tygodni i nie mieści się w main.
 - [średnie] 30 gałęzi mieści się w całości w main: ich usunięcie nie straci żadnego commita.
@@ -250,8 +250,8 @@ _Jak Ty i agenci dzielicie rzeczywistość projektów, żebyś nie był kurierem
 ### Jozz-Cave-Workbench
 - Po co (hipoteza): Dom Jaskini, Twojego okna na wszystkie projekty: kod, testy, kompas i publiczny podgląd. Twoja prywatna Jaskinia żyje jako artefakt.
 - README: [!IMPORTANT] Stan na 14 XI 2026 (Opus czatu, autor większości tego repo; tylko dokumentacja). Kilka zdań niżej jest nieaktualnych: - „Status: v6.4, 21 Oct, in the owner's private claude.ai artifact” — żywa jest v6.4.1 na GitHub Pages, publikowana automatem dom-odswiezanie.yml (od 10 XI; harmonogram 
-- Życie: żywe · ostatnia aktywność: dziś · commitów 316 · gałęzi 31 · PR otwartych 2
-- [średnie] 11 gałęzi mieści się w całości w main: ich usunięcie nie straci żadnego commita.
+- Życie: żywe · ostatnia aktywność: dziś · commitów 318 · gałęzi 31 · PR otwartych 1
+- [średnie] 12 gałęzi mieści się w całości w main: ich usunięcie nie straci żadnego commita.
 - Dokumenty wejścia wskazują gałęzie: `gh-pages`, `v6-materialy`
 - Dokumenty wejścia: `AGENTS.md`, `README.md`
 - Repo: https://github.com/Jozzpoly/Jozz-Cave-Workbench
@@ -308,8 +308,9 @@ _Repo nowsze niż ostatni przegląd Claude. Przypisanie do rodziny to propozycja
 ### Jaskinia
 - Po co (hipoteza): None
 - README: Warsztat do tworzenia, uruchamiania i rozwijania gier oraz eksperymentów, budowany przez właściciela razem z agentami AI. W budowie.
-- Życie: żywe · ostatnia aktywność: dziś · commitów 106 · gałęzi 18 · PR otwartych 6
-- [średnie] 8 dokumentów wejścia na main: AGENTS.md, README.md, proby/README.md, proby/e1-wersje/README.md i inne.
+- Życie: żywe · ostatnia aktywność: dziś · commitów 108 · gałęzi 18 · PR otwartych 4
+- [średnie] 9 dokumentów wejścia na main: AGENTS.md, README.md, proby/README.md, proby/e1-wersje/README.md i inne.
+- Dokumenty wejścia wskazują gałęzie: `podglad/dowody-studio-r2`
 - Dokumenty wejścia: `AGENTS.md`, `README.md`, `proby/README.md`, `proby/e1-wersje/README.md`, `proby/p1-organ-w-starym-domu/README.md`, `proby/r1-rdzen-minimalny/README.md`
 - Repo: https://github.com/Jozzpoly/Jaskinia
 
@@ -324,9 +325,9 @@ _Repo nowsze niż ostatni przegląd Claude. Przypisanie do rodziny to propozycja
 - Dokumenty wejścia: `AGENTS.md`, `AI_PROJECT_MEMORY.md`, `README.md`, `START_HERE.md`, `docs/decisions/README.md`, `docs/migration/README.md`
 - Repo: https://github.com/Jozzpoly/Coopege
 
-## Zmiany od poprzedniego zrzutu (2026-11-14 13:41 UTC)
-- Jaskinia: +11 commitów, +1 gałąź
-- Jozz-Cave-Workbench: +1 commit
+## Zmiany od poprzedniego zrzutu (2026-11-14 19:59 UTC)
+- Jozz-Cave-Workbench: +2 commity
+- Jaskinia: +2 commity
 
 ## Lekcje, które przeszły między światami
 - **E17 — Najpierw intencja, potem skończone wykonanie** (Box3d-Character-Controler → Combat-Lab). Źródło: https://github.com/Jozzpoly/Box3d-Character-Controler/blob/e7a98beaca4c010e056c31db97b33c05b4610e38/docs/PROJECT_STATE.md#L83-L128. Droga: Natywnie. Combat znał E17 z własnego BODY_WORLD (7.10), a negatywną połowę doczytał u dawcy. Drzwi w Medium powstały minutę przed użyciem, więc były zapisem, nie odkryciem.
