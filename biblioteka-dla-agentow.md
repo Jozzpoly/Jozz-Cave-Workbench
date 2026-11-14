@@ -1,6 +1,6 @@
 # Biblioteka Jozzpoly — brief dla agentów
 
-Zrzut: 2026-11-14 22:50 UTC. Pokrycie: 28/28 repo (28 publicznych, 0 prywatnych). To migawka, nie żywa prawda: przed działaniem sprawdź żywy branch, PR i CI.
+Zrzut: 2026-11-14 23:29 UTC. Pokrycie: 28/28 repo (28 publicznych, 0 prywatnych). To migawka, nie żywa prawda: przed działaniem sprawdź żywy branch, PR i CI.
 
 ## Zasady pracy
 **Granica rozstrzygnięta przez właściciela, jego słowami (10 XI 2026):** „Istotne nieodwracalne decyzje dotyczące mojego dorobku, prywatności, dostępu, pieniędzy i rzeczywistego przełączenia używanej Jaskini” zostają z nim. Reszta to zawodowy osąd agentów.
@@ -250,8 +250,8 @@ _Jak Ty i agenci dzielicie rzeczywistość projektów, żebyś nie był kurierem
 ### Jozz-Cave-Workbench
 - Po co (hipoteza): Dom Jaskini, Twojego okna na wszystkie projekty: kod, testy, kompas i publiczny podgląd. Twoja prywatna Jaskinia żyje jako artefakt.
 - README: [!IMPORTANT] Stan na 14 XI 2026 (Opus czatu, autor większości tego repo; tylko dokumentacja). Kilka zdań niżej jest nieaktualnych: - „Status: v6.4, 21 Oct, in the owner's private claude.ai artifact” — żywa jest v6.4.1 na GitHub Pages, publikowana automatem dom-odswiezanie.yml (od 10 XI; harmonogram 
-- Życie: żywe · ostatnia aktywność: dziś · commitów 318 · gałęzi 31 · PR otwartych 1
-- [średnie] 12 gałęzi mieści się w całości w main: ich usunięcie nie straci żadnego commita.
+- Życie: żywe · ostatnia aktywność: dziś · commitów 323 · gałęzi 32 · PR otwartych 1
+- [średnie] 13 gałęzi mieści się w całości w main: ich usunięcie nie straci żadnego commita.
 - Dokumenty wejścia wskazują gałęzie: `gh-pages`, `v6-materialy`
 - Dokumenty wejścia: `AGENTS.md`, `README.md`
 - Repo: https://github.com/Jozzpoly/Jozz-Cave-Workbench
@@ -275,7 +275,7 @@ _Czy da się złożyć całość: żywą krainę, w której mieszkańcy żyją z
 ### Feniks-Studio
 - Po co (hipoteza): Warsztat do tworzenia miejsc, rzeczy i eksperymentów przyszłego Feniksa. Dziś badania i plan bez aplikacji: budowę wstrzymałeś, a Jaskinia jest jednym z kandydatów na jego dom.
 - README: [!IMPORTANT] Gdzie naprawdę jest kod (stan na 14 XI 2026, Opus Code; tylko dokumentacja). main nie zawiera aplikacji i to jest prawda — ale do dziś nie mówił, gdzie ona jest, więc agent wchodzący tutaj jej nie znajdował. Jest w dwóch niescalonych gałęziach: | Gdzie | Co tam jest | Ostatnia praca | |
-- Życie: żywe · ostatnia aktywność: dziś · commitów 12 · gałęzi 5 · PR otwartych 2
+- Życie: żywe · ostatnia aktywność: dziś · commitów 15 · gałęzi 6 · PR otwartych 2
 - Dokumenty wejścia wskazują gałęzie: `checkpoint/astra-v5-core-2026-10-18`, `experiment/tworzywo-construction`
 - Dokumenty wejścia: `AGENTS.md`, `README.md`
 - Repo: https://github.com/Jozzpoly/Feniks-Studio
@@ -308,7 +308,8 @@ _Repo nowsze niż ostatni przegląd Claude. Przypisanie do rodziny to propozycja
 ### Jaskinia
 - Po co (hipoteza): None
 - README: Warsztat do tworzenia, uruchamiania i rozwijania gier oraz eksperymentów, budowany przez właściciela razem z agentami AI. W budowie.
-- Życie: żywe · ostatnia aktywność: dziś · commitów 108 · gałęzi 18 · PR otwartych 4
+- Życie: żywe · ostatnia aktywność: dziś · commitów 111 · gałęzi 19 · PR otwartych 4
+- [średnie] 10 gałęzi mieści się w całości w main: ich usunięcie nie straci żadnego commita.
 - [średnie] 9 dokumentów wejścia na main: AGENTS.md, README.md, proby/README.md, proby/e1-wersje/README.md i inne.
 - Dokumenty wejścia wskazują gałęzie: `podglad/dowody-studio-r2`
 - Dokumenty wejścia: `AGENTS.md`, `README.md`, `proby/README.md`, `proby/e1-wersje/README.md`, `proby/p1-organ-w-starym-domu/README.md`, `proby/r1-rdzen-minimalny/README.md`
@@ -325,9 +326,11 @@ _Repo nowsze niż ostatni przegląd Claude. Przypisanie do rodziny to propozycja
 - Dokumenty wejścia: `AGENTS.md`, `AI_PROJECT_MEMORY.md`, `README.md`, `START_HERE.md`, `docs/decisions/README.md`, `docs/migration/README.md`
 - Repo: https://github.com/Jozzpoly/Coopege
 
-## Zmiany od poprzedniego zrzutu (2026-11-14 19:59 UTC)
-- Jozz-Cave-Workbench: +2 commity
-- Jaskinia: +2 commity
+## Zmiany od poprzedniego zrzutu (2026-11-14 22:50 UTC)
+- Feniks-Studio: +3 commity, +1 gałąź
+- Jozz-Cave-Workbench: +5 commitów, +1 gałąź
+- Jaskinia: +3 commity, +1 gałąź
+- nowe ustalenia: Feniks-Studio:wchloniete
 
 ## Lekcje, które przeszły między światami
 - **E17 — Najpierw intencja, potem skończone wykonanie** (Box3d-Character-Controler → Combat-Lab). Źródło: https://github.com/Jozzpoly/Box3d-Character-Controler/blob/e7a98beaca4c010e056c31db97b33c05b4610e38/docs/PROJECT_STATE.md#L83-L128. Droga: Natywnie. Combat znał E17 z własnego BODY_WORLD (7.10), a negatywną połowę doczytał u dawcy. Drzwi w Medium powstały minutę przed użyciem, więc były zapisem, nie odkryciem.

@@ -6,27 +6,27 @@
   "source": {
     "repository": "Jozzpoly/Jozz-Cave-Workbench",
     "ref": "main",
-    "commit": "6752ea07f20197c7eb4869d9adfe7020c3421fe8",
-    "html_blob": "c06a0f4889e6a6112dd3377390ed35e834be7ce9",
-    "workflow_run": "https://github.com/Jozzpoly/Jozz-Cave-Workbench/actions/runs/43650078474"
+    "commit": "74bc08e73c0534134b0ded264428bafbfc21b6d6",
+    "html_blob": "cdeaaa3576f3ac004315363adb3cded77bfcf134",
+    "workflow_run": "https://github.com/Jozzpoly/Jozz-Cave-Workbench/actions/runs/43653442438"
   },
   "data": {
     "repository_count": 28,
     "scope": "public-repositories-only",
     "historical_snapshot": "2026-11-14",
-    "generated": "2026-11-14T22:50+00:00",
-    "generated_ts": 1794696609,
+    "generated": "2026-11-14T23:29+00:00",
+    "generated_ts": 1794698966,
     "auto_refresh": true,
     "refresh": "scheduled every 3 h on main, but GitHub drops scheduled runs under load: measured 14 Nov 2026, only about two runs a day actually fire. Published when a fact or the page changed, or the data is over 20 h old; 'generated' above says how old this data really is (.github/workflows/dom-odswiezanie.yml)",
     "coverage": "28/28",
     "api_unknown": [],
     "zagraj": {
-      "checked_at": "2026-11-14 22:50 UTC",
+      "checked_at": "2026-11-14 23:29 UTC",
       "answering": 11,
       "of": 11,
       "method": "HTTP GET bez przeglądarki: adres odpowiada albo nie. To nie jest test samej gry."
     },
-    "fingerprint": "7c3c1ffae5a50be4"
+    "fingerprint": "1106e7f340f649a9"
   },
   "limitations": [
     "experimental_only",
@@ -47,8 +47,8 @@
     "owner_approval": "activated once by merging the workflow into main (owner, 10 Nov 2026); the repository variable PUBLIKUJ_PAGES = nie turns it off",
     "tested_before_publishing": "Jaskinia's browser suites (tools/testy.py) and continuity from the page published before (tools/dom_ciaglosc_test.mjs)",
     "previous": {
-      "commit": "06f14cafb69909d0309ac9433e569ffd5edbaaf3",
-      "data": "2026-11-14T19:59+00:00"
+      "commit": "6752ea07f20197c7eb4869d9adfe7020c3421fe8",
+      "data": "2026-11-14T22:50+00:00"
     }
   }
 }
