@@ -143,6 +143,7 @@ jobs:
         run: |
           w="$RUNNER_TEMP/wynik"; mkdir -p "$w/testy"
           cp dist/jaskinia-web.html dist/jaskinia.html "$w"/ 2>/dev/null || true
+          cp dist/biblioteka-dla-agentow.md "$w"/ 2>/dev/null || true
           for f in library git gh zagraj knowledge wejscia connector_repos; do cp "data/$f.json" "$w"/ 2>/dev/null || true; done
           cp "$RUNNER_TEMP/regen.txt" "$w"/ 2>/dev/null || true
           cp shots/logi/*.txt "$w/testy"/ 2>/dev/null || true

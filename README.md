@@ -4,7 +4,6 @@
 > - „26 public repositories” — żywe dane obejmują **28** (`gh-pages/status.json`).
 > - Przyciski osądu właściciela (Potwierdź / Popraw / Odrzuć, Zajmę się / Zleć agentowi) są w kodzie (`src/app.js` ~592–640, ~862–945), ale działają tylko z bazą artefaktu claude.ai; pod adresem Pages ich nie ma i **nigdzie nie zapisały ani jednej decyzji** (sprawdzone 13 XI).
 > - `src/jaskinia/58-api.js` obiecuje okna „from another repository without editing src/jaskinia/*” — Jaskinia nie ma czym wczytać kodu spoza własnego buildu; obcy kod wchodzi tylko jako strona w oknie „przyrząd”.
-> - Odnośnik „biblioteka-dla-agentow.md” w oknie dla agentów prowadzi do 404 pod adresem Pages.
 >
 > Kierunek: następca powstaje w repo [`Jaskinia`](https://github.com/Jozzpoly/Jaskinia); to repo zostaje codziennym oknem właściciela i dawcą uruchamialnych buildów.
 
