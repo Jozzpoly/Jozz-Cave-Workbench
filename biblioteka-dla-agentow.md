@@ -1,6 +1,6 @@
 # Biblioteka Jozzpoly — brief dla agentów
 
-Zrzut: 2026-11-15 00:27 UTC. Pokrycie: 28/28 repo (28 publicznych, 0 prywatnych). To migawka, nie żywa prawda: przed działaniem sprawdź żywy branch, PR i CI.
+Zrzut: 2026-11-15 01:08 UTC. Pokrycie: 28/28 repo (28 publicznych, 0 prywatnych). To migawka, nie żywa prawda: przed działaniem sprawdź żywy branch, PR i CI.
 
 ## Zasady pracy
 **Granica rozstrzygnięta przez właściciela, jego słowami (10 XI 2026):** „Istotne nieodwracalne decyzje dotyczące mojego dorobku, prywatności, dostępu, pieniędzy i rzeczywistego przełączenia używanej Jaskini” zostają z nim. Reszta to zawodowy osąd agentów.
@@ -76,7 +76,7 @@ _Jak dać graczowi i aktorowi fizyczne ciało, które słucha intencji, zamiast 
 ### Combat-Lab
 - Po co (hipoteza): Odkrywanie ucieleśnionej walki i ruchu. Na main stoi neutralna próbka, a prawdziwe eksperymenty żyją na osobnych gałęziach.
 - README: Eksperymentalne laboratorium ruchu, fizycznie różnych ciał, tłumu, kontaktu i zmienianej przez człowieka materii. Nie jest gotową grą ani zaakceptowanym silnikiem walki.
-- Życie: żywe · ostatnia aktywność: 3 dni temu · commitów 2028 · gałęzi 3 · PR otwartych 0
+- Życie: żywe · ostatnia aktywność: 4 dni temu · commitów 2028 · gałęzi 3 · PR otwartych 0
 - Stan według repo (`docs/RESEARCH_STATE.md`, 2026-11-10): „Cel: odkrywać w otwartym, edytowalnym świecie fizycznie odmienne organizmy, rzeczywisty ruch i nacisk, relacje ciał/materii, crowds, reakcje, a w przyszłości walkę. Nie budować ponownie ruchu kulek po trasach ani…”
 - [średnie] 4 dokumenty wejścia na main: AGENTS.md, README.md, docs/RESEARCH_STATE.md, docs/history/RESEARCH_STATE_OVERLAYS_THROUGH_2026-10-10.md.
 - Dokumenty wejścia wskazują gałęzie: `archive/all-research-pre-provider-handoff-2026-11-10`, `rehearsal/current`
@@ -250,7 +250,7 @@ _Jak Ty i agenci dzielicie rzeczywistość projektów, żebyś nie był kurierem
 ### Jozz-Cave-Workbench
 - Po co (hipoteza): Dom Jaskini, Twojego okna na wszystkie projekty: kod, testy, kompas i publiczny podgląd. Twoja prywatna Jaskinia żyje jako artefakt.
 - README: [!IMPORTANT] Stan na 14 XI 2026 (Opus czatu, autor większości tego repo; tylko dokumentacja). Kilka zdań niżej jest nieaktualnych: - „Status: v6.4, 21 Oct, in the owner's private claude.ai artifact” — żywa jest v6.4.1 na GitHub Pages, publikowana automatem dom-odswiezanie.yml (od 10 XI; harmonogram 
-- Życie: żywe · ostatnia aktywność: dziś · commitów 327 · gałęzi 33 · PR otwartych 1
+- Życie: żywe · ostatnia aktywność: dziś · commitów 328 · gałęzi 33 · PR otwartych 1
 - [średnie] 14 gałęzi mieści się w całości w main: ich usunięcie nie straci żadnego commita.
 - Dokumenty wejścia wskazują gałęzie: `gh-pages`, `v6-materialy`
 - Dokumenty wejścia: `AGENTS.md`, `README.md`
@@ -308,7 +308,7 @@ _Repo nowsze niż ostatni przegląd Claude. Przypisanie do rodziny to propozycja
 ### Jaskinia
 - Po co (hipoteza): None
 - README: Warsztat do tworzenia, uruchamiania i rozwijania gier oraz eksperymentów, budowany przez właściciela razem z agentami AI. W budowie.
-- Życie: żywe · ostatnia aktywność: dziś · commitów 120 · gałęzi 21 · PR otwartych 4
+- Życie: żywe · ostatnia aktywność: dziś · commitów 121 · gałęzi 22 · PR otwartych 5
 - [średnie] 12 gałęzi mieści się w całości w main: ich usunięcie nie straci żadnego commita.
 - [średnie] 9 dokumentów wejścia na main: AGENTS.md, README.md, proby/README.md, proby/e1-wersje/README.md i inne.
 - Dokumenty wejścia wskazują gałęzie: `podglad/dowody-studio-r2`
@@ -326,10 +326,9 @@ _Repo nowsze niż ostatni przegląd Claude. Przypisanie do rodziny to propozycja
 - Dokumenty wejścia: `AGENTS.md`, `AI_PROJECT_MEMORY.md`, `README.md`, `START_HERE.md`, `docs/decisions/README.md`, `docs/migration/README.md`
 - Repo: https://github.com/Jozzpoly/Coopege
 
-## Zmiany od poprzedniego zrzutu (2026-11-14 23:29 UTC)
-- Feniks-Studio: +3 commity, +1 gałąź
-- Jozz-Cave-Workbench: +4 commity, +1 gałąź
-- Jaskinia: +9 commitów, +2 gałęzie
+## Zmiany od poprzedniego zrzutu (2026-11-15 00:27 UTC)
+- Jozz-Cave-Workbench: +1 commit
+- Jaskinia: +1 commit, +1 gałąź
 
 ## Lekcje, które przeszły między światami
 - **E17 — Najpierw intencja, potem skończone wykonanie** (Box3d-Character-Controler → Combat-Lab). Źródło: https://github.com/Jozzpoly/Box3d-Character-Controler/blob/e7a98beaca4c010e056c31db97b33c05b4610e38/docs/PROJECT_STATE.md#L83-L128. Droga: Natywnie. Combat znał E17 z własnego BODY_WORLD (7.10), a negatywną połowę doczytał u dawcy. Drzwi w Medium powstały minutę przed użyciem, więc były zapisem, nie odkryciem.

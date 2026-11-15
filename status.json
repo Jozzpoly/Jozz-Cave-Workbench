@@ -7,26 +7,26 @@
     "repository": "Jozzpoly/Jozz-Cave-Workbench",
     "ref": "main",
     "commit": "c2da3136079e30d2d581c9f2620944a0835a2c0d",
-    "html_blob": "d02b0599f64c6033f43c64cb3ab491b804dab2e6",
-    "workflow_run": "https://github.com/Jozzpoly/Jozz-Cave-Workbench/actions/runs/43658184705"
+    "html_blob": "6d308253579b4b6fb6ccb2404dae3346d34bc8fa",
+    "workflow_run": "https://github.com/Jozzpoly/Jozz-Cave-Workbench/actions/runs/43661576495"
   },
   "data": {
     "repository_count": 28,
     "scope": "public-repositories-only",
     "historical_snapshot": "2026-11-15",
-    "generated": "2026-11-15T00:27+00:00",
-    "generated_ts": 1794702426,
+    "generated": "2026-11-15T01:08+00:00",
+    "generated_ts": 1794704906,
     "auto_refresh": true,
     "refresh": "scheduled every 3 h on main, but GitHub drops scheduled runs under load: measured 14 Nov 2026, only about two runs a day actually fire. Published when a fact or the page changed, or the data is over 20 h old; 'generated' above says how old this data really is (.github/workflows/dom-odswiezanie.yml)",
     "coverage": "28/28",
     "api_unknown": [],
     "zagraj": {
-      "checked_at": "2026-11-15 00:27 UTC",
+      "checked_at": "2026-11-15 01:08 UTC",
       "answering": 11,
       "of": 11,
       "method": "HTTP GET bez przeglądarki: adres odpowiada albo nie. To nie jest test samej gry."
     },
-    "fingerprint": "18c7ecc864734b96"
+    "fingerprint": "475b88d42e6024e5"
   },
   "limitations": [
     "experimental_only",
@@ -47,8 +47,8 @@
     "owner_approval": "activated once by merging the workflow into main (owner, 10 Nov 2026); the repository variable PUBLIKUJ_PAGES = nie turns it off",
     "tested_before_publishing": "Jaskinia's browser suites (tools/testy.py) and continuity from the page published before (tools/dom_ciaglosc_test.mjs)",
     "previous": {
-      "commit": "74bc08e73c0534134b0ded264428bafbfc21b6d6",
-      "data": "2026-11-14T23:29+00:00"
+      "commit": "c2da3136079e30d2d581c9f2620944a0835a2c0d",
+      "data": "2026-11-15T00:27+00:00"
     }
   }
 }
