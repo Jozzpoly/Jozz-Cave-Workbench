@@ -7,26 +7,26 @@
     "repository": "Jozzpoly/Jozz-Cave-Workbench",
     "ref": "main",
     "commit": "c2da3136079e30d2d581c9f2620944a0835a2c0d",
-    "html_blob": "60be6ac385575a1e44fbef23dd36c7c83e07ac41",
-    "workflow_run": "https://github.com/Jozzpoly/Jozz-Cave-Workbench/actions/runs/43860588424"
+    "html_blob": "ab1c810677c6ffd56df8854d96ebdbfdcef1fdb3",
+    "workflow_run": "https://github.com/Jozzpoly/Jozz-Cave-Workbench/actions/runs/43969145369"
   },
   "data": {
     "repository_count": 28,
     "scope": "public-repositories-only",
     "historical_snapshot": "2026-11-16",
-    "generated": "2026-11-16T11:47+00:00",
-    "generated_ts": 1794829638,
+    "generated": "2026-11-16T22:21+00:00",
+    "generated_ts": 1794867673,
     "auto_refresh": true,
     "refresh": "scheduled every 3 h on main, but GitHub drops scheduled runs under load: measured 14 Nov 2026, only about two runs a day actually fire. Published when a fact or the page changed, or the data is over 20 h old; 'generated' above says how old this data really is (.github/workflows/dom-odswiezanie.yml)",
     "coverage": "28/28",
     "api_unknown": [],
     "zagraj": {
-      "checked_at": "2026-11-16 11:47 UTC",
+      "checked_at": "2026-11-16 22:21 UTC",
       "answering": 11,
       "of": 11,
       "method": "HTTP GET bez przeglądarki: adres odpowiada albo nie. To nie jest test samej gry."
     },
-    "fingerprint": "c99a4b8fb71f271a"
+    "fingerprint": "268d5485dd055018"
   },
   "limitations": [
     "experimental_only",
@@ -48,7 +48,7 @@
     "tested_before_publishing": "Jaskinia's browser suites (tools/testy.py) and continuity from the page published before (tools/dom_ciaglosc_test.mjs)",
     "previous": {
       "commit": "c2da3136079e30d2d581c9f2620944a0835a2c0d",
-      "data": "2026-11-16T01:10+00:00"
+      "data": "2026-11-16T11:47+00:00"
     }
   }
 }
