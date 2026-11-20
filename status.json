@@ -7,26 +7,26 @@
     "repository": "Jozzpoly/Jozz-Cave-Workbench",
     "ref": "main",
     "commit": "c2da3136079e30d2d581c9f2620944a0835a2c0d",
-    "html_blob": "f1c77d4ba80140f7a415f4f6d2bd5e7a1134175d",
-    "workflow_run": "https://github.com/Jozzpoly/Jozz-Cave-Workbench/actions/runs/44660703097"
+    "html_blob": "e1f47a0834939f318cb0e11db159c80cbdcdfb57",
+    "workflow_run": "https://github.com/Jozzpoly/Jozz-Cave-Workbench/actions/runs/44731476456"
   },
   "data": {
     "repository_count": 28,
     "scope": "public-repositories-only",
     "historical_snapshot": "2026-11-20",
-    "generated": "2026-11-20T02:27+00:00",
-    "generated_ts": 1795141629,
+    "generated": "2026-11-20T11:55+00:00",
+    "generated_ts": 1795175747,
     "auto_refresh": true,
     "refresh": "scheduled every 3 h on main, but GitHub drops scheduled runs under load: measured 14 Nov 2026, only about two runs a day actually fire. Published when a fact or the page changed, or the data is over 20 h old; 'generated' above says how old this data really is (.github/workflows/dom-odswiezanie.yml)",
     "coverage": "28/28",
     "api_unknown": [],
     "zagraj": {
-      "checked_at": "2026-11-20 02:27 UTC",
+      "checked_at": "2026-11-20 11:56 UTC",
       "answering": 11,
       "of": 11,
       "method": "HTTP GET bez przeglądarki: adres odpowiada albo nie. To nie jest test samej gry."
     },
-    "fingerprint": "ff6d20cecb8fb597"
+    "fingerprint": "94cec7075ff810f5"
   },
   "limitations": [
     "experimental_only",
@@ -48,7 +48,7 @@
     "tested_before_publishing": "Jaskinia's browser suites (tools/testy.py) and continuity from the page published before (tools/dom_ciaglosc_test.mjs)",
     "previous": {
       "commit": "c2da3136079e30d2d581c9f2620944a0835a2c0d",
-      "data": "2026-11-19T20:50+00:00"
+      "data": "2026-11-20T02:27+00:00"
     }
   }
 }
