@@ -1,6 +1,6 @@
 # Biblioteka Jozzpoly — brief dla agentów
 
-Zrzut: 2026-11-21 11:26 UTC. Pokrycie: 28/28 repo (28 publicznych, 0 prywatnych). To migawka, nie żywa prawda: przed działaniem sprawdź żywy branch, PR i CI.
+Zrzut: 2026-11-21 19:30 UTC. Pokrycie: 28/28 repo (28 publicznych, 0 prywatnych). To migawka, nie żywa prawda: przed działaniem sprawdź żywy branch, PR i CI.
 
 ## Zasady pracy
 **Granica rozstrzygnięta przez właściciela, jego słowami (10 XI 2026):** „Istotne nieodwracalne decyzje dotyczące mojego dorobku, prywatności, dostępu, pieniędzy i rzeczywistego przełączenia używanej Jaskini” zostają z nim. Reszta to zawodowy osąd agentów.
@@ -63,7 +63,7 @@ _Czy postać w grze może naprawdę żyć: czuć, pamiętać, działać sama i b
 ### Gloopipelago
 - Po co (hipoteza): Obserwatorium żywej ewolucji: mały świat, w którym proste organizmy tworzą czytelne historie.
 - README: Gloopipelago is a living evolution observatory: a small spatial world where simple organisms and their environment can create legible evolutionary histories, while the same underlying world remains experimentally inspectable enough that surprising outcomes can be investigated rather than merely narr
-- Życie: uśpione · ostatnia aktywność: 71 dni temu · commitów 179 · gałęzi 20 · PR otwartych 4
+- Życie: uśpione · ostatnia aktywność: 72 dni temu · commitów 179 · gałęzi 20 · PR otwartych 4
 - Stan według repo (`docs/CURRENT_STATE.md`, 2026-09-10): „Gloopipelago is a living evolution observatory: the living world is primary; causal apparatus is enabling infrastructure.”
   - dalej według notatki: Promote the qualified M3 contract, then create a fresh bounded M3 implementation branch from the resulting live main.
 - [średnie] 10 gałęzi mieści się w całości w main: ich usunięcie nie straci żadnego commita.
@@ -114,7 +114,7 @@ _Z czego jest zrobiony świat: edytowalna materia, cała planeta, skan, który m
 ### Splot
 - Po co (hipoteza): Mały żywy świat 2.5D: materia, którą można przekształcać, kilka poziomów i zachowania, które reagują na zmiany. Grywalny punkt wyjścia, a geometria K3 jako osobny dawca.
 - README: Status (2026-10-18): experimental / Owner review pending. This public repository holds a reproducible playable baseline and a separate, non-promoted construction-geometry research donor. It is not a validated game engine, not the canonical geometry system for Feniks Studio, and not a replacement for
-- Życie: stygnące · ostatnia aktywność: 25 dni temu · commitów 477 · gałęzi 5 · PR otwartych 4
+- Życie: stygnące · ostatnia aktywność: 26 dni temu · commitów 477 · gałęzi 5 · PR otwartych 4
 - [średnie] 4 dokumenty wejścia na main: AGENTS.md, README.md, docs/CURRENT_STATE.md, donors/k3-geometry/README.md.
 - Dokumenty wejścia: `AGENTS.md`, `README.md`, `docs/CURRENT_STATE.md`, `donors/k3-geometry/README.md`
 - Repo: https://github.com/Jozzpoly/Splot
@@ -145,7 +145,7 @@ _Zbuduj, uruchom, obserwuj, popraw, wsiądź i jedź: warsztat maszyn od wokseli
 ### JV-Box3D-Web-experiment
 - Po co (hipoteza): JV Web: przeglądarkowa linia Jozz Vehicle, którą można prowadzić na komputerze i telefonie; demo dla znajomych.
 - README: JV Web is the browser product line for Jozz Vehicle: a driveable desktop/mobile product, practical vehicle-physics R&D surface and evidence-backed experimentation environment.
-- Życie: żywe · ostatnia aktywność: dziś · commitów 2011 · gałęzi 4 · PR otwartych 0
+- Życie: żywe · ostatnia aktywność: dziś · commitów 2020 · gałęzi 4 · PR otwartych 0
 - Stan według repo (`docs/PROJECT_STATE.md`, 2026-09-13): „NORMAL PRODUCT ITERATION / SPAWN QOL ACCEPTED”
   - dalej według notatki: Spawn no longer controls the schedule.
   - dalej według notatki: useful natural physical steering self-return;
@@ -170,14 +170,14 @@ _Zbuduj, uruchom, obserwuj, popraw, wsiądź i jedź: warsztat maszyn od wokseli
 ### WebXR-Lab
 - Po co (hipoteza): Riftworks: inżynieryjny sandbox w przeglądarce i VR z krótką pętlą zbuduj, uruchom, obserwuj, popraw.
 - README: Riftworks is a browser/VR engineering sandbox focused on a short creative loop: build → run → observe → improve
-- Życie: uśpione · ostatnia aktywność: 66 dni temu · commitów 300 · gałęzi 3 · PR otwartych 1
+- Życie: uśpione · ostatnia aktywność: 67 dni temu · commitów 300 · gałęzi 3 · PR otwartych 1
 - Dokumenty wejścia: `AGENTS.md`, `README.md`
 - Repo: https://github.com/Jozzpoly/WebXR-Lab
 
 ### Jozzue_Vehicles_Sandbox
 - Po co (hipoteza): Następna generacja Jozz Vehicle w pętli: buduj, uruchom, obserwuj, popraw, wsiądź i jedź.
 - README: Research repository for the next generation of Jozz Vehicle. Experiments are evidence, not architecture.
-- Życie: uśpione · ostatnia aktywność: 75 dni temu · commitów 257 · gałęzi 41 · PR otwartych 0
+- Życie: uśpione · ostatnia aktywność: 76 dni temu · commitów 257 · gałęzi 41 · PR otwartych 0
 - [poważne] 41 gałęzi na remote; 33 z nich nie ruszało się od ponad 3 tygodni i nie mieści się w main.
 - Dokumenty wejścia wskazują gałęzie: `rep4-b3-owner-checkpoint`
 - Dokumenty wejścia: `README.md`
@@ -186,7 +186,7 @@ _Zbuduj, uruchom, obserwuj, popraw, wsiądź i jedź: warsztat maszyn od wokseli
 ### Box3d_FunProject
 - Po co (hipoteza): Natywny sandbox pojazdów w C17 na silniku Box3D Erina Catto. README na main to wciąż README samego silnika.
 - README: Box3D is a 3D physics engine for games.
-- Życie: uśpione · ostatnia aktywność: 77 dni temu · commitów 585 · gałęzi 5 · PR otwartych 0
+- Życie: uśpione · ostatnia aktywność: 78 dni temu · commitów 585 · gałęzi 5 · PR otwartych 0
 - Stan według repo (`docs/CURRENT_STATE_INDEX_PL.md`, 2026-07-08): „Status (2026-07-08): M2.5/M3A/M3B.3 + M4 + M5.2 zwalidowane; fizyka przebudowana”
   - dalej według notatki: 2026-07-11 — aktywny plan: PLAN_FINALIZACJA_NADWOZIA_I_RIGU_2026_07_11_PL.md
 - [poważne] README na main to README silnika Box3D, a nie Twojego projektu.
@@ -250,7 +250,7 @@ _Jak Ty i agenci dzielicie rzeczywistość projektów, żebyś nie był kurierem
 ### Jozz-Cave-Workbench
 - Po co (hipoteza): Dom Jaskini, Twojego okna na wszystkie projekty: kod, testy, kompas i publiczny podgląd. Twoja prywatna Jaskinia żyje jako artefakt.
 - README: [!IMPORTANT] Stan na 14 XI 2026 (Opus czatu, autor większości tego repo; tylko dokumentacja). Kilka zdań niżej jest nieaktualnych: - „Status: v6.4, 21 Oct, in the owner's private claude.ai artifact” — żywa jest v6.4.1 na GitHub Pages, publikowana automatem dom-odswiezanie.yml (od 10 XI; harmonogram 
-- Życie: żywe · ostatnia aktywność: dziś · commitów 346 · gałęzi 33 · PR otwartych 1
+- Życie: żywe · ostatnia aktywność: dziś · commitów 347 · gałęzi 33 · PR otwartych 1
 - [średnie] 14 gałęzi mieści się w całości w main: ich usunięcie nie straci żadnego commita.
 - Dokumenty wejścia wskazują gałęzie: `gh-pages`, `v6-materialy`
 - Dokumenty wejścia: `AGENTS.md`, `README.md`
@@ -259,7 +259,7 @@ _Jak Ty i agenci dzielicie rzeczywistość projektów, żebyś nie był kurierem
 ### Shared-Work-Medium-Lab
 - Po co (hipoteza): Medium: wspólna praca Ciebie, ChatGPT, Codexa i Claude nad rzeczywistością projektów. Stąd wyrasta ta Biblioteka.
 - README: Experimental public laboratory for a developing shared work medium between an Owner, Browser ChatGPT, Codex, other agents, tools, and project reality.
-- Życie: wstrzymane · ostatnia aktywność: 6 dni temu · commitów 973 · gałęzi 42 · PR otwartych 3
+- Życie: wstrzymane · ostatnia aktywność: 7 dni temu · commitów 973 · gałęzi 42 · PR otwartych 3
 - Stan według repo (`docs/RESEARCH_STATE.md`, 2026-10-18): „Live lifecycle checkpoint (2026-10-18, recheck GitHub): open Medium PRs #22 (deployed Worker donor/operational boundary), #26 (PRZESMYK source), #27 (active descendant based on #26); Issue #7 remains broad field…”
   - dalej według notatki: Read the preserved checkpoint.
 - [poważne] 42 gałęzie na remote; 39 z nich nie ruszało się od ponad 3 tygodni i nie mieści się w main.
@@ -283,7 +283,7 @@ _Czy da się złożyć całość: żywą krainę, w której mieszkańcy żyją z
 ### Mini_Feniks
 - Po co (hipoteza): Poważna próba złożenia jak największej części marzenia o Feniksie w jedną żywą krainę; po pierwszym graniu budowa wstrzymana, trwa ocena fundamentu.
 - README: Poważna próba zrealizowania możliwie największej części marzenia o Feniksie, na jaką pozwalają nasze możliwości. Budujemy własne dzieło, konsekwentnie rozwijając jedną całość. Nie jest to demonstrator technologii ani celowo prowizoryczna wersja przyszłej gry.
-- Życie: stygnące · ostatnia aktywność: 29 dni temu · commitów 33 · gałęzi 2 · PR otwartych 1
+- Życie: uśpione · ostatnia aktywność: 30 dni temu · commitów 33 · gałęzi 2 · PR otwartych 1
 - Dokumenty wejścia: `AGENTS.md`, `README.md`
 - Repo: https://github.com/Jozzpoly/Mini_Feniks
 
@@ -293,7 +293,7 @@ _Od czego zaczęło się na GitHubie: mod do Minecrafta, vibe-coding, pusty pomy
 ### Simply_game_experiment
 - Po co (hipoteza): „Vibe koding”: roguelike 2D z maja 2025, jeden z pierwszych eksperymentów z AI na GitHubie.
 - README: A sophisticated 2D rouge-like game featuring advanced procedural generation, dynamic difficulty adaptation, comprehensive progression systems, and modern UI design. This professional-grade game has evolved through 4 major development phases to deliver a commercial-quality gaming experience.
-- Życie: uśpione · ostatnia aktywność: 482 dni temu · commitów 10 · gałęzi 3 · PR otwartych 1
+- Życie: uśpione · ostatnia aktywność: 483 dni temu · commitów 10 · gałęzi 3 · PR otwartych 1
 - Dokumenty wejścia: `README.md`
 - Repo: https://github.com/Jozzpoly/Simply_game_experiment
 
@@ -308,7 +308,7 @@ _Repo nowsze niż ostatni przegląd Claude. Przypisanie do rodziny to propozycja
 ### Jaskinia
 - Po co (hipoteza): None
 - README: Warsztat do tworzenia, uruchamiania i rozwijania gier oraz eksperymentów, budowany przez właściciela razem z agentami AI. W budowie.
-- Życie: żywe · ostatnia aktywność: dziś · commitów 403 · gałęzi 16 · PR otwartych 9
+- Życie: żywe · ostatnia aktywność: dziś · commitów 432 · gałęzi 17 · PR otwartych 11
 - [średnie] 9 dokumentów wejścia na main: AGENTS.md, README.md, proby/README.md, proby/e1-wersje/README.md i inne.
 - Dokumenty wejścia wskazują gałęzie: `podglad/dowody-studio-r2`
 - Dokumenty wejścia: `AGENTS.md`, `README.md`, `proby/README.md`, `proby/e1-wersje/README.md`, `proby/p1-organ-w-starym-domu/README.md`, `proby/r1-rdzen-minimalny/README.md`
@@ -325,12 +325,11 @@ _Repo nowsze niż ostatni przegląd Claude. Przypisanie do rodziny to propozycja
 - Dokumenty wejścia: `AGENTS.md`, `AI_PROJECT_MEMORY.md`, `README.md`, `START_HERE.md`, `docs/decisions/README.md`, `docs/migration/README.md`
 - Repo: https://github.com/Jozzpoly/Coopege
 
-## Zmiany od poprzedniego zrzutu (2026-11-21 02:32 UTC)
-- Jaskinia: +7 commitów, +2 gałęzie, −1 gałąź (usunięte)
-- JV-Box3D-Web-experiment: +11 commitów, +1 gałąź, życie: uśpione → żywe
+## Zmiany od poprzedniego zrzutu (2026-11-21 11:26 UTC)
+- Jaskinia: +29 commitów, +3 gałęzie, −2 gałęzie (usunięte)
+- JV-Box3D-Web-experiment: +9 commitów
 - Jozz-Cave-Workbench: +1 commit
-- Coopege: życie: żywe → stygnące
-- nowe ustalenia: JV-Box3D-Web-experiment:praca-poza-main
+- Mini_Feniks: życie: stygnące → uśpione
 
 ## Lekcje, które przeszły między światami
 - **E17 — Najpierw intencja, potem skończone wykonanie** (Box3d-Character-Controler → Combat-Lab). Źródło: https://github.com/Jozzpoly/Box3d-Character-Controler/blob/e7a98beaca4c010e056c31db97b33c05b4610e38/docs/PROJECT_STATE.md#L83-L128. Droga: Natywnie. Combat znał E17 z własnego BODY_WORLD (7.10), a negatywną połowę doczytał u dawcy. Drzwi w Medium powstały minutę przed użyciem, więc były zapisem, nie odkryciem.
