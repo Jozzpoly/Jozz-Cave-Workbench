@@ -1,6 +1,6 @@
 # Biblioteka Jozzpoly — brief dla agentów
 
-Zrzut: 2026-11-22 19:51 UTC. Pokrycie: 28/28 repo (28 publicznych, 0 prywatnych). To migawka, nie żywa prawda: przed działaniem sprawdź żywy branch, PR i CI.
+Zrzut: 2026-11-23 01:51 UTC. Pokrycie: 28/28 repo (28 publicznych, 0 prywatnych). To migawka, nie żywa prawda: przed działaniem sprawdź żywy branch, PR i CI.
 
 ## Zasady pracy
 **Granica rozstrzygnięta przez właściciela, jego słowami (10 XI 2026):** „Istotne nieodwracalne decyzje dotyczące mojego dorobku, prywatności, dostępu, pieniędzy i rzeczywistego przełączenia używanej Jaskini” zostają z nim. Reszta to zawodowy osąd agentów.
@@ -19,7 +19,7 @@ _Czy postać w grze może naprawdę żyć: czuć, pamiętać, działać sama i b
 ### Llm-Live-NPC
 - Po co (hipoteza): NPC napędzany małym LLM, który mieszka w świecie: widzi tylko swoje, pamięta i działa wyłącznie przez sprawdzone możliwości świata.
 - README: [!IMPORTANT] Stan na 14 XI 2026 (Opus czatu, tylko dokumentacja). main to historyczne laboratorium transportu P0 z 5 IX 2026, nie obecna implementacja pięciu mieszkańców SPC. Nowszy kod leży w niescalonych PR-ach i nie jest zakwalifikowany przez właściciela. Mapa repo, wejście dla agentów i audyt ga
-- Życie: żywe · ostatnia aktywność: 2 dni temu · commitów 2627 · gałęzi 78 · PR otwartych 42
+- Życie: żywe · ostatnia aktywność: 3 dni temu · commitów 2627 · gałęzi 78 · PR otwartych 42
 - Stan według repo (`docs/PROJECT_STATE.md`, 2026-09-05): „P0 — infrastructure + replaceable model transport qualified. Ready to close and move to P1.”
   - dalej według notatki: Can a lightweight LLM-driven NPC become a believable resident of a game world by receiving bounded perception, maintaining its own experience/beliefs, and acting only…
 - [poważne] 78 gałęzi na remote; 71 z nich nie ruszało się od ponad 3 tygodni i nie mieści się w main.
@@ -30,7 +30,7 @@ _Czy postać w grze może naprawdę żyć: czuć, pamiętać, działać sama i b
 ### Companion-Brain-Lab
 - Po co (hipoteza): Towarzysz gracza z prawdziwym, lokalnym mózgiem: autonomia, współpraca taktyczna i szybkie polecenia.
 - README: Independent R&D on embodied cooperation between a player and one-to-few NPC teammates. The aim is a competent, readable, correctable partner in a real shared world—not a chatbot, follower demo, behavior-list framework, or debug-only success.
-- Życie: stygnące · ostatnia aktywność: 11 dni temu · commitów 1494 · gałęzi 1 · PR otwartych 0
+- Życie: stygnące · ostatnia aktywność: 12 dni temu · commitów 1494 · gałęzi 1 · PR otwartych 0
 - Stan według repo (`docs/STATE.md`, 2026-11-10): „The project studies competent embodied cooperative NPCs: one, later a few companions, with a cheap local live brain, useful preparation/combat and situational initiative, quick player direction and correction, and inspectable factual World consequences. The…”
   - dalej według notatki: That a document named CURRENT.md from Sep 27 is today's execution plan. Its wide account is historically useful, but this snapshot + live evidence + new Owner input…
   - dalej według notatki: That the most recent experimental PR was merged or endorsed. It was not. The PR/archive status may change when cleanup completes: consult the manifest and live Git refs.
@@ -43,7 +43,7 @@ _Czy postać w grze może naprawdę żyć: czuć, pamiętać, działać sama i b
 ### ReflexBrain-Lab
 - Po co (hipoteza): Czy tani, lokalny mechanizm uczący się wyciągnie znaczenie z prywatnego doświadczenia żyjącego, ucieleśnionego aktora.
 - README: Stan badań: 10 listopada 2026. Ten plik i AGENTS.md są niezależne od ChatGPT, Clauda, Codexa, Groka i pamięci rozmów. Właściciel może przez pewien czas nie korzystać z GPT. Nie wymagaj od niego ręcznego odtwarzania historii projektu.
-- Życie: stygnące · ostatnia aktywność: 11 dni temu · commitów 1757 · gałęzi 15 · PR otwartych 10
+- Życie: stygnące · ostatnia aktywność: 12 dni temu · commitów 1757 · gałęzi 15 · PR otwartych 10
 - [średnie] Na main nie ma kodu: 6 plików, same dokumenty i konfiguracja.
 - [średnie] 15 gałęzi na remote; 14 z nich nie ruszało się od ponad 3 tygodni i nie mieści się w main.
 - Dokumenty wejścia wskazują gałęzie: `delivery/r8-private-windows-playtest-2026-10-26`
@@ -54,7 +54,7 @@ _Czy postać w grze może naprawdę żyć: czuć, pamiętać, działać sama i b
 ### Cognitive-Ecology-Lab
 - Po co (hipoteza): Pytało, czy mechanizmy poznawcze, które współpracują albo rywalizują, dają przewagę, której żaden nie ma osobno. Zamknięte werdyktem Ownera 9 paź 2026 (FAIL); pytanie zostaje zapisane, laboratorium nie jest kontynuowane.
 - README: FINAL OWNER PRODUCT VERDICT (2026-10-09): FAIL. Do not resume, present, recommend or develop this lab. The Owner requested its removal.
-- Życie: zakończone · ostatnia aktywność: 43 dni temu · commitów 72 · gałęzi 2 · PR otwartych 0
+- Życie: zakończone · ostatnia aktywność: 44 dni temu · commitów 72 · gałęzi 2 · PR otwartych 0
 - Stan według repo (`docs/STATE.md`, 2026-10-09): „TERMINATED · OWNER FAIL · REPOSITORY REMOVAL REQUESTED.”
 - [poważne] Repo samo o sobie mówi: „TERMINATED” (9 paź).
 - Dokumenty wejścia: `AGENTS.md`, `README.md`, `docs/STATE.md`
@@ -76,7 +76,7 @@ _Jak dać graczowi i aktorowi fizyczne ciało, które słucha intencji, zamiast 
 ### Combat-Lab
 - Po co (hipoteza): Odkrywanie ucieleśnionej walki i ruchu. Na main stoi neutralna próbka, a prawdziwe eksperymenty żyją na osobnych gałęziach.
 - README: Eksperymentalne laboratorium ruchu, fizycznie różnych ciał, tłumu, kontaktu i zmienianej przez człowieka materii. Nie jest gotową grą ani zaakceptowanym silnikiem walki.
-- Życie: stygnące · ostatnia aktywność: 11 dni temu · commitów 2028 · gałęzi 3 · PR otwartych 0
+- Życie: stygnące · ostatnia aktywność: 12 dni temu · commitów 2028 · gałęzi 3 · PR otwartych 0
 - Stan według repo (`docs/RESEARCH_STATE.md`, 2026-11-10): „Cel: odkrywać w otwartym, edytowalnym świecie fizycznie odmienne organizmy, rzeczywisty ruch i nacisk, relacje ciał/materii, crowds, reakcje, a w przyszłości walkę. Nie budować ponownie ruchu kulek po trasach ani…”
 - [średnie] 4 dokumenty wejścia na main: AGENTS.md, README.md, docs/RESEARCH_STATE.md, docs/history/RESEARCH_STATE_OVERLAYS_THROUGH_2026-10-10.md.
 - Dokumenty wejścia wskazują gałęzie: `archive/all-research-pre-provider-handoff-2026-11-10`, `rehearsal/current`
@@ -100,7 +100,7 @@ _Jak dać graczowi i aktorowi fizyczne ciało, które słucha intencji, zamiast 
 ### Box3d-Character-Controler
 - Po co (hipoteza): Laboratorium ucieleśnionego gracza: fizyczne ciało, które nie odbiera kontroli ani frajdy. Tu powstała lekcja E17.
 - README: Public browser laboratory for one broader question: How can a player possess a physically meaningful body while retaining enough control, readability and fun that physics becomes part of gameplay rather than an obstacle?
-- Życie: uśpione · ostatnia aktywność: 72 dni temu · commitów 974 · gałęzi 20 · PR otwartych 0
+- Życie: uśpione · ostatnia aktywność: 73 dni temu · commitów 974 · gałęzi 20 · PR otwartych 0
 - Stan według repo (`docs/PROJECT_STATE.md`, 2026-09-10): „The repository remains an Embodied Player Laboratory, not a realistic-ragdoll project.”
 - [średnie] 20 gałęzi na remote; 19 z nich nie ruszało się od ponad 3 tygodni i nie mieści się w main.
 - Dokumenty wejścia wskazują gałęzie: `archive/pre-cleanup-2026-09-09-dca388f4`
@@ -129,7 +129,7 @@ _Z czego jest zrobiony świat: edytowalna materia, cała planeta, skan, który m
 ### Jozz-Splat-Game-Lab
 - Po co (hipoteza): Prawdziwe skany Gaussian Splatting zamienione w światy gry, które można fizycznie testować.
 - README: Evidence-driven R&D for turning real Gaussian Splatting captures into spatially grounded, physically testable game worlds.
-- Życie: uśpione · ostatnia aktywność: 98 dni temu · commitów 184 · gałęzi 13 · PR otwartych 1
+- Życie: uśpione · ostatnia aktywność: 99 dni temu · commitów 184 · gałęzi 13 · PR otwartych 1
 - Stan według repo (`docs/PROJECT_STATE.md`, 2026-08-15): „W0.2 GRAVITY — VERIFIED / W0.3 METRIC SCALE NEXT”
   - dalej według notatki: W0.3 must infer one metric scale from independently known real-world distances while preserving raw source evidence.
   - dalej według notatki: W0.3a — two-point foreground distance measurement;
@@ -197,7 +197,7 @@ _Zbuduj, uruchom, obserwuj, popraw, wsiądź i jedź: warsztat maszyn od wokseli
 ### PROJECT-ANVIL-Machine-Matter-Physical-Fabric-Laboratory
 - Po co (hipoteza): Maszyny z materii zamiast katalogu części: malujesz w materii właściwości, a laboratorium kompiluje je do fizyki.
 - README: Machine Matter / Physical Fabric Laboratory PROJECT ANVIL is an experimental R&D laboratory for a deliberately unusual idea: Author persistent semantic matter and local physical intent, then compile them into disposable runtime representations appropriate to the simulation.
-- Życie: uśpione · ostatnia aktywność: 82 dni temu · commitów 602 · gałęzi 55 · PR otwartych 3
+- Życie: uśpione · ostatnia aktywność: 83 dni temu · commitów 602 · gałęzi 55 · PR otwartych 3
 - Stan według repo (`docs/CURRENT_HANDOFF.md`): „SEALED — HANDOFF READY / ANVIL-10 ACCEPTED / EPOCH I CLOSED / P06 PRODUCT DESIGN ACCEPTED / C6 IMPLEMENTATION READY / NO ACTIVE MATERIAL WORK / I1 NEXT”
 - [średnie] 55 gałęzi na remote; 24 z nich nie ruszało się od ponad 3 tygodni i nie mieści się w main.
 - [średnie] 30 gałęzi mieści się w całości w main: ich usunięcie nie straci żadnego commita.
@@ -250,7 +250,7 @@ _Jak Ty i agenci dzielicie rzeczywistość projektów, żebyś nie był kurierem
 ### Jozz-Cave-Workbench
 - Po co (hipoteza): Dom Jaskini, Twojego okna na wszystkie projekty: kod, testy, kompas i publiczny podgląd. Twoja prywatna Jaskinia żyje jako artefakt.
 - README: [!IMPORTANT] Stan na 14 XI 2026 (Opus czatu, autor większości tego repo; tylko dokumentacja). Kilka zdań niżej jest nieaktualnych: - „Status: v6.4, 21 Oct, in the owner's private claude.ai artifact” — żywa jest v6.4.1 na GitHub Pages, publikowana automatem dom-odswiezanie.yml (od 10 XI; harmonogram 
-- Życie: żywe · ostatnia aktywność: 1 dni temu · commitów 348 · gałęzi 33 · PR otwartych 1
+- Życie: żywe · ostatnia aktywność: dziś · commitów 349 · gałęzi 33 · PR otwartych 1
 - [średnie] 14 gałęzi mieści się w całości w main: ich usunięcie nie straci żadnego commita.
 - Dokumenty wejścia wskazują gałęzie: `gh-pages`, `v6-materialy`
 - Dokumenty wejścia: `AGENTS.md`, `README.md`
@@ -275,7 +275,7 @@ _Czy da się złożyć całość: żywą krainę, w której mieszkańcy żyją z
 ### Feniks-Studio
 - Po co (hipoteza): Warsztat do tworzenia miejsc, rzeczy i eksperymentów przyszłego Feniksa. Dziś badania i plan bez aplikacji: budowę wstrzymałeś, a Jaskinia jest jednym z kandydatów na jego dom.
 - README: [!IMPORTANT] Gdzie naprawdę jest kod (stan na 14 XI 2026, Opus Code; tylko dokumentacja). main nie zawiera aplikacji i to jest prawda — ale do dziś nie mówił, gdzie ona jest, więc agent wchodzący tutaj jej nie znajdował. Jest w dwóch niescalonych gałęziach: | Gdzie | Co tam jest | Ostatnia praca | |
-- Życie: stygnące · ostatnia aktywność: 7 dni temu · commitów 23 · gałęzi 8 · PR otwartych 3
+- Życie: stygnące · ostatnia aktywność: 8 dni temu · commitów 23 · gałęzi 8 · PR otwartych 3
 - Dokumenty wejścia wskazują gałęzie: `checkpoint/astra-v5-core-2026-10-18`, `experiment/tworzywo-construction`
 - Dokumenty wejścia: `AGENTS.md`, `README.md`
 - Repo: https://github.com/Jozzpoly/Feniks-Studio
@@ -325,9 +325,9 @@ _Repo nowsze niż ostatni przegląd Claude. Przypisanie do rodziny to propozycja
 - Dokumenty wejścia: `AGENTS.md`, `AI_PROJECT_MEMORY.md`, `README.md`, `START_HERE.md`, `docs/decisions/README.md`, `docs/migration/README.md`
 - Repo: https://github.com/Jozzpoly/Coopege
 
-## Zmiany od poprzedniego zrzutu (2026-11-21 19:30 UTC)
+## Zmiany od poprzedniego zrzutu (2026-11-22 19:51 UTC)
 - Jozz-Cave-Workbench: +1 commit
-- Feniks-Studio: życie: żywe → stygnące
+- nowe ustalenia: Jozz-Cave-Workbench:praca-poza-main
 
 ## Lekcje, które przeszły między światami
 - **E17 — Najpierw intencja, potem skończone wykonanie** (Box3d-Character-Controler → Combat-Lab). Źródło: https://github.com/Jozzpoly/Box3d-Character-Controler/blob/e7a98beaca4c010e056c31db97b33c05b4610e38/docs/PROJECT_STATE.md#L83-L128. Droga: Natywnie. Combat znał E17 z własnego BODY_WORLD (7.10), a negatywną połowę doczytał u dawcy. Drzwi w Medium powstały minutę przed użyciem, więc były zapisem, nie odkryciem.
