@@ -1,6 +1,6 @@
 # Biblioteka Jozzpoly — brief dla agentów
 
-Zrzut: 2026-11-24 02:23 UTC. Pokrycie: 28/28 repo (28 publicznych, 0 prywatnych). To migawka, nie żywa prawda: przed działaniem sprawdź żywy branch, PR i CI.
+Zrzut: 2026-11-24 13:59 UTC. Pokrycie: 28/28 repo (28 publicznych, 0 prywatnych). To migawka, nie żywa prawda: przed działaniem sprawdź żywy branch, PR i CI.
 
 ## Zasady pracy
 **Granica rozstrzygnięta przez właściciela, jego słowami (10 XI 2026):** „Istotne nieodwracalne decyzje dotyczące mojego dorobku, prywatności, dostępu, pieniędzy i rzeczywistego przełączenia używanej Jaskini” zostają z nim. Reszta to zawodowy osąd agentów.
@@ -19,9 +19,9 @@ _Czy postać w grze może naprawdę żyć: czuć, pamiętać, działać sama i b
 ### ReflexBrain-Lab
 - Po co (hipoteza): Czy tani, lokalny mechanizm uczący się wyciągnie znaczenie z prywatnego doświadczenia żyjącego, ucieleśnionego aktora.
 - README: Stan badań: 10 listopada 2026. Ten plik i AGENTS.md są niezależne od ChatGPT, Clauda, Codexa, Groka i pamięci rozmów. Właściciel może przez pewien czas nie korzystać z GPT. Nie wymagaj od niego ręcznego odtwarzania historii projektu.
-- Życie: żywe · ostatnia aktywność: dziś · commitów 1758 · gałęzi 16 · PR otwartych 10
+- Życie: żywe · ostatnia aktywność: dziś · commitów 1760 · gałęzi 17 · PR otwartych 10
 - [średnie] Na main nie ma kodu: 6 plików, same dokumenty i konfiguracja.
-- [średnie] 16 gałęzi na remote; 14 z nich nie ruszało się od ponad 3 tygodni i nie mieści się w main.
+- [średnie] 17 gałęzi na remote; 14 z nich nie ruszało się od ponad 3 tygodni i nie mieści się w main.
 - Dokumenty wejścia wskazują gałęzie: `delivery/r8-private-windows-playtest-2026-10-26`
 - Dokumenty wejścia: `AGENTS.md`, `README.md`
 - Pages: https://jozzpoly.github.io/ReflexBrain-Lab/
@@ -114,7 +114,7 @@ _Z czego jest zrobiony świat: edytowalna materia, cała planeta, skan, który m
 ### Splot
 - Po co (hipoteza): Mały żywy świat 2.5D: materia, którą można przekształcać, kilka poziomów i zachowania, które reagują na zmiany. Grywalny punkt wyjścia, a geometria K3 jako osobny dawca.
 - README: Status (2026-10-18): experimental / Owner review pending. This public repository holds a reproducible playable baseline and a separate, non-promoted construction-geometry research donor. It is not a validated game engine, not the canonical geometry system for Feniks Studio, and not a replacement for
-- Życie: stygnące · ostatnia aktywność: 28 dni temu · commitów 477 · gałęzi 5 · PR otwartych 4
+- Życie: stygnące · ostatnia aktywność: 29 dni temu · commitów 477 · gałęzi 5 · PR otwartych 4
 - [średnie] 4 dokumenty wejścia na main: AGENTS.md, README.md, docs/CURRENT_STATE.md, donors/k3-geometry/README.md.
 - Dokumenty wejścia: `AGENTS.md`, `README.md`, `docs/CURRENT_STATE.md`, `donors/k3-geometry/README.md`
 - Repo: https://github.com/Jozzpoly/Splot
@@ -122,7 +122,7 @@ _Z czego jest zrobiony świat: edytowalna materia, cała planeta, skan, który m
 ### FrameMatter-Lab
 - Po co (hipoteza): Edytowalna materia świata, która bywa statyczna albo dynamiczna i nie traci przy tym tożsamości (Godot).
 - README: Research lab for an editable systemic-world substrate where local Matter can become static or dynamic physical space without logical identity collapsing into engine representation.
-- Życie: uśpione · ostatnia aktywność: 43 dni temu · commitów 796 · gałęzi 12 · PR otwartych 1
+- Życie: uśpione · ostatnia aktywność: 44 dni temu · commitów 796 · gałęzi 12 · PR otwartych 1
 - Dokumenty wejścia: `README.md`, `docs/archive/README.md`, `docs/evidence/README.md`
 - Repo: https://github.com/Jozzpoly/FrameMatter-Lab
 
@@ -160,7 +160,7 @@ _Zbuduj, uruchom, obserwuj, popraw, wsiądź i jedź: warsztat maszyn od wokseli
 ### voxel-aeronautics-workshop
 - Po co (hipoteza): Warsztat maszyn budowanych blok po bloku: budujesz, uruchamiasz w fizyce i rozumiesz, dlaczego lecą albo się rozpadają.
 - README: Workbench Foundation - Gate C Stable Base Desktop voxel engineering sandbox where the player builds, tests and pilots their own machine. Gate C is the stable gameplay base: Blueprint v12 Assembly Spaces, deterministic multi-body compilation, articulated real-Cannon flight, strict runtime ownership a
-- Życie: uśpione · ostatnia aktywność: 34 dni temu · commitów 558 · gałęzi 3 · PR otwartych 1
+- Życie: uśpione · ostatnia aktywność: 35 dni temu · commitów 558 · gałęzi 3 · PR otwartych 1
 - Stan według repo (`AI_PROJECT_MEMORY.md`): „Current source of truth: Workbench Foundation on stable Gate C.”
 - [średnie] 5 dokumentów wejścia na main: AI_PROJECT_MEMORY.md, README.md, docs/README.md, docs/recovery/README.md i inne.
 - Dokumenty wejścia: `AI_PROJECT_MEMORY.md`, `README.md`, `docs/README.md`, `docs/recovery/README.md`, `tools/blockbench_import_studio/README.md`
@@ -177,7 +177,7 @@ _Zbuduj, uruchom, obserwuj, popraw, wsiądź i jedź: warsztat maszyn od wokseli
 ### Jozzue_Vehicles_Sandbox
 - Po co (hipoteza): Następna generacja Jozz Vehicle w pętli: buduj, uruchom, obserwuj, popraw, wsiądź i jedź.
 - README: Research repository for the next generation of Jozz Vehicle. Experiments are evidence, not architecture.
-- Życie: uśpione · ostatnia aktywność: 78 dni temu · commitów 257 · gałęzi 41 · PR otwartych 0
+- Życie: uśpione · ostatnia aktywność: 79 dni temu · commitów 257 · gałęzi 41 · PR otwartych 0
 - [poważne] 41 gałęzi na remote; 33 z nich nie ruszało się od ponad 3 tygodni i nie mieści się w main.
 - Dokumenty wejścia wskazują gałęzie: `rep4-b3-owner-checkpoint`
 - Dokumenty wejścia: `README.md`
@@ -186,7 +186,7 @@ _Zbuduj, uruchom, obserwuj, popraw, wsiądź i jedź: warsztat maszyn od wokseli
 ### Box3d_FunProject
 - Po co (hipoteza): Natywny sandbox pojazdów w C17 na silniku Box3D Erina Catto. README na main to wciąż README samego silnika.
 - README: Box3D is a 3D physics engine for games.
-- Życie: uśpione · ostatnia aktywność: 80 dni temu · commitów 585 · gałęzi 5 · PR otwartych 0
+- Życie: uśpione · ostatnia aktywność: 81 dni temu · commitów 585 · gałęzi 5 · PR otwartych 0
 - Stan według repo (`docs/CURRENT_STATE_INDEX_PL.md`, 2026-07-08): „Status (2026-07-08): M2.5/M3A/M3B.3 + M4 + M5.2 zwalidowane; fizyka przebudowana”
   - dalej według notatki: 2026-07-11 — aktywny plan: PLAN_FINALIZACJA_NADWOZIA_I_RIGU_2026_07_11_PL.md
 - [poważne] README na main to README silnika Box3D, a nie Twojego projektu.
@@ -210,7 +210,7 @@ _Zbuduj, uruchom, obserwuj, popraw, wsiądź i jedź: warsztat maszyn od wokseli
 ### JV-Box3D-Web-Public
 - Po co (hipoteza): Publiczne wdrożenie JV Web, zawierające wyłącznie gotowe artefakty.
 - README: Public, artifact-only deployment repository for JV Web.
-- Życie: uśpione · ostatnia aktywność: 93 dni temu · commitów 50 · gałęzi 2 · PR otwartych 0
+- Życie: uśpione · ostatnia aktywność: 94 dni temu · commitów 50 · gałęzi 2 · PR otwartych 0
 - Stan według repo (`HANDOFF.md`): „This repository is public artifact/provenance only. Product development belongs in Jozzpoly/JV-Box3D-Web-experiment.”
 - [średnie] 5 plików większych niż 5 MB na main (największy: __jv_scan__/tiles/tile_003.bin, 11.5 MB).
 - Dokumenty wejścia wskazują gałęzie: `preview/p1-2-owner`
@@ -224,7 +224,7 @@ _Grać razem: karty przy wspólnym stole, wspólny fizyczny świat, kooperacja w
 ### cloudflare-multiplayer-lab
 - Po co (hipoteza): MultiWorld: wspólny fizyczny świat w przeglądarce. Serwer na Cloudflare liczy fizykę Box3D.
 - README: Evidence-driven R&D laboratory for multiplayer / shared-world technology.
-- Życie: uśpione · ostatnia aktywność: 34 dni temu · commitów 2007 · gałęzi 3 · PR otwartych 0
+- Życie: uśpione · ostatnia aktywność: 35 dni temu · commitów 2007 · gałęzi 3 · PR otwartych 0
 - Dokumenty wejścia wskazują gałęzie: `archive/multi-world-history-2026-09-18`
 - Dokumenty wejścia: `AGENTS.md`, `README.md`
 - Pages: https://cloudflare-multiplayer-lab-staging.jozzpoly.workers.dev/world-v0/
@@ -233,7 +233,7 @@ _Grać razem: karty przy wspólnym stole, wspólny fizyczny świat, kooperacja w
 ### Tysi-c-The-Game
 - Po co (hipoteza): Tysiąc w przeglądarce dla znajomych: prywatne stoły, boty i fizyczny język kart.
 - README: Codename: Tysiąc The Game Browser-first Tysiąc for desktop and mobile: private friend tables, bots, explicit rule profiles, and a presentation layer rebuilt around a more physical digital-card language.
-- Życie: uśpione · ostatnia aktywność: 34 dni temu · commitów 1087 · gałęzi 80 · PR otwartych 6
+- Życie: uśpione · ostatnia aktywność: 35 dni temu · commitów 1087 · gałęzi 80 · PR otwartych 6
 - Stan według repo (`docs/EXECUTION_STATE.md`, 2026-10-20): „Tysiąc is a real, playable three-player digital card table for desktop and mobile, solo/bot and friend play — not a generic card framework, repository-cleanup exercise, or permanent R&D treadmill. Physical card continuity, permissive manipulation, visual…”
   - dalej według notatki: On kontynuuj: start with the 19–20 October campaign closure, verify fresh HEAD/CI of #75/#76/#77, exact stable-candidate.txt, public Golden API (without redeploy) and…
 - [poważne] 80 gałęzi na remote; 65 z nich nie ruszało się od ponad 3 tygodni i nie mieści się w main.
@@ -250,7 +250,7 @@ _Jak Ty i agenci dzielicie rzeczywistość projektów, żebyś nie był kurierem
 ### Jozz-Cave-Workbench
 - Po co (hipoteza): Dom Jaskini, Twojego okna na wszystkie projekty: kod, testy, kompas i publiczny podgląd. Twoja prywatna Jaskinia żyje jako artefakt.
 - README: [!IMPORTANT] Stan na 14 XI 2026 (Opus czatu, autor większości tego repo; tylko dokumentacja). Kilka zdań niżej jest nieaktualnych: - „Status: v6.4, 21 Oct, in the owner's private claude.ai artifact” — żywa jest v6.4.1 na GitHub Pages, publikowana automatem dom-odswiezanie.yml (od 10 XI; harmonogram 
-- Życie: żywe · ostatnia aktywność: dziś · commitów 351 · gałęzi 33 · PR otwartych 1
+- Życie: żywe · ostatnia aktywność: dziś · commitów 352 · gałęzi 33 · PR otwartych 1
 - [średnie] 14 gałęzi mieści się w całości w main: ich usunięcie nie straci żadnego commita.
 - Dokumenty wejścia wskazują gałęzie: `gh-pages`, `v6-materialy`
 - Dokumenty wejścia: `AGENTS.md`, `README.md`
@@ -259,7 +259,7 @@ _Jak Ty i agenci dzielicie rzeczywistość projektów, żebyś nie był kurierem
 ### Shared-Work-Medium-Lab
 - Po co (hipoteza): Medium: wspólna praca Ciebie, ChatGPT, Codexa i Claude nad rzeczywistością projektów. Stąd wyrasta ta Biblioteka.
 - README: Experimental public laboratory for a developing shared work medium between an Owner, Browser ChatGPT, Codex, other agents, tools, and project reality.
-- Życie: wstrzymane · ostatnia aktywność: 9 dni temu · commitów 973 · gałęzi 42 · PR otwartych 3
+- Życie: wstrzymane · ostatnia aktywność: 10 dni temu · commitów 973 · gałęzi 42 · PR otwartych 3
 - Stan według repo (`docs/RESEARCH_STATE.md`, 2026-10-18): „Live lifecycle checkpoint (2026-10-18, recheck GitHub): open Medium PRs #22 (deployed Worker donor/operational boundary), #26 (PRZESMYK source), #27 (active descendant based on #26); Issue #7 remains broad field…”
   - dalej według notatki: Read the preserved checkpoint.
 - [poważne] 42 gałęzie na remote; 39 z nich nie ruszało się od ponad 3 tygodni i nie mieści się w main.
@@ -293,7 +293,7 @@ _Od czego zaczęło się na GitHubie: mod do Minecrafta, vibe-coding, pusty pomy
 ### Simply_game_experiment
 - Po co (hipoteza): „Vibe koding”: roguelike 2D z maja 2025, jeden z pierwszych eksperymentów z AI na GitHubie.
 - README: A sophisticated 2D rouge-like game featuring advanced procedural generation, dynamic difficulty adaptation, comprehensive progression systems, and modern UI design. This professional-grade game has evolved through 4 major development phases to deliver a commercial-quality gaming experience.
-- Życie: uśpione · ostatnia aktywność: 485 dni temu · commitów 10 · gałęzi 3 · PR otwartych 1
+- Życie: uśpione · ostatnia aktywność: 486 dni temu · commitów 10 · gałęzi 3 · PR otwartych 1
 - Dokumenty wejścia: `README.md`
 - Repo: https://github.com/Jozzpoly/Simply_game_experiment
 
@@ -317,7 +317,7 @@ _Repo nowsze niż ostatni przegląd Claude. Przypisanie do rodziny to propozycja
 ### Coopege
 - Po co (hipoteza): None
 - README: [!IMPORTANT] Stan na 14 XI 2026 (Opus czatu, tylko dokumentacja). main opisuje stan z 15 VI 2026 (M8 VS-3, „owner retest”). Nowsza praca nigdy nie trafiła na main: łańcuch B1–B5 i odrodzenie R0 z 22–23 X (PR #1–#8), dokument autorski A0/A1 i dwa eksperymenty edytora z 9–10 XI (PR #11–#13). Ostatnia 
-- Życie: stygnące · ostatnia aktywność: 9 dni temu · commitów 298 · gałęzi 20 · PR otwartych 11
+- Życie: stygnące · ostatnia aktywność: 10 dni temu · commitów 298 · gałęzi 20 · PR otwartych 11
 - Stan według repo (`docs/process/CURRENT_MILESTONE.md`, 2026-06-14): „M7 TECH_VERIFIED / OWNER_ACCEPTED_WITH_DEBT / SUCCESSOR_REVIEWED”
 - [średnie] 20 gałęzi na remote; 15 z nich nie ruszało się od ponad 3 tygodni i nie mieści się w main.
 - [średnie] 9 dokumentów wejścia na main: AGENTS.md, AI_PROJECT_MEMORY.md, README.md, START_HERE.md i inne.
@@ -325,7 +325,8 @@ _Repo nowsze niż ostatni przegląd Claude. Przypisanie do rodziny to propozycja
 - Dokumenty wejścia: `AGENTS.md`, `AI_PROJECT_MEMORY.md`, `README.md`, `START_HERE.md`, `docs/decisions/README.md`, `docs/migration/README.md`
 - Repo: https://github.com/Jozzpoly/Coopege
 
-## Zmiany od poprzedniego zrzutu (2026-11-23 13:17 UTC)
+## Zmiany od poprzedniego zrzutu (2026-11-24 02:23 UTC)
+- ReflexBrain-Lab: +2 commity, +1 gałąź
 - Jozz-Cave-Workbench: +1 commit
 
 ## Lekcje, które przeszły między światami
